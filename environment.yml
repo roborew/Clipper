@@ -1,0 +1,14 @@
+name: clipper
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - streamlit>=1.22.0
+      - opencv-python>=4.7.0
+      - numpy>=1.24.3
+      - pandas>=2.0.1
+      - pillow>=9.5.0
+      - ffmpeg-python>=0.2.0
