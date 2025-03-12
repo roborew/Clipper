@@ -4,6 +4,11 @@ import os
 from pathlib import Path
 import json
 from datetime import datetime
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class VideoProcessor:
@@ -17,40 +22,126 @@ class VideoProcessor:
         self.fps = 0
         self.width = 0
         self.height = 0
+        logger.info("VideoProcessor initialized")
 
     def load_video(self, video_path):
         """Load a video file and initialize video properties"""
+        logger.info(f"Attempting to load video: {video_path}")
+        logger.info(f"File exists: {os.path.exists(video_path)}")
+
         if not os.path.exists(video_path):
+            logger.error(f"Video file not found: {video_path}")
             return False, f"Video file not found: {video_path}"
 
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            return False, f"Error opening video file: {video_path}"
+        # Check file size and extension
+        file_size = os.path.getsize(video_path)
+        file_ext = os.path.splitext(video_path)[1].lower()
+        logger.info(f"File size: {file_size/1024/1024:.2f} MB, Extension: {file_ext}")
 
-        self.cap = cap
-        self.video_path = video_path
-        self.total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.fps = cap.get(cv2.CAP_PROP_FPS)
-        self.width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        # Check if file is a valid video using ffprobe if available
+        try:
+            import subprocess
 
-        return True, "Video loaded successfully"
+            result = subprocess.run(
+                [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    video_path,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            if result.stdout.strip():
+                duration = float(result.stdout.strip())
+                logger.info(f"Video duration (ffprobe): {duration:.2f} seconds")
+            else:
+                logger.warning(f"ffprobe couldn't determine duration: {result.stderr}")
+        except Exception as e:
+            logger.warning(f"ffprobe check failed: {str(e)}")
+
+        try:
+            logger.info("Creating VideoCapture object...")
+            cap = cv2.VideoCapture(video_path)
+
+            if not cap.isOpened():
+                logger.error(f"Error opening video file: {video_path}")
+                return False, f"Error opening video file: {video_path}"
+
+            # Get video properties
+            logger.info("Reading video properties...")
+            total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            codec = int(cap.get(cv2.CAP_PROP_FOURCC))
+            codec_str = "".join([chr((codec >> 8 * i) & 0xFF) for i in range(4)])
+
+            logger.info(f"Video codec: {codec_str}")
+            logger.info(
+                f"Video properties: frames={total_frames}, fps={fps}, size={width}x{height}"
+            )
+
+            # Calculate duration
+            duration = total_frames / fps if fps > 0 else 0
+            logger.info(f"Video duration (calculated): {duration:.2f} seconds")
+
+            # Test reading first frame
+            logger.info("Testing frame reading...")
+            ret, test_frame = cap.read()
+            if not ret:
+                logger.error("Failed to read first frame")
+                cap.release()
+                return False, "Failed to read video frames"
+
+            logger.info("First frame read successfully")
+
+            # Reset to start
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+            # Update instance variables
+            self.cap = cap
+            self.video_path = video_path
+            self.total_frames = total_frames
+            self.fps = fps
+            self.width = width
+            self.height = height
+
+            logger.info("Video loaded successfully")
+            return True, "Video loaded successfully"
+
+        except Exception as e:
+            logger.error(f"Error loading video: {str(e)}")
+            logger.exception("Full traceback:")
+            return False, f"Error loading video: {str(e)}"
 
     def get_frame(self, frame_number):
         """Get a specific frame from the video"""
         if self.cap is None:
+            logger.error("No video loaded")
             return None
 
-        # Ensure frame number is within valid range
-        frame_number = max(0, min(frame_number, self.total_frames - 1))
+        try:
+            # Ensure frame number is within valid range
+            frame_number = max(0, min(frame_number, self.total_frames - 1))
 
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        ret, frame = self.cap.read()
-        if not ret:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+            ret, frame = self.cap.read()
+
+            if not ret:
+                logger.error(f"Failed to read frame {frame_number}")
+                return None
+
+            # Convert BGR to RGB for display in Streamlit
+            return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        except Exception as e:
+            logger.error(f"Error getting frame {frame_number}: {str(e)}")
             return None
-
-        # Convert BGR to RGB for display in Streamlit
-        return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     def export_clip(self, clip_data, output_path, progress_callback=None):
         """
