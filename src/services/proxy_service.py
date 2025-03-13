@@ -465,7 +465,11 @@ def proxy_progress_callback(progress_info):
 
 
 def cleanup_proxy_files(config_manager=None):
-    """Clean up proxy video files"""
+    """Clean up proxy video files
+
+    Returns:
+        bool: True if cleanup was performed, False otherwise
+    """
     try:
         # Get proxy directory from config manager
         if not config_manager:
@@ -473,34 +477,75 @@ def cleanup_proxy_files(config_manager=None):
 
         proxy_dir = config_manager.proxy_dir
 
-        # Clean up proxy_videos directory
-        if proxy_dir.exists() and st.checkbox("Clean up proxy videos?", value=False):
-            # Recursively find and delete all files in proxy directory
-            for file in proxy_dir.glob("**/*"):
-                if file.is_file():
-                    try:
-                        file.unlink()
-                        logger.info(f"Deleted proxy file: {file}")
-                    except Exception as e:
-                        logger.error(f"Error deleting proxy file {file}: {str(e)}")
+        # Display information about the proxy directory
+        if not proxy_dir.exists():
+            st.info(f"Proxy directory does not exist: {proxy_dir}")
+            return False
 
-            # Remove empty directories (except the root proxy directory)
-            for dir_path in sorted(
-                [p for p in proxy_dir.glob("**/*") if p.is_dir()], reverse=True
-            ):
-                try:
-                    if dir_path != proxy_dir and not any(dir_path.iterdir()):
-                        dir_path.rmdir()
-                        logger.info(f"Removed empty proxy directory: {dir_path}")
-                except Exception as e:
-                    logger.error(f"Error removing proxy directory {dir_path}: {str(e)}")
+        # Count proxy files
+        proxy_files = list(proxy_dir.glob("**/*.mp4"))
+        file_count = len(proxy_files)
 
-        # Reset proxy path in session state if it was deleted
-        if hasattr(st.session_state, "proxy_path") and st.session_state.proxy_path:
-            if not os.path.exists(st.session_state.proxy_path):
-                st.session_state.proxy_path = None
+        if file_count == 0:
+            st.info("No proxy files to clean up.")
+            return False
 
-        return True
+        # Show button with file count
+        if st.button(f"Clean Up {file_count} Proxy Videos"):
+            # Show confirmation dialog
+            confirm = st.warning("⚠️ This will delete all proxy videos. Are you sure?")
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Yes, Delete All Proxies", key="confirm_cleanup"):
+                    # Recursively find and delete all files in proxy directory
+                    deleted_count = 0
+                    for file in proxy_dir.glob("**/*"):
+                        if file.is_file():
+                            try:
+                                file.unlink()
+                                deleted_count += 1
+                                logger.info(f"Deleted proxy file: {file}")
+                            except Exception as e:
+                                logger.error(
+                                    f"Error deleting proxy file {file}: {str(e)}"
+                                )
+
+                    # Remove empty directories (except the root proxy directory)
+                    dir_count = 0
+                    for dir_path in sorted(
+                        [p for p in proxy_dir.glob("**/*") if p.is_dir()], reverse=True
+                    ):
+                        try:
+                            if dir_path != proxy_dir and not any(dir_path.iterdir()):
+                                dir_path.rmdir()
+                                dir_count += 1
+                                logger.info(
+                                    f"Removed empty proxy directory: {dir_path}"
+                                )
+                        except Exception as e:
+                            logger.error(
+                                f"Error removing proxy directory {dir_path}: {str(e)}"
+                            )
+
+                    # Reset proxy path in session state if it was deleted
+                    if (
+                        hasattr(st.session_state, "proxy_path")
+                        and st.session_state.proxy_path
+                    ):
+                        if not os.path.exists(st.session_state.proxy_path):
+                            st.session_state.proxy_path = None
+
+                    st.success(
+                        f"Cleanup complete: {deleted_count} files and {dir_count} empty directories removed."
+                    )
+                    return True
+
+            with col2:
+                if st.button("Cancel", key="cancel_cleanup"):
+                    st.info("Cleanup cancelled.")
+                    return False
+
+        return False
     except Exception as e:
         logger.error(f"Error cleaning up proxy files: {str(e)}")
         return False

@@ -181,3 +181,8 @@ class ConfigManager:
     def get_video_extensions(self) -> List[str]:
         """Get list of supported video extensions"""
         return self.config["patterns"]["video_extensions"]
+
+    def get_clips_file_path(self) -> Path:
+        """Get path to the clips file"""
+        # Create a clips.json file in the configs directory
+        return self.configs_dir / "clips.json"

@@ -145,10 +145,18 @@ class VideoProcessor:
             logger.error(f"Error getting frame {frame_number}: {str(e)}")
             return None
 
-    def export_clip(self, output_path, start_frame, end_frame, crop_region=None, output_resolution="1080p", progress_callback=None):
+    def export_clip(
+        self,
+        output_path,
+        start_frame,
+        end_frame,
+        crop_region=None,
+        output_resolution="1080p",
+        progress_callback=None,
+    ):
         """
         Export a clip based on the provided parameters
-        
+
         Args:
             output_path (str): Path to save the exported clip
             start_frame (int): Starting frame number
@@ -156,7 +164,7 @@ class VideoProcessor:
             crop_region (callable or tuple): Function that returns crop region for a frame or static crop region
             output_resolution (str): Output resolution preset
             progress_callback (function): Callback function for progress updates
-            
+
         Returns:
             bool, str: Success status and message
         """
@@ -169,13 +177,15 @@ class VideoProcessor:
                 "2160p": (3840, 2160),  # 4K UHD
                 "1440p": (2560, 1440),  # 2K QHD
                 "1080p": (1920, 1080),  # Full HD
-                "720p": (1280, 720),    # HD
-                "480p": (854, 480),     # SD
-                "360p": (640, 360),     # Low
+                "720p": (1280, 720),  # HD
+                "480p": (854, 480),  # SD
+                "360p": (640, 360),  # Low
             }
 
             output_res = resolution_presets.get(output_resolution, (1920, 1080))
-            logger.info(f"Exporting clip to {output_path} with resolution {output_resolution} ({output_res[0]}x{output_res[1]})")
+            logger.info(
+                f"Exporting clip to {output_path} with resolution {output_resolution} ({output_res[0]}x{output_res[1]})"
+            )
             logger.info(f"Frame range: {start_frame} to {end_frame}")
 
             # Create a new video capture to avoid interfering with the UI
@@ -233,7 +243,9 @@ class VideoProcessor:
                 # Log progress periodically
                 if (frame_idx - start_frame) % 100 == 0 or frame_idx == end_frame:
                     progress = (frame_idx - start_frame + 1) / total_clip_frames * 100
-                    logger.info(f"Export progress: {progress:.1f}% ({frame_idx - start_frame + 1}/{total_clip_frames})")
+                    logger.info(
+                        f"Export progress: {progress:.1f}% ({frame_idx - start_frame + 1}/{total_clip_frames})"
+                    )
 
             # Release resources
             cap.release()
@@ -242,7 +254,9 @@ class VideoProcessor:
             # Verify the output file was created
             if os.path.exists(output_path):
                 file_size = os.path.getsize(output_path) / (1024 * 1024)  # Size in MB
-                logger.info(f"Clip exported successfully to {output_path} ({file_size:.2f} MB)")
+                logger.info(
+                    f"Clip exported successfully to {output_path} ({file_size:.2f} MB)"
+                )
                 return True, f"Clip exported successfully to {output_path}"
             else:
                 logger.error("Export failed: Output file not created")
@@ -257,4 +271,4 @@ class VideoProcessor:
         if self.cap is not None:
             self.cap.release()
             self.cap = None
-            logger.info("Video capture resources released") 
+            logger.info("Video capture resources released")

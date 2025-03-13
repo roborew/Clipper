@@ -7,6 +7,7 @@ import logging
 from pathlib import Path
 import os
 import time
+import datetime
 
 from src.services import video_service
 
@@ -38,6 +39,75 @@ def display_video_player(
         The updated current frame number
     """
     try:
+        # Initialize session state for navigation
+        if "nav_action" not in st.session_state:
+            st.session_state.nav_action = None
+
+        # Initialize play state if not exists
+        if "is_playing" not in st.session_state:
+            st.session_state.is_playing = False
+        if "play_speed" not in st.session_state:
+            st.session_state.play_speed = 1.0  # Default playback speed multiplier
+        if "last_play_time" not in st.session_state:
+            st.session_state.last_play_time = None
+        if "auto_advance" not in st.session_state:
+            st.session_state.auto_advance = False
+
+        # Process navigation actions from previous render
+        if st.session_state.nav_action is not None:
+            action = st.session_state.nav_action
+            st.session_state.nav_action = None  # Reset the action
+
+            if action == "first":
+                current_frame = 0
+            elif action == "prev":
+                current_frame = max(0, current_frame - 1)
+            elif action == "next":
+                current_frame = min(total_frames - 1, current_frame + 1)
+            elif action == "back10":
+                current_frame = max(0, current_frame - 10)
+            elif action == "forward10":
+                current_frame = min(total_frames - 1, current_frame + 10)
+            elif action == "last":
+                current_frame = total_frames - 1
+            elif action == "play_pause":
+                st.session_state.is_playing = not st.session_state.is_playing
+                if st.session_state.is_playing:
+                    st.session_state.last_play_time = datetime.datetime.now()
+                    st.session_state.auto_advance = True
+                else:
+                    st.session_state.auto_advance = False
+
+            # Call the frame change callback
+            if on_frame_change:
+                on_frame_change(current_frame)
+
+        # Handle playback if playing
+        if st.session_state.is_playing and st.session_state.auto_advance:
+            # Calculate how many frames to advance based on elapsed time
+            now = datetime.datetime.now()
+            if st.session_state.last_play_time:
+                elapsed = (now - st.session_state.last_play_time).total_seconds()
+                frames_to_advance = int(elapsed * fps * st.session_state.play_speed)
+
+                if frames_to_advance > 0:
+                    # Advance frames
+                    current_frame = min(
+                        total_frames - 1, current_frame + frames_to_advance
+                    )
+                    st.session_state.last_play_time = now
+
+                    # Call the frame change callback
+                    if on_frame_change:
+                        on_frame_change(current_frame)
+
+                    # Stop at the end of the video
+                    if current_frame >= total_frames - 1:
+                        st.session_state.is_playing = False
+                        st.session_state.auto_advance = False
+            else:
+                st.session_state.last_play_time = now
+
         # Create columns for the player layout
         col1, col2 = st.columns([4, 1])
 
@@ -51,7 +121,7 @@ def display_video_player(
                     frame = video_service.draw_crop_overlay(frame, crop_region)
 
                 # Display the frame
-                st.image(frame, use_column_width=True)
+                st.image(frame, use_container_width=True)
 
                 # Display frame information
                 st.caption(
@@ -65,39 +135,61 @@ def display_video_player(
             # Video controls
             st.subheader("Controls")
 
+            # Play/Pause button
+            play_col, speed_col = st.columns(2)
+            with play_col:
+                play_label = "⏸️ Pause" if st.session_state.is_playing else "▶️ Play"
+                if st.button(play_label, key="btn_play_pause"):
+                    st.session_state.nav_action = "play_pause"
+                    st.rerun()
+
+            with speed_col:
+                # Playback speed selector
+                speed_options = [0.25, 0.5, 1.0, 2.0, 4.0]
+                speed_index = (
+                    speed_options.index(st.session_state.play_speed)
+                    if st.session_state.play_speed in speed_options
+                    else 2
+                )
+                new_speed = st.selectbox(
+                    "Speed", speed_options, index=speed_index, key="playback_speed"
+                )
+                if new_speed != st.session_state.play_speed:
+                    st.session_state.play_speed = new_speed
+                    if st.session_state.is_playing:
+                        st.session_state.last_play_time = datetime.datetime.now()
+
             # Frame navigation
-            st.button("⏮️ First Frame", on_click=lambda: set_frame(0))
+            if st.button("⏮️ First Frame", key="btn_first"):
+                st.session_state.nav_action = "first"
+                st.rerun()
 
             # Previous/Next frame buttons in a row
             prev_col, next_col = st.columns(2)
             with prev_col:
-                st.button(
-                    "⏪ Previous", on_click=lambda: set_frame(max(0, current_frame - 1))
-                )
+                if st.button("⏪ Previous", key="btn_prev"):
+                    st.session_state.nav_action = "prev"
+                    st.rerun()
             with next_col:
-                st.button(
-                    "Next ⏩",
-                    on_click=lambda: set_frame(
-                        min(total_frames - 1, current_frame + 1)
-                    ),
-                )
+                if st.button("Next ⏩", key="btn_next"):
+                    st.session_state.nav_action = "next"
+                    st.rerun()
 
             # Jump buttons
             jump_col1, jump_col2 = st.columns(2)
             with jump_col1:
-                st.button(
-                    "-10 Frames", on_click=lambda: set_frame(max(0, current_frame - 10))
-                )
+                if st.button("-10 Frames", key="btn_back10"):
+                    st.session_state.nav_action = "back10"
+                    st.rerun()
             with jump_col2:
-                st.button(
-                    "+10 Frames",
-                    on_click=lambda: set_frame(
-                        min(total_frames - 1, current_frame + 10)
-                    ),
-                )
+                if st.button("+10 Frames", key="btn_forward10"):
+                    st.session_state.nav_action = "forward10"
+                    st.rerun()
 
             # Last frame button
-            st.button("Last Frame ⏭️", on_click=lambda: set_frame(total_frames - 1))
+            if st.button("Last Frame ⏭️", key="btn_last"):
+                st.session_state.nav_action = "last"
+                st.rerun()
 
             # Frame slider
             new_frame = st.slider("Frame", 0, max(0, total_frames - 1), current_frame)
@@ -109,14 +201,10 @@ def display_video_player(
             # Timecode display
             st.text(f"Timecode: {video_service.format_timecode(current_frame, fps)}")
 
-        # Function to set the frame and call the callback
-        def set_frame(frame_num):
-            nonlocal current_frame
-            if frame_num != current_frame:
-                current_frame = frame_num
-                if on_frame_change:
-                    on_frame_change(current_frame)
-                st.rerun()
+        # Add a small delay and rerun if playing to advance frames
+        if st.session_state.is_playing:
+            time.sleep(0.1)  # Small delay to prevent UI freezing
+            st.rerun()
 
         return current_frame
 

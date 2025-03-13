@@ -65,7 +65,9 @@ def display_sidebar(config_manager):
 
 def display_video_selection(config_manager):
     """
-    Display video selection section in the sidebar
+    Display video selection section in the sidebar with a two-level selection:
+    1. Select camera type
+    2. Select specific video from that camera
 
     Args:
         config_manager: ConfigManager instance
@@ -88,31 +90,108 @@ def display_video_selection(config_manager):
 
             return None
 
-        # Create a selectbox with video filenames (not full paths)
-        video_options = [os.path.basename(v) for v in video_files]
+        # Check which videos have proxies
+        videos_with_proxies = {}
+        for video_path in video_files:
+            has_proxy = proxy_service.proxy_exists_for_video(video_path, config_manager)
+            videos_with_proxies[str(video_path)] = has_proxy
+
+        # Group videos by camera type
+        camera_groups = {}
+        for video_path in video_files:
+            # Extract camera type from path
+            # Assuming path structure like: data/source/CAMERA_TYPE/SESSION/filename.mp4
+            parts = Path(video_path).parts
+
+            # Try to find a camera type in the path
+            camera_type = "Other"
+            for part in parts:
+                # Look for common camera type patterns in the path
+                if any(
+                    cam in part.upper()
+                    for cam in ["SONY", "GP", "GOPRO", "CANON", "NIKON", "CAM"]
+                ):
+                    camera_type = part
+                    break
+
+            # Add to camera groups
+            if camera_type not in camera_groups:
+                camera_groups[camera_type] = []
+            camera_groups[camera_type].append(video_path)
+
+        # Add "All" option
+        camera_groups["All Videos"] = video_files
+
+        # Sort camera types
+        camera_types = sorted(list(camera_groups.keys()))
+        # Move "All Videos" to the beginning
+        if "All Videos" in camera_types:
+            camera_types.remove("All Videos")
+            camera_types.insert(0, "All Videos")
+
+        # Initialize session state for camera selection if not exists
+        if "selected_camera_type" not in st.session_state:
+            st.session_state.selected_camera_type = camera_types[0]
+
+        # Camera type selection
+        selected_camera = st.selectbox(
+            "Select Camera",
+            options=camera_types,
+            index=camera_types.index(st.session_state.selected_camera_type),
+            key="camera_type_select",
+        )
+
+        # Update selected camera in session state
+        st.session_state.selected_camera_type = selected_camera
+
+        # Get videos for the selected camera
+        filtered_videos = camera_groups[selected_camera]
+
+        # Create a selectbox with video filenames and proxy indicators
+        video_options = []
+        for v in filtered_videos:
+            basename = os.path.basename(v)
+            if videos_with_proxies.get(str(v), False):
+                # Add green tick for videos with proxies
+                video_options.append(f"✅ {basename}")
+            else:
+                video_options.append(basename)
 
         # Add a "None" option at the beginning
         video_options.insert(0, "Select a video...")
 
-        # Get the selected index from session state or default to 0
-        selected_index = 0
-        if "selected_video_index" in st.session_state:
-            selected_index = st.session_state.selected_video_index
+        # Display a legend for the indicators
+        st.caption("✅ = Proxy available")
 
-        # Display the selectbox
+        # Get the selected index from session state or default to 0
+        # We need to handle the case where the camera type changes
+        selected_index = 0
+        video_select_key = f"video_select_{selected_camera}"
+
+        if video_select_key in st.session_state:
+            # Try to use the saved index for this camera type
+            selected_index = st.session_state[video_select_key]
+            # Make sure the index is valid for the current options
+            if selected_index >= len(video_options):
+                selected_index = 0
+
+        # Display the video selectbox
         selected_option = st.selectbox(
-            "Select Video", options=video_options, index=selected_index
+            "Select Video",
+            options=video_options,
+            index=selected_index,
+            key=f"video_select_{selected_camera}_box",
         )
 
-        # Update the selected index in session state
-        st.session_state.selected_video_index = video_options.index(selected_option)
+        # Save the selected index for this camera type
+        st.session_state[video_select_key] = video_options.index(selected_option)
 
         # Return the full path of the selected video
         if selected_option != "Select a video...":
             selected_index = (
                 video_options.index(selected_option) - 1
             )  # Adjust for the "None" option
-            selected_video = video_files[selected_index]
+            selected_video = filtered_videos[selected_index]
 
             # Display video information
             display_video_info(selected_video, config_manager)
@@ -304,12 +383,106 @@ def display_settings(config_manager):
         )
         st.session_state.display_logs = display_logs
 
+        # Proxy settings
+        st.subheader("Proxy Settings")
+        proxy_settings = config_manager.get_proxy_settings()
+
+        # Display current proxy directory
+        st.info(f"Proxy directory: {config_manager.proxy_dir}")
+
+        # Add info about directory structure
+        if config_manager.config["export"]["preserve_structure"]:
+            st.info(
+                "Proxies will be stored in a directory structure that mirrors the source videos."
+            )
+        else:
+            st.info("Proxies will be stored in a flat directory structure.")
+
+        # Toggle for proxy creation
+        proxy_enabled = st.checkbox(
+            "Enable proxy videos", value=proxy_settings["enabled"]
+        )
+
+        # Only show these settings if proxy is enabled
+        if proxy_enabled:
+            proxy_width = st.number_input(
+                "Proxy width",
+                min_value=320,
+                max_value=1920,
+                value=proxy_settings["width"],
+                help="Width of proxy videos (height will be calculated to maintain aspect ratio)",
+            )
+
+            proxy_quality = st.slider(
+                "Proxy quality",
+                min_value=18,
+                max_value=35,
+                value=proxy_settings["quality"],
+                help="CRF value (18=high quality/larger file, 35=low quality/smaller file)",
+            )
+
+            # Update proxy settings in config if changed
+            if (
+                proxy_enabled != proxy_settings["enabled"]
+                or proxy_width != proxy_settings["width"]
+                or proxy_quality != proxy_settings["quality"]
+            ):
+                # Update config in memory
+                config_manager.config["proxy"]["enabled"] = proxy_enabled
+                config_manager.config["proxy"]["width"] = proxy_width
+                config_manager.config["proxy"]["quality"] = proxy_quality
+
+                # Save config to file
+                import yaml
+
+                with open(config_manager.config_path, "w") as f:
+                    yaml.dump(
+                        config_manager.config,
+                        f,
+                        default_flow_style=False,
+                    )
+
+                st.success("Proxy settings updated")
+
         # Generate all proxies button
-        if st.button("Generate All Proxies"):
+        if st.button("Generate All Missing Proxies"):
             proxy_service.generate_all_proxies(config_manager)
 
-        # Clean up proxies button
+        # Clean up proxies section
+        st.subheader("Maintenance")
         proxy_service.cleanup_proxy_files(config_manager)
+
+        # Configuration file management
+        st.subheader("Configuration")
+
+        # Get the current clips file path
+        clips_file = config_manager.get_clips_file_path()
+        st.info(f"Clips file: {clips_file}")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            # Save configuration button
+            if st.button("Save Clips"):
+                from src.services import clip_service
+
+                success = clip_service.save_session_clips(config_manager)
+                if success:
+                    st.success("Clips saved successfully")
+                else:
+                    st.error("Failed to save clips")
+
+        with col2:
+            # Load configuration button
+            if st.button("Reload Clips"):
+                from src.services import clip_service
+
+                success = clip_service.initialize_session_clips(config_manager)
+                if success:
+                    st.success("Clips reloaded successfully")
+                    st.rerun()
+                else:
+                    st.error("Failed to reload clips")
 
     except Exception as e:
         logger.exception(f"Error displaying settings: {str(e)}")

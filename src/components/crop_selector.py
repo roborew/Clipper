@@ -140,7 +140,7 @@ def select_crop_region(frame, output_resolution="1080p"):
 
         # Display preview with crop overlay
         preview_frame = video_service.draw_crop_overlay(frame.copy(), crop_region)
-        st.image(preview_frame, use_column_width=True)
+        st.image(preview_frame, use_container_width=True)
 
         # Confirmation buttons
         col1, col2 = st.columns(2)
