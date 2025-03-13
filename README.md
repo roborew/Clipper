@@ -40,10 +40,32 @@ A Streamlit application for efficiently clipping and cropping videos with the ab
 3. Create the necessary directories:
 
    ```
-   mkdir -p data output configs
+   mkdir -p data
    ```
 
-4. Place your video files in the `data` directory.
+4. Creating Symbolic Links
+
+To create symbolic links to external storage:
+
+1.  For the source data directory (if stored externally):
+
+```bash
+ln -s "/Volumes/ExternalDrive/02_CALIBRATED_FOOTAGE" data/source
+```
+
+2.  For the processed data directory:
+
+```bash
+ln -s "/path/to/StorageLocationls/00_SURF_FOOTAGE_PREPT" data/prept
+```
+
+#### Verifying Symbolic Links
+
+To verify that your symbolic links are correctly set up:
+
+```bash
+ls -la data/
+```
 
 ## Usage
 
