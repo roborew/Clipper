@@ -141,7 +141,7 @@ def display_video_player(
                 play_label = "⏸️ Pause" if st.session_state.is_playing else "▶️ Play"
                 if st.button(play_label, key="btn_play_pause"):
                     st.session_state.nav_action = "play_pause"
-                    st.rerun()
+                    st.session_state.trigger_rerun = True
 
             with speed_col:
                 # Playback speed selector
@@ -162,34 +162,34 @@ def display_video_player(
             # Frame navigation
             if st.button("⏮️ First Frame", key="btn_first"):
                 st.session_state.nav_action = "first"
-                st.rerun()
+                st.session_state.trigger_rerun = True
 
             # Previous/Next frame buttons in a row
             prev_col, next_col = st.columns(2)
             with prev_col:
                 if st.button("⏪ Previous", key="btn_prev"):
                     st.session_state.nav_action = "prev"
-                    st.rerun()
+                    st.session_state.trigger_rerun = True
             with next_col:
                 if st.button("Next ⏩", key="btn_next"):
                     st.session_state.nav_action = "next"
-                    st.rerun()
+                    st.session_state.trigger_rerun = True
 
             # Jump buttons
             jump_col1, jump_col2 = st.columns(2)
             with jump_col1:
                 if st.button("-10 Frames", key="btn_back10"):
                     st.session_state.nav_action = "back10"
-                    st.rerun()
+                    st.session_state.trigger_rerun = True
             with jump_col2:
                 if st.button("+10 Frames", key="btn_forward10"):
                     st.session_state.nav_action = "forward10"
-                    st.rerun()
+                    st.session_state.trigger_rerun = True
 
             # Last frame button
             if st.button("Last Frame ⏭️", key="btn_last"):
                 st.session_state.nav_action = "last"
-                st.rerun()
+                st.session_state.trigger_rerun = True
 
             # Frame slider
             new_frame = st.slider("Frame", 0, max(0, total_frames - 1), current_frame)
@@ -201,10 +201,10 @@ def display_video_player(
             # Timecode display
             st.text(f"Timecode: {video_service.format_timecode(current_frame, fps)}")
 
-        # Add a small delay and rerun if playing to advance frames
+        # Add a small delay and trigger rerun if playing to advance frames
         if st.session_state.is_playing:
             time.sleep(0.1)  # Small delay to prevent UI freezing
-            st.rerun()
+            st.session_state.trigger_rerun = True
 
         return current_frame
 
@@ -296,51 +296,19 @@ def display_crop_controls(
     output_resolution="1080p",
 ):
     """
-    Display crop region controls
+    Display crop controls (temporarily disabled)
 
     Args:
-        on_select_crop: Callback for selecting crop region
-        on_clear_crop: Callback for clearing crop region
+        on_select_crop: Callback for select crop button
+        on_clear_crop: Callback for clear crop button
         current_crop: Current crop region (x, y, width, height)
-        output_resolution: Output resolution for the crop
+        output_resolution: Output resolution
 
     Returns:
         None
     """
-    try:
-        st.subheader("Crop Controls")
-
-        # Create columns for the crop controls
-        col1, col2 = st.columns(2)
-
-        with col1:
-            # Select crop button
-            if on_select_crop:
-                st.button("Select Crop at Current Frame", on_click=on_select_crop)
-
-        with col2:
-            # Clear crop button
-            if on_clear_crop:
-                st.button("Clear Crop Keyframe", on_click=on_clear_crop)
-
-        # Display current crop information
-        if current_crop:
-            x, y, width, height = current_crop
-            st.text(f"Crop: X={x}, Y={y}, Width={width}, Height={height}")
-
-            # Calculate aspect ratio
-            aspect_ratio = width / height if height > 0 else 0
-            st.text(f"Aspect Ratio: {aspect_ratio:.3f}")
-
-            # Show output dimensions
-            out_width, out_height = video_service.calculate_crop_dimensions(
-                output_resolution, aspect_ratio
-            )
-            st.text(f"Output: {out_width}x{out_height} ({output_resolution})")
-
-    except Exception as e:
-        logger.exception(f"Error displaying crop controls: {str(e)}")
-        st.error(f"Error displaying crop controls: {str(e)}")
+    st.subheader("Crop Controls")
+    st.info("Crop functionality is temporarily disabled.")
 
 
 def play_clip_preview(

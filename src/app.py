@@ -18,7 +18,11 @@ from src.services import (
 from src.utils import logging_utils
 
 # Import UI components
-from src.components import video_player, sidebar, crop_selector
+from src.components import (
+    sidebar,
+    video_player,
+    crop_selector,
+)
 
 # Set up logging
 logger = logging_utils.setup_logger()
@@ -39,6 +43,13 @@ def main():
 
     # Add Streamlit handler for logging
     logging_utils.add_streamlit_handler(logger)
+
+    # Check if we need to rerun
+    if st.session_state.get("trigger_rerun", False):
+        # Reset the flag
+        st.session_state.trigger_rerun = False
+        # Rerun the app
+        st.rerun()
 
     # Display the sidebar
     selected_video = sidebar.display_sidebar(st.session_state.config_manager)
@@ -154,36 +165,11 @@ def display_main_content(video_path):
         # Title with video name
         st.title(f"Editing: {os.path.basename(video_path)}")
 
-        # Check if we're in crop selection mode
+        # If crop selection is active, display a message that it's temporarily disabled
         if st.session_state.crop_selection_active:
-            # Get the current frame
-            frame = video_service.get_frame(
-                (
-                    st.session_state.proxy_path
-                    if "proxy_path" in st.session_state
-                    else video_path
-                ),
-                st.session_state.current_frame,
-            )
-
-            # Display crop selector
-            crop_region = crop_selector.select_crop_region_direct(
-                frame,
-                st.session_state.current_frame,
-                current_clip,
-                st.session_state.output_resolution,
-            )
-
-            # If crop region is confirmed, add it as a keyframe
-            if crop_region is not None and not st.session_state.crop_selection_active:
-                if current_clip:
-                    clip_service.add_crop_keyframe(
-                        st.session_state.current_frame, crop_region
-                    )
-                    st.success(
-                        f"Added crop keyframe at frame {st.session_state.current_frame}"
-                    )
-                    st.rerun()
+            st.warning("Crop selection is temporarily disabled.")
+            st.session_state.crop_selection_active = False
+            st.rerun()
         else:
             # Get crop region for current frame if available
             crop_region = None
@@ -200,10 +186,11 @@ def display_main_content(video_path):
                     else video_path
                 ),
                 st.session_state.current_frame,
-                video_info["fps"],
-                video_info["total_frames"],
+                st.session_state.fps,
+                st.session_state.total_frames,
                 on_frame_change=handle_frame_change,
                 crop_region=crop_region,
+                config_manager=config_manager,
             )
 
             # Create columns for the controls
@@ -220,13 +207,9 @@ def display_main_content(video_path):
                 )
 
             with col2:
-                # Display crop controls
-                video_player.display_crop_controls(
-                    on_select_crop=handle_select_crop,
-                    on_clear_crop=handle_clear_crop,
-                    current_crop=crop_region,
-                    output_resolution=st.session_state.output_resolution,
-                )
+                # Display crop controls (temporarily disabled)
+                st.subheader("Crop Controls")
+                st.info("Crop functionality is temporarily disabled.")
 
             # Display keyframe list if clip has keyframes
             if current_clip and current_clip.crop_keyframes:
@@ -274,6 +257,9 @@ def handle_set_start():
         logger.info(f"Set start frame to {st.session_state.current_frame}")
         st.success(f"Start frame set to {st.session_state.current_frame}")
 
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
+
     except Exception as e:
         logger.exception(f"Error setting start frame: {str(e)}")
         st.error(f"Error setting start frame: {str(e)}")
@@ -299,6 +285,9 @@ def handle_set_end():
 
         logger.info(f"Set end frame to {st.session_state.current_frame}")
         st.success(f"End frame set to {st.session_state.current_frame}")
+
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
 
     except Exception as e:
         logger.exception(f"Error setting end frame: {str(e)}")
@@ -404,6 +393,42 @@ def handle_export_clip():
         st.error(f"Error exporting clip: {str(e)}")
 
 
+def handle_select_keyframe(frame_number):
+    """Handle select keyframe button click"""
+    try:
+        # Update current frame
+        st.session_state.current_frame = frame_number
+
+        logger.debug(f"Selected keyframe at frame {frame_number}")
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
+
+    except Exception as e:
+        logger.exception(f"Error selecting keyframe: {str(e)}")
+        st.error(f"Error selecting keyframe: {str(e)}")
+
+
+def handle_delete_keyframe(frame_number):
+    """Handle delete keyframe button click"""
+    try:
+        # Remove keyframe
+        success = clip_service.remove_crop_keyframe(frame_number)
+
+        if success:
+            logger.info(f"Deleted keyframe at frame {frame_number}")
+            st.success(f"Deleted keyframe at frame {frame_number}")
+        else:
+            logger.warning(f"Failed to delete keyframe at frame {frame_number}")
+            st.warning(f"Failed to delete keyframe at frame {frame_number}")
+
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
+
+    except Exception as e:
+        logger.exception(f"Error deleting keyframe: {str(e)}")
+        st.error(f"Error deleting keyframe: {str(e)}")
+
+
 def handle_new_clip(video_path):
     """Handle new clip button click"""
     try:
@@ -428,100 +453,12 @@ def handle_new_clip(video_path):
 
         logger.info(f"Created new clip: {clip.name}")
         st.success(f"Created new clip: {clip.name}")
-        st.rerun()
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
 
     except Exception as e:
         logger.exception(f"Error creating new clip: {str(e)}")
         st.error(f"Error creating new clip: {str(e)}")
-
-
-def handle_select_crop():
-    """Handle select crop button click"""
-    try:
-        # Get current clip
-        if (
-            "current_clip_index" not in st.session_state
-            or st.session_state.current_clip_index < 0
-        ):
-            st.warning("Please create or select a clip first")
-            return
-
-        # Set crop selection mode
-        st.session_state.crop_selection_active = True
-
-        logger.info(
-            f"Entering crop selection mode at frame {st.session_state.current_frame}"
-        )
-        st.rerun()
-
-    except Exception as e:
-        logger.exception(f"Error selecting crop: {str(e)}")
-        st.error(f"Error selecting crop: {str(e)}")
-
-
-def handle_clear_crop():
-    """Handle clear crop button click"""
-    try:
-        # Get current clip
-        current_clip = clip_service.get_current_clip()
-
-        if not current_clip:
-            st.warning("No clip selected")
-            return
-
-        # Remove keyframe at current frame
-        success = clip_service.remove_crop_keyframe(st.session_state.current_frame)
-
-        if success:
-            logger.info(
-                f"Removed crop keyframe at frame {st.session_state.current_frame}"
-            )
-            st.success(
-                f"Removed crop keyframe at frame {st.session_state.current_frame}"
-            )
-        else:
-            logger.warning(f"No keyframe at frame {st.session_state.current_frame}")
-            st.warning(f"No keyframe at frame {st.session_state.current_frame}")
-
-        st.rerun()
-
-    except Exception as e:
-        logger.exception(f"Error clearing crop: {str(e)}")
-        st.error(f"Error clearing crop: {str(e)}")
-
-
-def handle_select_keyframe(frame_number):
-    """Handle select keyframe button click"""
-    try:
-        # Update current frame
-        st.session_state.current_frame = frame_number
-
-        logger.debug(f"Selected keyframe at frame {frame_number}")
-        st.rerun()
-
-    except Exception as e:
-        logger.exception(f"Error selecting keyframe: {str(e)}")
-        st.error(f"Error selecting keyframe: {str(e)}")
-
-
-def handle_delete_keyframe(frame_number):
-    """Handle delete keyframe button click"""
-    try:
-        # Remove keyframe
-        success = clip_service.remove_crop_keyframe(frame_number)
-
-        if success:
-            logger.info(f"Deleted keyframe at frame {frame_number}")
-            st.success(f"Deleted keyframe at frame {frame_number}")
-        else:
-            logger.warning(f"Failed to delete keyframe at frame {frame_number}")
-            st.warning(f"Failed to delete keyframe at frame {frame_number}")
-
-        st.rerun()
-
-    except Exception as e:
-        logger.exception(f"Error deleting keyframe: {str(e)}")
-        st.error(f"Error deleting keyframe: {str(e)}")
 
 
 if __name__ == "__main__":

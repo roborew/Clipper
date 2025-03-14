@@ -85,7 +85,7 @@ def display_video_selection(config_manager):
             st.info("No video files found in the configured directories")
 
             # Show refresh button
-            if st.button("Refresh Video List"):
+            if st.button("Refresh Video List", key="refresh_video_list_btn"):
                 st.rerun()
 
             return None
@@ -257,7 +257,7 @@ def display_video_info(video_path, config_manager):
                 st.warning("Proxy: Not available")
 
                 # Create proxy button
-                if st.button("Create Proxy"):
+                if st.button("Create Proxy", key="create_proxy_btn"):
                     # Create a placeholder for progress
                     progress_placeholder = st.empty()
 
@@ -330,7 +330,7 @@ def display_clip_management():
 
         # Save clips button
         if st.session_state.clip_modified:
-            if st.button("Save Clips"):
+            if st.button("Save Clips", key="save_clips_btn_clips_section"):
                 clip_service.save_session_clips()
                 st.rerun()
 
@@ -341,7 +341,7 @@ def display_clip_management():
 
 def display_settings(config_manager):
     """
-    Display settings section in the sidebar
+    Display settings in the sidebar
 
     Args:
         config_manager: ConfigManager instance
@@ -375,6 +375,9 @@ def display_settings(config_manager):
             "current_clip_index" in st.session_state
             and st.session_state.current_clip_index >= 0
         ):
+            # Import clip_service to ensure it's available
+            from src.services import clip_service
+
             clip_service.update_current_clip(output_resolution=selected_resolution)
 
         # Display logs toggle
@@ -445,7 +448,7 @@ def display_settings(config_manager):
                 st.success("Proxy settings updated")
 
         # Generate all proxies button
-        if st.button("Generate All Missing Proxies"):
+        if st.button("Generate All Missing Proxies", key="generate_all_proxies_btn"):
             proxy_service.generate_all_proxies(config_manager)
 
         # Clean up proxies section
@@ -463,7 +466,7 @@ def display_settings(config_manager):
 
         with col1:
             # Save configuration button
-            if st.button("Save Clips"):
+            if st.button("Save Clips", key="save_clips_btn"):
                 from src.services import clip_service
 
                 success = clip_service.save_session_clips(config_manager)
@@ -474,7 +477,7 @@ def display_settings(config_manager):
 
         with col2:
             # Load configuration button
-            if st.button("Reload Clips"):
+            if st.button("Reload Clips", key="reload_clips_btn"):
                 from src.services import clip_service
 
                 success = clip_service.initialize_session_clips(config_manager)

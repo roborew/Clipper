@@ -490,10 +490,19 @@ def cleanup_proxy_files(config_manager=None):
             st.info("No proxy files to clean up.")
             return False
 
+        # Initialize session state for cleanup confirmation
+        if "cleanup_confirm_state" not in st.session_state:
+            st.session_state.cleanup_confirm_state = "initial"
+
         # Show button with file count
-        if st.button(f"Clean Up {file_count} Proxy Videos"):
-            # Show confirmation dialog
-            confirm = st.warning("⚠️ This will delete all proxy videos. Are you sure?")
+        if st.button(f"Clean Up {file_count} Proxy Videos", key="cleanup_proxy_btn"):
+            # Set state to confirmation
+            st.session_state.cleanup_confirm_state = "confirm"
+            st.rerun()
+
+        # Show confirmation dialog if in confirm state
+        if st.session_state.cleanup_confirm_state == "confirm":
+            st.warning("⚠️ This will delete all proxy videos. Are you sure?")
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Yes, Delete All Proxies", key="confirm_cleanup"):
@@ -535,6 +544,9 @@ def cleanup_proxy_files(config_manager=None):
                         if not os.path.exists(st.session_state.proxy_path):
                             st.session_state.proxy_path = None
 
+                    # Reset confirmation state
+                    st.session_state.cleanup_confirm_state = "initial"
+
                     st.success(
                         f"Cleanup complete: {deleted_count} files and {dir_count} empty directories removed."
                     )
@@ -542,10 +554,14 @@ def cleanup_proxy_files(config_manager=None):
 
             with col2:
                 if st.button("Cancel", key="cancel_cleanup"):
+                    # Reset confirmation state
+                    st.session_state.cleanup_confirm_state = "initial"
                     st.info("Cleanup cancelled.")
+                    st.rerun()
                     return False
 
         return False
     except Exception as e:
         logger.error(f"Error cleaning up proxy files: {str(e)}")
+        st.error(f"Error cleaning up proxy files: {str(e)}")
         return False

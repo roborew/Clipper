@@ -8,6 +8,7 @@ import numpy as np
 import streamlit as st
 from pathlib import Path
 import logging
+import base64
 
 logger = logging.getLogger("clipper.video")
 
@@ -484,3 +485,40 @@ def export_clip(
     except Exception as e:
         logger.exception(f"Error exporting clip: {str(e)}")
         return False
+
+
+def frame_to_base64(frame):
+    """
+    Convert a frame (numpy array) to a base64 encoded string for HTML embedding
+
+    Args:
+        frame: The frame as a numpy array
+
+    Returns:
+        Base64 encoded string representation of the frame
+    """
+    try:
+        # Ensure the frame is in BGR format (OpenCV default)
+        if frame is None:
+            logger.error("Cannot convert None frame to base64")
+            return ""
+
+        # Convert to RGB if needed (assuming BGR input)
+        if len(frame.shape) == 3 and frame.shape[2] == 3:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        else:
+            frame_rgb = frame
+
+        # Encode the frame as JPEG
+        success, buffer = cv2.imencode(".jpg", frame_rgb)
+        if not success:
+            logger.error("Failed to encode frame as JPEG")
+            return ""
+
+        # Convert to base64
+        encoded = base64.b64encode(buffer).decode("utf-8")
+        return encoded
+
+    except Exception as e:
+        logger.exception(f"Error converting frame to base64: {str(e)}")
+        return ""
