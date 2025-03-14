@@ -8,10 +8,39 @@ from pathlib import Path
 import os
 import time
 import datetime
+import streamlit.components.v1 as components
+import base64
+import cv2
+import io
+from PIL import Image
 
 from src.services import video_service
 
 logger = logging.getLogger("clipper.ui.player")
+
+# Get the absolute path to the static directory
+STATIC_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static"
+)
+
+
+# Function to create animation container with unique ID
+def create_animation_container(container_id):
+    """Create a container for animation with a unique ID"""
+    container_html = f"""
+    <div id="{container_id}" 
+         style="width: 100%; 
+                min-height: 300px; 
+                border: 1px solid #ddd; 
+                padding: 10px; 
+                margin-top: 10px; 
+                background-color: #f9f9f9;">
+        <div style="text-align: center; padding: 20px;">
+            <p>Animation container ready</p>
+        </div>
+    </div>
+    """
+    return container_html
 
 
 def display_video_player(
@@ -49,6 +78,23 @@ def display_video_player(
         # Initialize session state for navigation
         if "nav_action" not in st.session_state:
             st.session_state.nav_action = None
+
+        # Initialize animation state if not exists
+        if "animation_active" not in st.session_state:
+            st.session_state.animation_active = False
+
+        if "animation_speed" not in st.session_state:
+            st.session_state.animation_speed = 1.0
+
+        # Store the current frame in session state for the JavaScript animation
+        if "js_current_frame" not in st.session_state:
+            st.session_state.js_current_frame = current_frame
+
+        # Initialize original_frame to avoid scope issues
+        original_frame = current_frame
+
+        # Store the start frame in session state for the animation
+        st.session_state.animation_start_frame = original_frame
 
         # Display the video with HTML components (half size)
         st.subheader("Video Preview")
@@ -88,6 +134,151 @@ def display_video_player(
                     f"Frame: {current_frame} / {total_frames-1} | "
                     f"Time: {video_service.format_timecode(current_frame, fps)}"
                 )
+
+                # Animation controls in a row
+                anim_col1, anim_col2 = st.columns([1, 1])
+
+                with anim_col1:
+                    # Create a list of frames for animation
+                    if st.button("Prepare Animation Frames", key="prepare_frames"):
+                        # Remove redundant explanation
+                        # st.info(
+                        #     """
+                        # **Animation System**:
+                        # 1. Capturing frames starting from your current position
+                        # 2. Using the exact same frames you see in the main display
+                        # 3. Including all crop regions exactly as they appear
+                        # 4. No regeneration of images - using the existing rendered frames
+                        # """
+                        # )
+
+                        st.session_state.animation_frames = []
+                        progress_bar = st.progress(0)
+
+                        # Determine range of frames to preload
+                        frame_range = min(
+                            100, total_frames
+                        )  # Limit to 100 frames to avoid memory issues
+
+                        # Store the current frame to restore it later
+                        original_frame = current_frame
+
+                        # Store the start frame in session state for the animation
+                        st.session_state.animation_start_frame = original_frame
+
+                        # For each frame in the range, capture the EXACT same frame that's shown in the main display
+                        for i in range(frame_range):
+                            # Calculate the frame index
+                            frame_idx = original_frame + i
+                            if frame_idx >= total_frames:
+                                frame_idx = frame_idx % total_frames  # Wrap around
+
+                            # Get the frame using the same method as the main display
+                            frame = video_service.get_frame(video_path, frame_idx)
+
+                            if frame is not None:
+                                # Apply crop overlay using the same logic as the main display
+                                # Ensure we're getting the correct crop region for this specific frame
+                                frame_crop = None
+                                if crop_region and callable(crop_region):
+                                    # If crop_region is a function, call it with the current frame index
+                                    frame_crop = crop_region(frame_idx)
+                                    # Log the crop region for debugging
+                                    logger.debug(
+                                        f"Frame {frame_idx} crop region: {frame_crop}"
+                                    )
+                                elif crop_region:
+                                    # If crop_region is a static value, use it directly
+                                    frame_crop = crop_region
+                                    logger.debug(
+                                        f"Using static crop region: {frame_crop}"
+                                    )
+
+                                # Apply the crop overlay to the frame
+                                if frame_crop:
+                                    # Draw the crop overlay on the frame
+                                    frame = video_service.draw_crop_overlay(
+                                        frame, frame_crop
+                                    )
+                                    logger.debug(
+                                        f"Applied crop overlay to frame {frame_idx}"
+                                    )
+                                else:
+                                    logger.debug(
+                                        f"No crop region for frame {frame_idx}"
+                                    )
+
+                                # Convert OpenCV image from BGR to RGB for correct colors
+                                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                                # Convert OpenCV image to bytes
+                                _, buffer = cv2.imencode(".jpg", frame_rgb)
+                                img_str = base64.b64encode(buffer).decode("utf-8")
+
+                                st.session_state.animation_frames.append(img_str)
+
+                            # Update progress
+                            progress_bar.progress((i + 1) / frame_range)
+
+                        st.success(
+                            f"Prepared {len(st.session_state.animation_frames)} frames for animation starting from frame {original_frame}"
+                        )
+
+                        # Restore the original frame
+                        current_frame = original_frame
+
+                with anim_col2:
+                    # Animation speed control
+                    speed_options = {"0.5x": 0.5, "1x": 1.0, "2x": 2.0, "5x": 5.0}
+                    selected_speed = st.selectbox(
+                        "Speed",
+                        options=list(speed_options.keys()),
+                        index=1,  # Default to 1x
+                        key="js_playback_speed_selector",
+                    )
+                    st.session_state.animation_speed = speed_options[selected_speed]
+
+                # Add animation container and JavaScript
+                if len(st.session_state.get("animation_frames", [])) > 0:
+                    st.subheader("Animation")
+
+                    # Get the animation start frame from session state
+                    animation_start_frame = st.session_state.get(
+                        "animation_start_frame", current_frame
+                    )
+
+                    # Create the JavaScript animation component
+                    animation_html = create_js_animation(
+                        "animation-container",
+                        st.session_state.animation_frames,
+                        animation_start_frame,  # Use the stored start frame
+                        animation_start_frame
+                        + len(st.session_state.animation_frames)
+                        - 1,  # Calculate the end frame
+                        st.session_state.animation_speed,
+                    )
+
+                    if animation_html:
+                        # Use a fixed height to ensure the component is visible
+                        components.html(animation_html, height=400, scrolling=True)
+
+                    # Add a debug button to check container existence
+                    if st.button("Debug: Check Containers", key="debug_containers"):
+                        st.info("Checking for animation containers in the DOM...")
+                        debug_html = """
+                        <script>
+                        setTimeout(function() {
+                            const result = window.checkAnimationContainers();
+                            const resultElement = document.createElement('div');
+                            resultElement.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                            document.body.appendChild(resultElement);
+                            
+                            // Also log to console
+                            console.log('Container check results:', result);
+                        }, 500);
+                        </script>
+                        """
+                        components.html(debug_html, height=100)
             else:
                 st.error(f"Could not load frame {current_frame}")
 
@@ -301,6 +492,10 @@ def play_clip_preview(
         # Calculate total frames in clip
         total_frames = end_frame - start_frame + 1
 
+        # Initialize animation state if not exists
+        if "preview_animation_speed" not in st.session_state:
+            st.session_state.preview_animation_speed = 1.0
+
         # Display video information
         st.text(
             f"Clip preview: {total_frames} frames ({video_service.format_duration(duration)})"
@@ -343,13 +538,13 @@ def play_clip_preview(
 
         with frame_col:
             # Display the current frame as an image for precise frame viewing
-            frame = video_service.get_frame(
-                video_path, st.session_state.preview_current_frame
-            )
+            current_frame = st.session_state.preview_current_frame
+            frame = video_service.get_frame(video_path, current_frame)
+
             if frame is not None:
                 # Apply crop overlay if specified
                 if crop_region and callable(crop_region):
-                    frame_crop = crop_region(st.session_state.preview_current_frame)
+                    frame_crop = crop_region(current_frame)
                     if frame_crop:
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
@@ -358,20 +553,166 @@ def play_clip_preview(
 
                 # Display frame information
                 st.caption(
-                    f"Frame: {st.session_state.preview_current_frame} / {end_frame} | "
-                    f"Time: {video_service.format_timecode(st.session_state.preview_current_frame, fps)}"
+                    f"Frame: {current_frame} / {end_frame} | "
+                    f"Time: {video_service.format_timecode(current_frame, fps)}"
                 )
-            else:
-                st.error(
-                    f"Could not load frame {st.session_state.preview_current_frame}"
-                )
+
+                # Animation controls in a row
+                anim_col1, anim_col2 = st.columns([1, 1])
+
+                with anim_col1:
+                    # Create a list of frames for animation
+                    if st.button(
+                        "Prepare Animation Frames", key="preview_prepare_frames"
+                    ):
+                        # Remove redundant explanation
+                        # st.info(
+                        #     f"""
+                        # **Clip Animation System**:
+                        # 1. Capturing ONLY frames within the clip range ({start_frame} to {end_frame})
+                        # 2. Using the exact same frames you see in the main display
+                        # 3. Including all crop regions exactly as they appear
+                        # 4. No regeneration of images - using the existing rendered frames
+                        # """
+                        # )
+
+                        st.session_state.preview_animation_frames = []
+                        progress_bar = st.progress(0)
+
+                        # Only use frames within the clip range (start_frame to end_frame)
+                        # Limit to 100 frames to avoid memory issues
+                        total_clip_frames = end_frame - start_frame + 1
+                        frame_range = min(int(total_clip_frames), 100)
+
+                        # Store the current frame to restore it later
+                        original_frame = current_frame
+
+                        # Store the clip start frame in session state for the animation
+                        st.session_state.preview_animation_start_frame = start_frame
+
+                        # For each frame in the clip range, get the frame with crop region already applied
+                        for i in range(frame_range):
+                            # Calculate the exact frame index within the clip range
+                            frame_idx = start_frame + i
+
+                            # Ensure we don't go beyond the end frame
+                            if frame_idx <= end_frame:
+                                # Get the frame using the same method as the main display
+                                frame = video_service.get_frame(video_path, frame_idx)
+
+                                if frame is not None:
+                                    # Apply crop overlay using the same logic as the main display
+                                    # Ensure we're getting the correct crop region for this specific frame
+                                    frame_crop = None
+                                    if crop_region and callable(crop_region):
+                                        # If crop_region is a function, call it with the current frame index
+                                        frame_crop = crop_region(frame_idx)
+                                        # Log the crop region for debugging
+                                        logger.debug(
+                                            f"Clip frame {frame_idx} crop region: {frame_crop}"
+                                        )
+                                    elif crop_region:
+                                        # If crop_region is a static value, use it directly
+                                        frame_crop = crop_region
+                                        logger.debug(
+                                            f"Using static crop region for clip: {frame_crop}"
+                                        )
+
+                                    # Apply the crop overlay to the frame
+                                    if frame_crop:
+                                        # Draw the crop overlay on the frame
+                                        frame = video_service.draw_crop_overlay(
+                                            frame, frame_crop
+                                        )
+                                        logger.debug(
+                                            f"Applied crop overlay to clip frame {frame_idx}"
+                                        )
+                                    else:
+                                        logger.debug(
+                                            f"No crop region for clip frame {frame_idx}"
+                                        )
+
+                                    # Convert OpenCV image from BGR to RGB for correct colors
+                                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                                    # Convert OpenCV image to bytes
+                                    _, buffer = cv2.imencode(".jpg", frame_rgb)
+                                    img_str = base64.b64encode(buffer).decode("utf-8")
+
+                                    st.session_state.preview_animation_frames.append(
+                                        img_str
+                                    )
+
+                            # Update progress
+                            progress_bar.progress((i + 1) / frame_range)
+
+                        st.success(
+                            f"Prepared {len(st.session_state.preview_animation_frames)} frames for animation from frame {start_frame} to {start_frame + len(st.session_state.preview_animation_frames) - 1}"
+                        )
+
+                        # Restore the original frame
+                        current_frame = original_frame
+
+                with anim_col2:
+                    # Animation speed control
+                    speed_options = {"0.5x": 0.5, "1x": 1.0, "2x": 2.0, "5x": 5.0}
+                    selected_speed = st.selectbox(
+                        "Speed",
+                        options=list(speed_options.keys()),
+                        index=1,  # Default to 1x
+                        key="preview_js_playback_speed_selector",
+                    )
+                    st.session_state.preview_animation_speed = speed_options[
+                        selected_speed
+                    ]
+
+                # Add animation container and JavaScript
+                if len(st.session_state.get("preview_animation_frames", [])) > 0:
+                    st.subheader("Animation")
+
+                    # Get the animation start frame from session state
+                    preview_animation_start_frame = st.session_state.get(
+                        "preview_animation_start_frame", start_frame
+                    )
+
+                    # Create the JavaScript animation component
+                    animation_html = create_js_animation(
+                        "preview-animation-container",
+                        st.session_state.preview_animation_frames,
+                        preview_animation_start_frame,  # Use the stored start frame
+                        end_frame,  # Use the clip end frame
+                        st.session_state.preview_animation_speed,
+                    )
+
+                    if animation_html:
+                        # Use a fixed height to ensure the component is visible
+                        components.html(animation_html, height=400, scrolling=True)
+
+                    # Add a debug button to check container existence
+                    if st.button(
+                        "Debug: Check Containers", key="preview_debug_containers"
+                    ):
+                        st.info("Checking for animation containers in the DOM...")
+                        debug_html = """
+                        <script>
+                        setTimeout(function() {
+                            const result = window.checkAnimationContainers();
+                            const resultElement = document.createElement('div');
+                            resultElement.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                            document.body.appendChild(resultElement);
+                            
+                            // Also log to console
+                            console.log('Container check results:', result);
+                        }, 500);
+                        </script>
+                        """
+                        components.html(debug_html, height=100)
 
         with controls_col:
             # Add frame navigation controls
             st.subheader("Frame Controls")
 
             # Display current frame information
-            current_frame = st.session_state.preview_current_frame
             st.text(f"Current Frame: {current_frame} / {end_frame}")
             st.text(f"Time: {video_service.format_timecode(current_frame, fps)}")
 
@@ -483,3 +824,83 @@ def display_keyframe_list(
     except Exception as e:
         logger.exception(f"Error displaying keyframe list: {str(e)}")
         st.error(f"Error displaying keyframe list: {str(e)}")
+
+
+# Add a function to create a JavaScript animation component
+def create_js_animation(container_id, frames, start_frame=0, end_frame=None, speed=1.0):
+    """Create a JavaScript animation component"""
+    # Load the JavaScript file
+    js_path = os.path.join(STATIC_DIR, "js", "frame_animation.js")
+
+    # Check if the file exists
+    if not os.path.exists(js_path):
+        st.error(f"JavaScript file not found: {js_path}")
+        return None
+
+    # Read the JavaScript file
+    with open(js_path, "r") as f:
+        js_code = f.read()
+
+    # Add debugging information
+    st.caption(f"Animation info: {len(frames)} frames, starting at frame {start_frame}")
+
+    # Create HTML with the JavaScript and initialization code
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {{ margin: 0; padding: 0; }}
+            #animation-wrapper {{ width: 100%; height: 100%; }}
+        </style>
+    </head>
+    <body>
+        <div id="animation-wrapper">
+            <div id="{container_id}" 
+                 style="width: 100%; 
+                        min-height: 300px; 
+                        border: 2px solid #4CAF50; 
+                        padding: 10px; 
+                        margin-top: 10px; 
+                        background-color: #f9f9f9;">
+                <div style="text-align: center; padding: 20px;">
+                    <p>Animation container ready - {len(frames)} frames starting at frame {start_frame}</p>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        {js_code}
+        
+        // Initialize animation when the page loads
+        window.addEventListener('DOMContentLoaded', function() {{
+            console.log("DOM loaded, initializing animation for {container_id}");
+            console.log("Animation parameters: start_frame={start_frame}, end_frame={end_frame if end_frame is not None else 'null'}, frames={len(frames)}");
+            
+            // Short delay to ensure DOM is ready
+            setTimeout(function() {{
+                try {{
+                    // Initialize the animation
+                    initializeAnimation(
+                        '{container_id}', 
+                        {frames}, 
+                        {start_frame}, 
+                        {end_frame if end_frame is not None else 'null'}
+                    );
+                }} catch (e) {{
+                    console.error("Error initializing animation:", e);
+                    
+                    // Display error in the container
+                    const container = document.getElementById('{container_id}');
+                    if (container) {{
+                        container.innerHTML = '<div style="color: red; padding: 20px;">Error initializing animation: ' + e.message + '</div>';
+                    }}
+                }}
+            }}, 100);
+        }});
+        </script>
+    </body>
+    </html>
+    """
+
+    return html
