@@ -181,26 +181,34 @@ def display_clip_controls(
     try:
         st.subheader("Clip Controls")
 
-        # Create columns for the clip controls
-        col1, col2 = st.columns(2)
+        # Create a flat layout with 4 columns for all controls
+        set_start_col, start_info_col, set_end_col, end_info_col = st.columns(4)
 
-        with col1:
-            # Set start/end frame buttons
+        # Set start frame button and info
+        with set_start_col:
             if on_set_start:
                 st.button("Set Start Frame", on_click=on_set_start)
 
-            # Display current start frame if clip exists
+        with start_info_col:
             if clip:
                 st.text(f"Start: {clip.start_frame}")
+                if st.button("Go to", key="goto_start"):
+                    # Update current frame to start frame
+                    st.session_state.current_frame = clip.start_frame
+                    st.rerun()
 
-        with col2:
-            # Set end frame button
+        # Set end frame button and info
+        with set_end_col:
             if on_set_end:
                 st.button("Set End Frame", on_click=on_set_end)
 
-            # Display current end frame if clip exists
+        with end_info_col:
             if clip:
                 st.text(f"End: {clip.end_frame}")
+                if st.button("Go to", key="goto_end"):
+                    # Update current frame to end frame
+                    st.session_state.current_frame = clip.end_frame
+                    st.rerun()
 
         # Play and export buttons
         play_col, export_col = st.columns(2)
@@ -308,8 +316,23 @@ def play_clip_preview(
             st.video(video_bytes, start_time=start_time)
 
         with col_video2:
-            # Empty space to balance layout
-            st.write("")
+            # Display in/out points with go-to buttons
+            st.subheader("Clip Points")
+
+            # Use a flat layout for in/out points
+            st.text(f"In Point: {start_frame}")
+            if st.button("Go to In Point", key="goto_in_point"):
+                st.session_state.preview_current_frame = start_frame
+                if on_frame_change:
+                    on_frame_change(start_frame)
+                st.rerun()
+
+            st.text(f"Out Point: {end_frame}")
+            if st.button("Go to Out Point", key="goto_out_point"):
+                st.session_state.preview_current_frame = end_frame
+                if on_frame_change:
+                    on_frame_change(end_frame)
+                st.rerun()
 
         # Initialize session state for current preview frame if not exists
         if "preview_current_frame" not in st.session_state:
@@ -352,32 +375,28 @@ def play_clip_preview(
             st.text(f"Current Frame: {current_frame} / {end_frame}")
             st.text(f"Time: {video_service.format_timecode(current_frame, fps)}")
 
-            # Frame navigation
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                if st.button("⏮️ Start Frame", key="preview_first"):
-                    st.session_state.preview_current_frame = start_frame
-                    if on_frame_change:
-                        on_frame_change(start_frame)
-                    st.rerun()
+            # Frame navigation - use a flat layout
+            if st.button("⏮️ Start Frame", key="preview_first"):
+                st.session_state.preview_current_frame = start_frame
+                if on_frame_change:
+                    on_frame_change(start_frame)
+                st.rerun()
 
-            with col2:
-                if st.button("Set In Point", key="set_in_point"):
-                    # Call the frame change callback to set in point
-                    if on_frame_change:
-                        on_frame_change(st.session_state.preview_current_frame)
-                    st.success(
-                        f"In point set at frame {st.session_state.preview_current_frame}"
-                    )
+            if st.button("Set In Point", key="set_in_point"):
+                # Call the frame change callback to set in point
+                if on_frame_change:
+                    on_frame_change(st.session_state.preview_current_frame)
+                st.success(
+                    f"In point set at frame {st.session_state.preview_current_frame}"
+                )
 
-            with col3:
-                if st.button("Set Out Point", key="set_out_point"):
-                    # Call the frame change callback to set out point
-                    if on_frame_change:
-                        on_frame_change(st.session_state.preview_current_frame)
-                    st.success(
-                        f"Out point set at frame {st.session_state.preview_current_frame}"
-                    )
+            if st.button("Set Out Point", key="set_out_point"):
+                # Call the frame change callback to set out point
+                if on_frame_change:
+                    on_frame_change(st.session_state.preview_current_frame)
+                st.success(
+                    f"Out point set at frame {st.session_state.preview_current_frame}"
+                )
 
             # Frame slider for precise navigation
             new_frame = st.slider(
