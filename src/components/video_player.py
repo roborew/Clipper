@@ -366,7 +366,7 @@ def play_clip_preview(
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                preview_placeholder.image(frame)
+                preview_placeholder.image(frame, use_container_width=True)
 
                 # Update progress
                 progress = i / max(1, total_frames - 1)

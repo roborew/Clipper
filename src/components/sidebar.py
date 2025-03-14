@@ -289,6 +289,20 @@ def display_clip_management():
     try:
         st.subheader("Clip Management")
 
+        # Create New Clip button at the top of the clip management section
+        if st.button("Create New Clip", key="create_new_clip_sidebar"):
+            # Import here to avoid circular imports
+            from src.app import handle_new_clip
+
+            # Get the current video path from session state
+            video_path = None
+            if "proxy_path" in st.session_state:
+                video_path = st.session_state.proxy_path
+
+            # Create a new clip
+            handle_new_clip(video_path)
+            st.rerun()
+
         # Check if clips are initialized
         if "clips" not in st.session_state:
             st.info("No clips available")

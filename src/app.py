@@ -22,6 +22,7 @@ from src.components import (
     sidebar,
     video_player,
     crop_selector,
+    simple_crop_selector,
 )
 
 # Set up logging
@@ -165,11 +166,42 @@ def display_main_content(video_path):
         # Title with video name
         st.title(f"Editing: {os.path.basename(video_path)}")
 
-        # If crop selection is active, display a message that it's temporarily disabled
+        # If crop selection is active, display the crop selector
         if st.session_state.crop_selection_active:
-            st.warning("Crop selection is temporarily disabled.")
-            st.session_state.crop_selection_active = False
-            st.rerun()
+            # Get the current frame
+            frame = video_service.get_frame(
+                (
+                    st.session_state.proxy_path
+                    if "proxy_path" in st.session_state
+                    else video_path
+                ),
+                st.session_state.current_frame,
+            )
+
+            # Display crop selector
+            crop_region = simple_crop_selector.select_crop_region(
+                frame,
+                st.session_state.current_frame,
+                current_clip,
+                st.session_state.output_resolution,
+            )
+
+            # If crop region is confirmed, add it as a keyframe
+            if crop_region is not None:
+                if current_clip:
+                    try:
+                        clip_service.add_crop_keyframe(
+                            st.session_state.current_frame, crop_region
+                        )
+                        st.success(
+                            f"Added crop keyframe at frame {st.session_state.current_frame}"
+                        )
+                        # Set crop selection to inactive and rerun
+                        st.session_state.crop_selection_active = False
+                        st.rerun()
+                    except Exception as e:
+                        logger.exception(f"Error adding crop keyframe: {str(e)}")
+                        st.error(f"Error adding crop keyframe: {str(e)}")
         else:
             # Get crop region for current frame if available
             crop_region = None
@@ -207,9 +239,12 @@ def display_main_content(video_path):
                 )
 
             with col2:
-                # Display crop controls (temporarily disabled)
-                st.subheader("Crop Controls")
-                st.info("Crop functionality is temporarily disabled.")
+                # Display crop controls
+                display_crop_controls(
+                    current_clip=current_clip,
+                    current_frame=st.session_state.current_frame,
+                    crop_region=crop_region,
+                )
 
             # Display keyframe list if clip has keyframes
             if current_clip and current_clip.crop_keyframes:
@@ -219,10 +254,6 @@ def display_main_content(video_path):
                     on_select_keyframe=handle_select_keyframe,
                     on_delete_keyframe=handle_delete_keyframe,
                 )
-
-            # New clip button
-            if st.button("Create New Clip"):
-                handle_new_clip(video_path)
 
     except Exception as e:
         logger.exception(f"Error displaying main content: {str(e)}")
@@ -432,6 +463,11 @@ def handle_delete_keyframe(frame_number):
 def handle_new_clip(video_path):
     """Handle new clip button click"""
     try:
+        # Check if video_path is None
+        if video_path is None:
+            st.warning("No video selected. Please select a video first.")
+            return None
+
         # Clear keyframes and reset current clip index
         st.session_state.current_frame = 0
 
@@ -453,12 +489,120 @@ def handle_new_clip(video_path):
 
         logger.info(f"Created new clip: {clip.name}")
         st.success(f"Created new clip: {clip.name}")
+
+        # Save clips to file
+        clip_service.save_session_clips()
+
         # Set a flag to trigger rerun
         st.session_state.trigger_rerun = True
+
+        return clip
 
     except Exception as e:
         logger.exception(f"Error creating new clip: {str(e)}")
         st.error(f"Error creating new clip: {str(e)}")
+        return None
+
+
+def display_crop_controls(current_clip=None, current_frame=0, crop_region=None):
+    """
+    Display crop controls
+
+    Args:
+        current_clip: Current clip object
+        current_frame: Current frame number
+        crop_region: Current crop region (x, y, width, height)
+
+    Returns:
+        None
+    """
+    st.subheader("Crop Controls")
+
+    if current_clip:
+        # Display current crop information
+        if crop_region:
+            x, y, width, height = crop_region
+            st.text(f"Crop: X={x}, Y={y}, Width={width}, Height={height}")
+
+            # Calculate aspect ratio
+            aspect_ratio = width / height if height > 0 else 0
+            st.text(f"Aspect Ratio: {aspect_ratio:.3f}")
+
+            # Show output dimensions
+            output_resolution = st.session_state.output_resolution
+            out_width, out_height = video_service.calculate_crop_dimensions(
+                output_resolution, aspect_ratio
+            )
+            st.text(f"Output: {out_width}x{out_height} ({output_resolution})")
+
+            # Clear crop button
+            if st.button("Clear Crop Keyframe", key=f"clear_crop_{current_frame}"):
+                handle_clear_crop(current_frame)
+
+        # Select crop button
+        if st.button(
+            "Select Crop at Current Frame", key=f"select_crop_{current_frame}"
+        ):
+            handle_select_crop()
+    else:
+        st.info("Create or select a clip to enable crop controls")
+
+
+def handle_select_crop():
+    """Handle select crop button click"""
+    try:
+        # Get current clip
+        if (
+            "current_clip_index" not in st.session_state
+            or st.session_state.current_clip_index < 0
+        ):
+            st.warning("Please create or select a clip first")
+            return
+
+        # Set crop selection mode
+        st.session_state.crop_selection_active = True
+
+        logger.info(
+            f"Entering crop selection mode at frame {st.session_state.current_frame}"
+        )
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
+
+    except Exception as e:
+        logger.exception(f"Error selecting crop: {str(e)}")
+        st.error(f"Error selecting crop: {str(e)}")
+
+
+def handle_clear_crop(frame_number=None):
+    """Handle clear crop button click"""
+    try:
+        # Get current clip
+        current_clip = clip_service.get_current_clip()
+
+        if not current_clip:
+            st.warning("No clip selected")
+            return
+
+        # Use current frame if not specified
+        if frame_number is None:
+            frame_number = st.session_state.current_frame
+
+        # Remove keyframe at current frame
+        success = clip_service.remove_crop_keyframe(frame_number)
+
+        if success:
+            logger.info(f"Removed crop keyframe at frame {frame_number}")
+            st.success(f"Removed crop keyframe at frame {frame_number}")
+        else:
+            logger.warning(f"No keyframe at frame {frame_number}")
+            st.warning(f"No keyframe at frame {frame_number}")
+
+        # Set a flag to trigger rerun
+        st.session_state.trigger_rerun = True
+
+    except Exception as e:
+        logger.exception(f"Error clearing crop: {str(e)}")
+        st.error(f"Error clearing crop: {str(e)}")
 
 
 if __name__ == "__main__":
