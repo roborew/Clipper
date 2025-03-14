@@ -294,13 +294,8 @@ def display_clip_management():
             # Import here to avoid circular imports
             from src.app import handle_new_clip
 
-            # Get the current video path from session state
-            video_path = None
-            if "proxy_path" in st.session_state:
-                video_path = st.session_state.proxy_path
-
-            # Create a new clip
-            handle_new_clip(video_path)
+            # Create a new clip using the current video
+            handle_new_clip()
             st.rerun()
 
         # Check if clips are initialized
@@ -472,8 +467,11 @@ def display_settings(config_manager):
         # Configuration file management
         st.subheader("Configuration")
 
+        # Get the current video path
+        current_video = st.session_state.get("current_video", None)
+
         # Get the current clips file path
-        clips_file = config_manager.get_clips_file_path()
+        clips_file = config_manager.get_clips_file_path(current_video)
         st.info(f"Clips file: {clips_file}")
 
         col1, col2 = st.columns(2)
@@ -500,6 +498,25 @@ def display_settings(config_manager):
                     st.rerun()
                 else:
                     st.error("Failed to reload clips")
+
+        # Migration section
+        st.subheader("Migration")
+        st.markdown(
+            """
+        If you're upgrading from an older version, you can migrate your clips from 
+        the old single clips.json file to the new per-video clips files.
+        """
+        )
+
+        if st.button("Migrate Clips", key="migrate_clips_btn"):
+            from src.services import clip_service
+
+            success = clip_service.migrate_clips(config_manager)
+            if success:
+                st.success("Clips migrated successfully")
+                st.rerun()
+            else:
+                st.error("Failed to migrate clips")
 
     except Exception as e:
         logger.exception(f"Error displaying settings: {str(e)}")

@@ -182,7 +182,36 @@ class ConfigManager:
         """Get list of supported video extensions"""
         return self.config["patterns"]["video_extensions"]
 
-    def get_clips_file_path(self) -> Path:
-        """Get path to the clips file"""
-        # Create a clips.json file in the configs directory
-        return self.configs_dir / "clips.json"
+    def get_clips_file_path(self, video_path=None) -> Path:
+        """
+        Get path to the clips file for a specific video
+
+        Args:
+            video_path: Path to the video file (optional)
+
+        Returns:
+            Path to the clips file
+        """
+        if video_path is None:
+            # Backward compatibility: return the default clips file
+            return self.configs_dir / "clips.json"
+
+        # Get the relative path to preserve camera folder structure
+        relative_path = self.get_relative_source_path(video_path)
+
+        if relative_path is None:
+            # Fall back to using just the filename
+            base_name = Path(video_path).stem
+            return self.configs_dir / f"{base_name}_clips.json"
+
+        # Create directory structure matching the source
+        if self.config["export"]["preserve_structure"]:
+            # Preserve camera folder structure
+            config_dir = self.configs_dir / relative_path.parent
+            if self.config["export"]["create_missing_dirs"]:
+                config_dir.mkdir(parents=True, exist_ok=True)
+            return config_dir / f"{Path(relative_path).stem}_clips.json"
+        else:
+            # Save in configs directory with path-based name
+            config_name = str(relative_path).replace("/", "_").replace("\\", "_")
+            return self.configs_dir / f"{config_name}_clips.json"

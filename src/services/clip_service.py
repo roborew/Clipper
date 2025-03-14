@@ -231,8 +231,11 @@ def initialize_session_clips(config_manager=None):
         if not config_manager:
             config_manager = st.session_state.config_manager
 
-        # Get clips file path
-        clips_file = config_manager.get_clips_file_path()
+        # Get current video path if available
+        current_video = st.session_state.get("current_video", None)
+
+        # Get clips file path based on current video
+        clips_file = config_manager.get_clips_file_path(current_video)
 
         # Initialize session state variables if they don't exist
         if "clips" not in st.session_state:
@@ -242,8 +245,26 @@ def initialize_session_clips(config_manager=None):
             st.session_state.current_clip_index = -1
             st.session_state.clip_name = ""
             st.session_state.clip_modified = False
+            # Store the clips file path for this session
+            st.session_state.current_clips_file = clips_file
 
-            logger.info(f"Initialized session with {len(clips)} clips")
+            logger.info(
+                f"Initialized session with {len(clips)} clips from {clips_file}"
+            )
+        elif (
+            current_video
+            and st.session_state.get("current_clips_file", None) != clips_file
+        ):
+            # If video changed, load clips for the new video
+            clips = load_clips(clips_file)
+            st.session_state.clips = clips
+            st.session_state.current_clip_index = -1
+            st.session_state.clip_name = ""
+            st.session_state.clip_modified = False
+            # Update the clips file path for this session
+            st.session_state.current_clips_file = clips_file
+
+            logger.info(f"Loaded {len(clips)} clips for new video from {clips_file}")
 
         return True
 
@@ -267,15 +288,22 @@ def save_session_clips(config_manager=None):
         if not config_manager:
             config_manager = st.session_state.config_manager
 
-        # Get clips file path
-        clips_file = config_manager.get_clips_file_path()
+        # Get current video path if available
+        current_video = st.session_state.get("current_video", None)
+
+        # Get clips file path based on current video
+        clips_file = config_manager.get_clips_file_path(current_video)
 
         # Save clips to file
         if "clips" in st.session_state:
             success = save_clips(st.session_state.clips, clips_file)
             if success:
                 st.session_state.clip_modified = False
-                logger.info(f"Saved {len(st.session_state.clips)} clips to file")
+                # Update the clips file path for this session
+                st.session_state.current_clips_file = clips_file
+                logger.info(
+                    f"Saved {len(st.session_state.clips)} clips to {clips_file}"
+                )
             return success
 
         return False
@@ -574,3 +602,69 @@ def get_current_clip():
     except Exception as e:
         logger.exception(f"Error getting current clip: {str(e)}")
         return None
+
+
+def migrate_clips(config_manager):
+    """
+    Migrate clips from the old single clips.json file to per-video clips files
+
+    Args:
+        config_manager: ConfigManager instance
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        # Get the old clips file path
+        old_clips_file = config_manager.get_clips_file_path()
+
+        # Check if the old clips file exists
+        if not os.path.exists(old_clips_file):
+            logger.info(
+                f"No old clips file found at {old_clips_file}, nothing to migrate"
+            )
+            return True
+
+        # Load clips from the old file
+        old_clips = load_clips(old_clips_file)
+
+        if not old_clips:
+            logger.info(f"No clips found in {old_clips_file}, nothing to migrate")
+            return True
+
+        # Group clips by source video
+        clips_by_video = {}
+        for clip in old_clips:
+            if not clip.source_path:
+                logger.warning(f"Clip {clip.id} has no source path, skipping")
+                continue
+
+            source_path = clip.source_path
+            if source_path not in clips_by_video:
+                clips_by_video[source_path] = []
+
+            clips_by_video[source_path].append(clip)
+
+        # Save clips to per-video files
+        for source_path, clips in clips_by_video.items():
+            # Get the clips file path for this video
+            clips_file = config_manager.get_clips_file_path(source_path)
+
+            # Save clips to file
+            success = save_clips(clips, clips_file)
+            if success:
+                logger.info(f"Migrated {len(clips)} clips to {clips_file}")
+            else:
+                logger.error(f"Failed to migrate clips to {clips_file}")
+                return False
+
+        # Rename the old clips file as backup
+        backup_file = old_clips_file.with_suffix(".json.bak")
+        os.rename(old_clips_file, backup_file)
+        logger.info(f"Renamed old clips file to {backup_file}")
+
+        return True
+
+    except Exception as e:
+        logger.exception(f"Error migrating clips: {str(e)}")
+        return False

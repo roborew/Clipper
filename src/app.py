@@ -55,6 +55,17 @@ def main():
     # Display the sidebar
     selected_video = sidebar.display_sidebar(st.session_state.config_manager)
 
+    # Store the selected video in session state
+    if selected_video:
+        # Check if the video has changed
+        if st.session_state.get("current_video") != selected_video:
+            st.session_state.current_video = selected_video
+            # Initialize clips for the new video
+            clip_service.initialize_session_clips(st.session_state.config_manager)
+    else:
+        # Clear current video if none is selected
+        st.session_state.current_video = None
+
     # Main content area
     if selected_video:
         # Display the main video player and controls
@@ -78,6 +89,10 @@ def initialize_session_state():
         if "config_manager" not in st.session_state:
             st.session_state.config_manager = ConfigManager()
             logger.info("Initialized config manager")
+
+        # Initialize current_video if not set
+        if "current_video" not in st.session_state:
+            st.session_state.current_video = None
 
         # Initialize clips
         clip_service.initialize_session_clips(st.session_state.config_manager)
@@ -460,9 +475,13 @@ def handle_delete_keyframe(frame_number):
         st.error(f"Error deleting keyframe: {str(e)}")
 
 
-def handle_new_clip(video_path):
+def handle_new_clip(video_path=None):
     """Handle new clip button click"""
     try:
+        # If no video_path provided, use the current video from session state
+        if video_path is None:
+            video_path = st.session_state.get("current_video", None)
+
         # Check if video_path is None
         if video_path is None:
             st.warning("No video selected. Please select a video first.")
