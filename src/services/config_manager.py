@@ -157,17 +157,22 @@ class ConfigManager:
         if relative_path is None:
             # Fall back to using just the filename
             base_name = video_path.stem
-            return self.proxy_dir / f"{base_name}_proxy.mp4"
+            proxy_path = self.proxy_dir / f"{base_name}_proxy.mp4"
+            # Ensure the proxy directory exists
+            self.proxy_dir.mkdir(parents=True, exist_ok=True)
+            return proxy_path
 
         # Preserve folder structure for proxies if configured
         if self.config["export"]["preserve_structure"]:
             # Create proxy directory with same structure as source
             proxy_dir = self.proxy_dir / relative_path.parent
-            if self.config["export"]["create_missing_dirs"]:
-                proxy_dir.mkdir(parents=True, exist_ok=True)
+            # Always ensure the directory exists
+            proxy_dir.mkdir(parents=True, exist_ok=True)
             return proxy_dir / f"{Path(relative_path).stem}_proxy.mp4"
         else:
             # Save directly in proxy directory (flat structure)
+            # Ensure the proxy directory exists
+            self.proxy_dir.mkdir(parents=True, exist_ok=True)
             return self.proxy_dir / f"{Path(relative_path).stem}_proxy.mp4"
 
     def is_proxy_enabled(self) -> bool:
@@ -193,8 +198,8 @@ class ConfigManager:
             Path to the clips file
         """
         if video_path is None:
-            # Backward compatibility: return the default clips file
-            return self.configs_dir / "clips.json"
+            # If no video path is provided, return a temporary clips file
+            return self.configs_dir / "temp_clips.json"
 
         # Get the relative path to preserve camera folder structure
         relative_path = self.get_relative_source_path(video_path)

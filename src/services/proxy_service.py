@@ -77,6 +77,7 @@ def create_proxy_video(
                 progress_bar = st.progress(0)
 
         # Get video duration for progress calculation
+        source_path_str = str(source_path)
         duration_cmd = [
             "ffprobe",
             "-v",
@@ -85,107 +86,64 @@ def create_proxy_video(
             "format=duration",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
-            str(source_path),
+            source_path_str,
         ]
 
         try:
+            logger.info(f"Running duration command: {' '.join(duration_cmd)}")
             duration_result = subprocess.run(
                 duration_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
             )
-            duration = float(duration_result.stdout.strip())
-            logger.info(f"Video duration: {duration:.2f} seconds")
+            if duration_result.returncode != 0:
+                logger.warning(
+                    f"ffprobe returned non-zero exit code: {duration_result.returncode}"
+                )
+                logger.warning(f"ffprobe stderr: {duration_result.stderr}")
+                duration = 0
+            else:
+                duration = float(duration_result.stdout.strip())
+                logger.info(f"Video duration: {duration:.2f} seconds")
         except Exception as e:
             logger.warning(f"Could not determine video duration: {str(e)}")
             duration = 0
 
         # Command to create a lower-resolution, web-compatible proxy using settings from config
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-i",
-            str(source_path),
-            "-c:v",
-            "libx264",
-            "-preset",
-            "fast",
-            "-crf",
-            str(proxy_settings["quality"]),
-            "-vf",
-            f"scale={proxy_settings['width']}:-2",  # Use width from config
-            "-c:a",
-            "aac",
-            "-b:a",
-            proxy_settings["audio_bitrate"],
-            str(proxy_path),
-        ]
+        # Handle spaces in file paths by ensuring they're properly escaped
+        source_path_str = str(source_path)
+        proxy_path_str = str(proxy_path)
 
-        # Create a queue to communicate between threads
-        progress_queue = Queue()
-        stop_event = threading.Event()
+        # Try a different approach for handling spaces in file paths
+        # Use a single string command with shell=True
+        ffmpeg_cmd_str = (
+            f'ffmpeg -y -i "{source_path_str}" '
+            f'-c:v libx264 -preset fast -crf {proxy_settings["quality"]} '
+            f'-vf scale={proxy_settings["width"]}:-2 '
+            f'-c:a aac -b:a {proxy_settings["audio_bitrate"]} '
+            f"-movflags +faststart -fflags +genpts "
+            f'"{proxy_path_str}"'
+        )
 
-        # Function to monitor progress
-        def monitor_progress(process, duration, queue, stop_event):
-            pattern = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
-
-            while process.poll() is None and not stop_event.is_set():
-                try:
-                    # Read line from stderr
-                    line = process.stderr.readline()
-
-                    # Convert to string if it's bytes
-                    if isinstance(line, bytes):
-                        output = line.decode("utf-8", errors="replace")
-                    else:
-                        output = line
-
-                    # Check for progress information
-                    match = pattern.search(output)
-                    if match and duration > 0:
-                        h, m, s = map(float, match.groups())
-                        current_time = h * 3600 + m * 60 + s
-                        progress = min(current_time / duration, 1.0)
-
-                        # Calculate remaining time
-                        if current_time > 0:
-                            remaining = (
-                                (duration - current_time) / current_time * current_time
-                            )
-                        else:
-                            remaining = 0
-
-                        # Put progress info in queue
-                        progress_info = {
-                            "progress": progress,
-                            "remaining": remaining,
-                            "current_time": current_time,
-                        }
-                        queue.put(progress_info)
-
-                        # Call the progress callback if provided
-                        if progress_callback:
-                            progress_callback(progress_info)
-                except Exception as e:
-                    # Don't log Streamlit context errors as they're expected in threads
-                    if "ScriptRunContext" not in str(e):
-                        logger.error(f"Error in progress monitoring: {str(e)}")
-                    continue
-
-            # Signal completion
-            final_progress = {"progress": 1.0, "remaining": 0, "current_time": duration}
-            queue.put(final_progress)
-            if progress_callback:
-                progress_callback(final_progress)
-            logger.info("Monitor thread completed")
+        # Log the command for debugging
+        logger.info(f"Starting ffmpeg conversion with shell: {ffmpeg_cmd_str}")
 
         # Start the conversion process with pipe for stderr
-        logger.info(f"Starting ffmpeg conversion: {' '.join(cmd)}")
-        process = subprocess.Popen(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True,
-            bufsize=1,
-        )
+        try:
+            # Use shell=True to handle spaces in file paths
+            process = subprocess.Popen(
+                ffmpeg_cmd_str,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                bufsize=1,
+                shell=True,
+            )
+        except Exception as e:
+            logger.error(f"Failed to start ffmpeg process: {str(e)}")
+            if actual_progress_placeholder:
+                actual_progress_placeholder.error(
+                    f"Failed to start ffmpeg process: {str(e)}"
+                )
+            return None
 
         # Monitor progress in a separate thread
         if duration > 0:
@@ -240,8 +198,38 @@ def create_proxy_video(
 
                 # Wait for process to complete
                 logger.info("Waiting for ffmpeg process to complete...")
-                process.wait()
-                logger.info("ffmpeg process completed")
+                return_code = process.wait()
+                logger.info(f"ffmpeg process completed with return code {return_code}")
+
+                # Check if process was successful
+                if return_code != 0:
+                    logger.error(
+                        f"ffmpeg process failed with return code {return_code}"
+                    )
+                    if actual_progress_placeholder:
+                        actual_progress_placeholder.error(
+                            f"ffmpeg process failed with return code {return_code}"
+                        )
+
+                    # If the file was created but is incomplete, remove it
+                    if os.path.exists(proxy_path):
+                        try:
+                            os.remove(proxy_path)
+                            logger.info(f"Removed incomplete proxy file: {proxy_path}")
+                        except Exception as e:
+                            logger.error(
+                                f"Failed to remove incomplete proxy file: {str(e)}"
+                            )
+
+                    # If this is part of batch processing, mark as failed and move to next video
+                    if (
+                        st.session_state.proxy_generation_active
+                        and st.session_state.proxy_current_video == source_path
+                    ):
+                        st.session_state.proxy_failed_videos.append(source_path)
+                        move_to_next_proxy_video()
+
+                    return None
 
                 # Final progress update
                 if actual_progress_placeholder:
@@ -258,7 +246,37 @@ def create_proxy_video(
             logger.info(
                 "No duration available, waiting for process without progress updates"
             )
-            process.wait()
+            return_code = process.wait()
+            logger.info(f"ffmpeg process completed with return code {return_code}")
+
+            # Check if process was successful
+            if return_code != 0:
+                logger.error(f"ffmpeg process failed with return code {return_code}")
+                if actual_progress_placeholder:
+                    actual_progress_placeholder.error(
+                        f"ffmpeg process failed with return code {return_code}"
+                    )
+
+                # If the file was created but is incomplete, remove it
+                if os.path.exists(proxy_path):
+                    try:
+                        os.remove(proxy_path)
+                        logger.info(f"Removed incomplete proxy file: {proxy_path}")
+                    except Exception as e:
+                        logger.error(
+                            f"Failed to remove incomplete proxy file: {str(e)}"
+                        )
+
+                # If this is part of batch processing, mark as failed and move to next video
+                if (
+                    st.session_state.proxy_generation_active
+                    and st.session_state.proxy_current_video == source_path
+                ):
+                    st.session_state.proxy_failed_videos.append(source_path)
+                    move_to_next_proxy_video()
+
+                return None
+
             if actual_progress_placeholder:
                 progress_bar.progress(1.0)
                 actual_progress_placeholder.text("Proxy video created successfully!")
@@ -268,6 +286,62 @@ def create_proxy_video(
             logger.info(
                 f"Proxy created successfully: {proxy_path} ({proxy_size:.2f} MB)"
             )
+
+            # Verify the proxy file is valid
+            verify_cmd = [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "stream=codec_type",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                proxy_path_str,
+            ]
+
+            try:
+                logger.info(f"Running verification command: {' '.join(verify_cmd)}")
+                verify_result = subprocess.run(
+                    verify_cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=10,
+                )
+                if (
+                    verify_result.returncode != 0
+                    or "video" not in verify_result.stdout.strip()
+                ):
+                    logger.error(f"Created proxy file is not valid: {proxy_path}")
+                    logger.error(f"ffprobe stderr: {verify_result.stderr}")
+                    if actual_progress_placeholder:
+                        actual_progress_placeholder.error(
+                            "Created proxy file is not valid. Removing and trying again."
+                        )
+
+                    # Remove the invalid file
+                    try:
+                        os.remove(proxy_path)
+                        logger.info(f"Removed invalid proxy file: {proxy_path}")
+                    except Exception as e:
+                        logger.error(f"Failed to remove invalid proxy file: {str(e)}")
+
+                    # If this is part of batch processing, mark as failed and move to next video
+                    if (
+                        st.session_state.proxy_generation_active
+                        and st.session_state.proxy_current_video == source_path
+                    ):
+                        st.session_state.proxy_failed_videos.append(source_path)
+                        move_to_next_proxy_video()
+
+                    return None
+
+                logger.info(f"Proxy file verified as valid: {proxy_path}")
+            except Exception as e:
+                logger.warning(f"Could not verify proxy file: {str(e)}")
+                # Continue anyway since the file exists
 
             # If this is part of batch processing, mark as completed and move to next video
             if (
@@ -384,13 +458,58 @@ def proxy_exists_for_video(video_path, config_manager=None):
         config_manager = st.session_state.config_manager
 
     proxy_path = config_manager.get_proxy_path(Path(video_path))
+
     # Check if the proxy file exists
-    exists = proxy_path.exists()
-    if exists:
-        logger.debug(f"Proxy exists for {video_path} at {proxy_path}")
-    else:
+    if not proxy_path.exists():
         logger.debug(f"No proxy found for {video_path}, would be at {proxy_path}")
-    return exists
+        return False
+
+    # Verify the proxy file is valid
+    try:
+        proxy_path_str = str(proxy_path)
+        verify_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=codec_type",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            proxy_path_str,
+        ]
+
+        logger.debug(f"Running verification command: {' '.join(verify_cmd)}")
+        verify_result = subprocess.run(
+            verify_cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            timeout=5,
+        )
+
+        if verify_result.returncode != 0 or "video" not in verify_result.stdout.strip():
+            logger.warning(f"Proxy file exists but is not valid: {proxy_path}")
+            logger.warning(f"ffprobe stderr: {verify_result.stderr}")
+
+            # Remove the invalid file
+            try:
+                os.remove(proxy_path)
+                logger.info(f"Removed invalid proxy file: {proxy_path}")
+            except Exception as e:
+                logger.error(f"Failed to remove invalid proxy file: {str(e)}")
+
+            return False
+
+        logger.debug(f"Proxy exists and is valid for {video_path} at {proxy_path}")
+        return True
+
+    except Exception as e:
+        logger.warning(f"Could not verify proxy file {proxy_path}: {str(e)}")
+        # Assume it's valid if we can't verify
+        logger.debug(f"Proxy exists for {video_path} at {proxy_path} (not verified)")
+        return True
 
 
 def display_proxy_generation_progress():

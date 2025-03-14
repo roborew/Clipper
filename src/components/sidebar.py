@@ -499,25 +499,6 @@ def display_settings(config_manager):
                 else:
                     st.error("Failed to reload clips")
 
-        # Migration section
-        st.subheader("Migration")
-        st.markdown(
-            """
-        If you're upgrading from an older version, you can migrate your clips from 
-        the old single clips.json file to the new per-video clips files.
-        """
-        )
-
-        if st.button("Migrate Clips", key="migrate_clips_btn"):
-            from src.services import clip_service
-
-            success = clip_service.migrate_clips(config_manager)
-            if success:
-                st.success("Clips migrated successfully")
-                st.rerun()
-            else:
-                st.error("Failed to migrate clips")
-
     except Exception as e:
         logger.exception(f"Error displaying settings: {str(e)}")
         st.error(f"Error displaying settings: {str(e)}")
