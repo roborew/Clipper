@@ -289,6 +289,7 @@ def display_main_content(video_path):
                 on_frame_change=handle_frame_change,
                 crop_region=crop_region,
                 config_manager=config_manager,
+                clip=current_clip,
             )
 
             # Create columns for the controls

@@ -51,6 +51,7 @@ def display_video_player(
     on_frame_change=None,
     crop_region=None,
     config_manager=None,
+    clip=None,
 ):
     """
     Display a video player with controls
@@ -63,6 +64,7 @@ def display_video_player(
         on_frame_change: Callback function when frame changes
         crop_region: Optional crop region to display
         config_manager: ConfigManager instance
+        clip: Current clip object for keyframe interpolation
 
     Returns:
         The updated current frame number
@@ -141,71 +143,71 @@ def display_video_player(
                 with anim_col1:
                     # Create a list of frames for animation
                     if st.button("Prepare Animation Frames", key="prepare_frames"):
-                        # Remove redundant explanation
-                        # st.info(
-                        #     """
-                        # **Animation System**:
-                        # 1. Capturing frames starting from your current position
-                        # 2. Using the exact same frames you see in the main display
-                        # 3. Including all crop regions exactly as they appear
-                        # 4. No regeneration of images - using the existing rendered frames
-                        # """
-                        # )
-
                         st.session_state.animation_frames = []
                         progress_bar = st.progress(0)
 
-                        # Determine range of frames to preload
-                        frame_range = min(
-                            100, total_frames
-                        )  # Limit to 100 frames to avoid memory issues
-
-                        # Store the current frame to restore it later
-                        original_frame = current_frame
+                        # Get frame range from clip if available, otherwise use current position
+                        if clip:
+                            start_frame = clip.start_frame
+                            end_frame = clip.end_frame
+                            total_frames_to_animate = end_frame - start_frame + 1
+                            animation_start = start_frame
+                        else:
+                            # If no clip, animate from current position
+                            start_frame = current_frame
+                            end_frame = total_frames - 1
+                            total_frames_to_animate = end_frame - start_frame + 1
+                            animation_start = current_frame
 
                         # Store the start frame in session state for the animation
-                        st.session_state.animation_start_frame = original_frame
+                        st.session_state.animation_start_frame = animation_start
 
-                        # For each frame in the range, capture the EXACT same frame that's shown in the main display
-                        for i in range(frame_range):
+                        # For each frame in the range, get the frame with crop region already applied
+                        for i in range(total_frames_to_animate):
                             # Calculate the frame index
-                            frame_idx = original_frame + i
-                            if frame_idx >= total_frames:
-                                frame_idx = frame_idx % total_frames  # Wrap around
+                            frame_idx = start_frame + i
 
                             # Get the frame using the same method as the main display
                             frame = video_service.get_frame(video_path, frame_idx)
 
                             if frame is not None:
-                                # Apply crop overlay using the same logic as the main display
-                                # Ensure we're getting the correct crop region for this specific frame
+                                # Get the interpolated crop region for this specific frame
                                 frame_crop = None
-                                if crop_region and callable(crop_region):
-                                    # If crop_region is a function, call it with the current frame index
-                                    frame_crop = crop_region(frame_idx)
-                                    # Log the crop region for debugging
+                                # First try to get crop region from clip keyframes if available
+                                if (
+                                    clip
+                                    and hasattr(clip, "crop_keyframes")
+                                    and clip.crop_keyframes
+                                ):
+                                    frame_crop = clip.get_crop_region_at_frame(
+                                        frame_idx
+                                    )
                                     logger.debug(
-                                        f"Frame {frame_idx} crop region: {frame_crop}"
+                                        f"Frame {frame_idx} interpolated crop region from clip: {frame_crop}"
+                                    )
+                                # Fall back to provided crop_region if no clip keyframes
+                                elif crop_region and callable(crop_region):
+                                    frame_crop = crop_region(frame_idx)
+                                    logger.debug(
+                                        f"Frame {frame_idx} function crop region: {frame_crop}"
                                     )
                                 elif crop_region:
-                                    # If crop_region is a static value, use it directly
                                     frame_crop = crop_region
                                     logger.debug(
-                                        f"Using static crop region: {frame_crop}"
+                                        f"Frame {frame_idx} static crop region: {frame_crop}"
                                     )
 
                                 # Apply the crop overlay to the frame
                                 if frame_crop:
-                                    # Draw the crop overlay on the frame
                                     frame = video_service.draw_crop_overlay(
                                         frame, frame_crop
                                     )
                                     logger.debug(
-                                        f"Applied crop overlay to frame {frame_idx}"
+                                        f"Applied crop overlay to clip frame {frame_idx}"
                                     )
                                 else:
                                     logger.debug(
-                                        f"No crop region for frame {frame_idx}"
+                                        f"No crop region for clip frame {frame_idx}"
                                     )
 
                                 # Convert OpenCV image from BGR to RGB for correct colors
@@ -218,10 +220,10 @@ def display_video_player(
                                 st.session_state.animation_frames.append(img_str)
 
                             # Update progress
-                            progress_bar.progress((i + 1) / frame_range)
+                            progress_bar.progress((i + 1) / total_frames_to_animate)
 
                         st.success(
-                            f"Prepared {len(st.session_state.animation_frames)} frames for animation starting from frame {original_frame}"
+                            f"Prepared {len(st.session_state.animation_frames)} frames for animation starting from frame {animation_start}"
                         )
 
                         # Restore the original frame
@@ -579,10 +581,11 @@ def play_clip_preview(
                         st.session_state.preview_animation_frames = []
                         progress_bar = st.progress(0)
 
-                        # Only use frames within the clip range (start_frame to end_frame)
-                        # Limit to 100 frames to avoid memory issues
+                        # Use all frames in the clip range
                         total_clip_frames = end_frame - start_frame + 1
-                        frame_range = min(int(total_clip_frames), 100)
+                        frame_range = int(
+                            total_clip_frames
+                        )  # Remove the 100 frame limit
 
                         # Store the current frame to restore it later
                         original_frame = current_frame
@@ -601,26 +604,34 @@ def play_clip_preview(
                                 frame = video_service.get_frame(video_path, frame_idx)
 
                                 if frame is not None:
-                                    # Apply crop overlay using the same logic as the main display
-                                    # Ensure we're getting the correct crop region for this specific frame
+                                    # Get the interpolated crop region for this specific frame
                                     frame_crop = None
-                                    if crop_region and callable(crop_region):
-                                        # If crop_region is a function, call it with the current frame index
-                                        frame_crop = crop_region(frame_idx)
-                                        # Log the crop region for debugging
+                                    # First try to get crop region from clip keyframes if available
+                                    if (
+                                        clip
+                                        and hasattr(clip, "crop_keyframes")
+                                        and clip.crop_keyframes
+                                    ):
+                                        frame_crop = clip.get_crop_region_at_frame(
+                                            frame_idx
+                                        )
                                         logger.debug(
-                                            f"Clip frame {frame_idx} crop region: {frame_crop}"
+                                            f"Frame {frame_idx} interpolated crop region from clip: {frame_crop}"
+                                        )
+                                    # Fall back to provided crop_region if no clip keyframes
+                                    elif crop_region and callable(crop_region):
+                                        frame_crop = crop_region(frame_idx)
+                                        logger.debug(
+                                            f"Frame {frame_idx} function crop region: {frame_crop}"
                                         )
                                     elif crop_region:
-                                        # If crop_region is a static value, use it directly
                                         frame_crop = crop_region
                                         logger.debug(
-                                            f"Using static crop region for clip: {frame_crop}"
+                                            f"Frame {frame_idx} static crop region: {frame_crop}"
                                         )
 
                                     # Apply the crop overlay to the frame
                                     if frame_crop:
-                                        # Draw the crop overlay on the frame
                                         frame = video_service.draw_crop_overlay(
                                             frame, frame_crop
                                         )
