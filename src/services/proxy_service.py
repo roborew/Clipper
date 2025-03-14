@@ -11,6 +11,7 @@ from pathlib import Path
 from queue import Queue
 import streamlit as st
 import logging
+import collections
 
 # Configure logging to suppress Streamlit context warnings
 streamlit_logger = logging.getLogger("streamlit")
@@ -134,10 +135,19 @@ def create_proxy_video(
         def monitor_progress(process, duration, queue, stop_event):
             # Suppress Streamlit context warnings in this thread
             import logging
+            import collections
 
             logging.getLogger("streamlit").setLevel(logging.ERROR)
 
             pattern = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
+
+            # Keep track of recent encoding speeds for better time estimation
+            encoding_speeds = collections.deque(
+                maxlen=10
+            )  # Store last 10 speed measurements
+            last_time = None
+            last_current_time = 0
+            start_time = time.time()
 
             while process.poll() is None and not stop_event.is_set():
                 try:
@@ -157,19 +167,43 @@ def create_proxy_video(
                         current_time = h * 3600 + m * 60 + s
                         progress = min(current_time / duration, 1.0)
 
-                        # Calculate remaining time
-                        if current_time > 0:
+                        # Calculate encoding speed (seconds of video processed per second of real time)
+                        now = time.time()
+                        if last_time is not None and current_time > last_current_time:
+                            elapsed_real_time = now - last_time
+                            processed_video_time = current_time - last_current_time
+                            if elapsed_real_time > 0:
+                                encoding_speed = (
+                                    processed_video_time / elapsed_real_time
+                                )
+                                encoding_speeds.append(encoding_speed)
+
+                        last_time = now
+                        last_current_time = current_time
+
+                        # Calculate remaining time based on average recent encoding speed
+                        if encoding_speeds:
+                            avg_speed = sum(encoding_speeds) / len(encoding_speeds)
+                            remaining_video_time = duration - current_time
                             remaining = (
-                                (duration - current_time) / current_time * current_time
+                                remaining_video_time / avg_speed if avg_speed > 0 else 0
                             )
                         else:
-                            remaining = 0
+                            # Fallback to simple estimation if we don't have speed data yet
+                            elapsed_total = now - start_time
+                            if current_time > 0 and elapsed_total > 0:
+                                remaining = (duration - current_time) / (
+                                    current_time / elapsed_total
+                                )
+                            else:
+                                remaining = 0
 
                         # Put progress info in queue
                         progress_info = {
                             "progress": progress,
                             "remaining": remaining,
                             "current_time": current_time,
+                            "encoding_speed": avg_speed if encoding_speeds else 0,
                         }
                         queue.put(progress_info)
 
@@ -267,10 +301,33 @@ def create_proxy_video(
                             try:
                                 progress_bar.progress(progress_info["progress"])
                                 remaining = progress_info["remaining"]
-                                actual_progress_placeholder.text(
-                                    f"Creating proxy video: {int(progress_info['progress'] * 100)}% complete "
-                                    f"(approx. {int(remaining/60)} min {int(remaining%60)} sec remaining)"
-                                )
+
+                                # Calculate encoding speed (how fast we're processing the video)
+                                if "current_time" in progress_info and duration > 0:
+                                    percent_complete = int(
+                                        progress_info["progress"] * 100
+                                    )
+                                    minutes_remaining = int(remaining / 60)
+                                    seconds_remaining = int(remaining % 60)
+
+                                    # Get encoding speed if available
+                                    encoding_speed = progress_info.get(
+                                        "encoding_speed", 0
+                                    )
+                                    speed_text = ""
+                                    if encoding_speed > 0:
+                                        speed_ratio = encoding_speed
+                                        speed_text = f" at {speed_ratio:.2f}x speed"
+
+                                    # Format the message with more accurate time estimate
+                                    message = f"Creating proxy video: {percent_complete}% complete{speed_text} "
+                                    message += f"(approx. {minutes_remaining}m {seconds_remaining}s remaining)"
+
+                                    actual_progress_placeholder.text(message)
+                                else:
+                                    actual_progress_placeholder.text(
+                                        f"Creating proxy video: {int(progress_info['progress'] * 100)}% complete"
+                                    )
                             except Exception:
                                 # Ignore Streamlit context errors
                                 pass
@@ -287,8 +344,12 @@ def create_proxy_video(
                     if current_time - last_update_time > 2.0:
                         if actual_progress_placeholder:
                             try:
+                                elapsed_time = current_time - start_time
+                                minutes_elapsed = int(elapsed_time / 60)
+                                seconds_elapsed = int(elapsed_time % 60)
+
                                 actual_progress_placeholder.text(
-                                    f"Creating proxy video... (ffmpeg is running)"
+                                    f"Creating proxy video... (processing for {minutes_elapsed}m {seconds_elapsed}s)"
                                 )
                             except Exception:
                                 # Ignore Streamlit context errors
@@ -337,8 +398,13 @@ def create_proxy_video(
                 if actual_progress_placeholder:
                     try:
                         progress_bar.progress(1.0)
+                        # Calculate total processing time
+                        total_time = time.time() - start_time
+                        minutes = int(total_time / 60)
+                        seconds = int(total_time % 60)
+
                         actual_progress_placeholder.text(
-                            "Proxy video created successfully!"
+                            f"Proxy video created successfully in {minutes}m {seconds}s!"
                         )
                     except Exception:
                         # Ignore Streamlit context errors
@@ -348,6 +414,7 @@ def create_proxy_video(
             logger.info(
                 "No duration available, waiting for process without progress updates"
             )
+            start_time = time.time()
             return_code = process.wait()
             logger.info(f"ffmpeg process completed with return code {return_code}")
 
@@ -383,8 +450,13 @@ def create_proxy_video(
             if actual_progress_placeholder:
                 try:
                     progress_bar.progress(1.0)
+                    # Calculate total processing time
+                    total_time = time.time() - start_time
+                    minutes = int(total_time / 60)
+                    seconds = int(total_time % 60)
+
                     actual_progress_placeholder.text(
-                        "Proxy video created successfully!"
+                        f"Proxy video created successfully in {minutes}m {seconds}s!"
                     )
                 except Exception:
                     # Ignore Streamlit context errors
@@ -701,15 +773,20 @@ def proxy_progress_callback(progress_info):
     try:
         progress = progress_info.get("progress", 0.0)
         remaining = progress_info.get("remaining", 0)
+        encoding_speed = progress_info.get("encoding_speed", 0)
 
         # Update session state with progress info
         st.session_state.proxy_current_progress = progress
+
+        # Store encoding speed if available
+        if encoding_speed > 0:
+            st.session_state.proxy_encoding_speed = encoding_speed
 
         # Format the time remaining
         if remaining > 0:
             minutes = int(remaining / 60)
             seconds = int(remaining % 60)
-            st.session_state.proxy_time_remaining = f"{minutes} min {seconds} sec"
+            st.session_state.proxy_time_remaining = f"{minutes}m {seconds}s"
         else:
             st.session_state.proxy_time_remaining = "Calculating..."
     except Exception as e:
