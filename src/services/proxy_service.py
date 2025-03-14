@@ -937,6 +937,7 @@ def create_clip_preview(
     clip_name,
     start_frame,
     end_frame,
+    crop_region=None,
     progress_placeholder=None,
     config_manager=None,
 ):
@@ -948,6 +949,7 @@ def create_clip_preview(
         clip_name: Name of the clip
         start_frame: Start frame of the clip
         end_frame: End frame of the clip
+        crop_region: Optional tuple of (x, y, width, height) for cropping
         progress_placeholder: Streamlit placeholder for progress updates
         config_manager: ConfigManager instance
 
@@ -955,6 +957,11 @@ def create_clip_preview(
         Path to the preview video or None if creation failed
     """
     try:
+        logger.info(f"Creating clip preview for {clip_name}")
+        logger.info(f"Source: {source_path}")
+        logger.info(f"Frames: {start_frame} to {end_frame}")
+        logger.info(f"Crop region: {crop_region}")
+
         if not config_manager:
             config_manager = st.session_state.config_manager
 
@@ -962,6 +969,7 @@ def create_clip_preview(
         preview_path = config_manager.get_clip_preview_path(
             Path(source_path), clip_name
         )
+        logger.info(f"Preview path: {preview_path}")
 
         # Check if preview already exists
         if preview_path.exists():
@@ -970,6 +978,7 @@ def create_clip_preview(
 
         # Ensure the parent directory exists
         preview_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created preview directory: {preview_path.parent}")
 
         # Get video duration for progress calculation
         duration_cmd = [
@@ -1004,6 +1013,7 @@ def create_clip_preview(
                 if duration_result.returncode == 0
                 else 0
             )
+            logger.info(f"Video duration: {duration} seconds")
         except Exception as e:
             logger.warning(f"Could not determine video duration: {str(e)}")
             duration = 0
@@ -1047,6 +1057,7 @@ def create_clip_preview(
                     fps = float(fps_str)
             else:
                 fps = 30  # Default to 30 fps if we can't determine it
+            logger.info(f"Video FPS: {fps}")
         except Exception as e:
             logger.warning(f"Could not determine video FPS: {str(e)}")
             fps = 30
@@ -1054,9 +1065,26 @@ def create_clip_preview(
         # Calculate start and end times in seconds
         start_time = start_frame / fps
         end_time = end_frame / fps
+        logger.info(f"Time range: {start_time} to {end_time} seconds")
 
         # Create ffmpeg command for clip preview
         proxy_settings = config_manager.get_proxy_settings()
+
+        # Build the video filter string
+        vf_filters = []
+
+        # Add crop filter if crop region is provided
+        if crop_region:
+            x, y, width, height = crop_region
+            vf_filters.append(f"crop={width}:{height}:{x}:{y}")
+
+        # Add scale filter
+        vf_filters.append(f"scale={proxy_settings['width']}:-2")
+
+        # Combine filters
+        vf_string = ",".join(vf_filters)
+        logger.info(f"Video filters: {vf_string}")
+
         cmd = [
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
@@ -1067,7 +1095,7 @@ def create_clip_preview(
             "-t",
             str(end_time - start_time),
             "-vf",
-            f"scale={proxy_settings['width']}:-2",  # Scale width to proxy width, maintain aspect ratio
+            vf_string,
             "-c:v",
             "libx264",
             "-crf",
@@ -1081,12 +1109,7 @@ def create_clip_preview(
             str(preview_path),
         ]
 
-        # Show progress
-        if progress_placeholder:
-            progress_placeholder.text("Creating clip preview...")
-            progress_bar = st.progress(0)
-
-        # Convert command list to string for shell execution
+        # Convert command to string with proper quoting
         cmd_str = " ".join(
             (
                 f'"{arg}"'
@@ -1095,14 +1118,18 @@ def create_clip_preview(
             )
             for arg in cmd
         )
+        logger.info(f"Running ffmpeg command: {cmd_str}")
 
-        # Start the conversion process
+        if progress_placeholder:
+            progress_placeholder.text("Creating clip preview...")
+
+        # Run ffmpeg command
         process = subprocess.Popen(
             cmd_str,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            universal_newlines=True,
             shell=True,
+            universal_newlines=True,
         )
 
         # Monitor progress
@@ -1110,28 +1137,29 @@ def create_clip_preview(
             line = process.stderr.readline()
             if not line:
                 break
-            # Update progress if possible
-            if progress_placeholder and duration > 0:
-                time_match = re.search(r"time=(\d+):(\d+):(\d+.\d+)", line)
+            if progress_placeholder and "time=" in line:
+                # Extract current time from ffmpeg output
+                time_match = re.search(r"time=(\d+:\d+:\d+.\d+)", line)
                 if time_match:
-                    hours, minutes, seconds = map(float, time_match.groups())
-                    current_time = hours * 3600 + minutes * 60 + seconds
-                    progress = min(current_time / duration, 1.0)
-                    progress_bar.progress(progress)
+                    current_time = time_match.group(1)
+                    progress_placeholder.text(
+                        f"Creating clip preview... Time: {current_time}"
+                    )
+            logger.debug(f"ffmpeg output: {line.strip()}")
 
         # Wait for process to complete
         process.wait()
 
-        # Check if preview was created successfully
-        if os.path.exists(preview_path):
-            logger.info(f"Clip preview created successfully: {preview_path}")
-            if progress_placeholder:
-                progress_placeholder.success("✅ Clip preview created successfully!")
+        if process.returncode == 0:
+            logger.info(f"Successfully created clip preview: {preview_path}")
             return str(preview_path)
         else:
-            logger.error("Failed to create clip preview")
+            error_output = process.stderr.read()
+            logger.error(f"Error creating clip preview: {error_output}")
             if progress_placeholder:
-                progress_placeholder.error("Failed to create clip preview")
+                progress_placeholder.error(
+                    f"Error creating clip preview: {error_output}"
+                )
             return None
 
     except Exception as e:

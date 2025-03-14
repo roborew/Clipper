@@ -212,6 +212,18 @@ def display_video_selection(config_manager):
                         if os.path.exists(proxy_path):
                             os.remove(proxy_path)
                             st.info("Deleted existing proxy, generating new one...")
+
+                            # Store the new proxy path in session state
+                            st.session_state.proxy_path = str(proxy_path)
+
+                            # Update proxy path in all clips that use this video
+                            if "clips" in st.session_state:
+                                for clip in st.session_state.clips:
+                                    if clip.source_path == selected_video:
+                                        clip.proxy_path = str(proxy_path)
+                                        clip.update()  # Mark as modified
+                                st.session_state.clip_modified = True
+
                             st.rerun()
                     except Exception as e:
                         logger.exception(f"Error deleting proxy: {str(e)}")
@@ -589,28 +601,83 @@ def display_clip_management():
                     st.text(f"Duration: {clip.get_duration_frames()} frames")
                     st.text(f"Keyframes: {len(clip.crop_keyframes)}")
 
-                    # Select button
-                    if st.button("Select", key=f"select_clip_{i}"):
-                        st.session_state.current_clip_index = i
-                        st.rerun()
+                    # Create columns for buttons
+                    btn_col1, btn_col2, btn_col3 = st.columns(3)
 
-                    # Delete button
-                    if st.button("Delete", key=f"delete_clip_{i}"):
-                        # Delete the clip
-                        clip_service.delete_clip(i)
-                        # Auto-save after deletion
-                        success = clip_service.save_session_clips()
-                        if success:
-                            st.session_state.last_save_status = {
-                                "success": True,
-                                "message": f"Deleted and saved clip: {clip.name}",
-                            }
-                        else:
-                            st.session_state.last_save_status = {
-                                "success": False,
-                                "message": f"Failed to save after deleting clip: {clip.name}",
-                            }
-                        st.rerun()
+                    with btn_col1:
+                        if st.button("Select", key=f"select_clip_{i}"):
+                            st.session_state.current_clip_index = i
+                            st.rerun()
+
+                    with btn_col2:
+                        # Preview button
+                        if st.button("Preview", key=f"preview_clip_{i}"):
+                            # Create progress placeholder
+                            progress_placeholder = st.empty()
+                            progress_placeholder.info("Generating clip preview...")
+
+                            # Get the current crop region for the start frame
+                            crop_region = clip.get_crop_region_at_frame(
+                                clip.start_frame
+                            )
+
+                            logger.info(f"Preview button clicked for clip {clip.name}")
+                            logger.info(f"Source path: {clip.source_path}")
+                            logger.info(f"Start frame: {clip.start_frame}")
+                            logger.info(f"End frame: {clip.end_frame}")
+                            logger.info(f"Current proxy path: {clip.proxy_path}")
+
+                            # Always generate a new preview for the clip
+                            from src.services import proxy_service
+
+                            preview_path = proxy_service.create_clip_preview(
+                                clip.source_path,
+                                clip.name,
+                                clip.start_frame,
+                                clip.end_frame,
+                                crop_region=crop_region,  # Pass the crop region
+                                progress_placeholder=progress_placeholder,
+                                config_manager=config_manager,
+                            )
+
+                            if preview_path:
+                                logger.info(f"Preview generated at: {preview_path}")
+                                # Update clip's proxy path
+                                clip.proxy_path = preview_path
+                                clip.update()  # Mark as modified
+                                st.session_state.clip_modified = True
+
+                                # Store the preview path in session state for the main page
+                                logger.info(
+                                    f"Setting preview path in session state: {preview_path}"
+                                )
+                                st.session_state.preview_clip_path = preview_path
+                                st.session_state.current_clip_index = i
+                                st.session_state.trigger_rerun = True
+                                progress_placeholder.success(
+                                    "Preview ready! Switching to main view..."
+                                )
+                            else:
+                                logger.error("Failed to generate preview")
+                                progress_placeholder.error("Failed to generate preview")
+
+                    with btn_col3:
+                        if st.button("Delete", key=f"delete_clip_{i}"):
+                            # Delete the clip
+                            clip_service.delete_clip(i)
+                            # Auto-save after deletion
+                            success = clip_service.save_session_clips()
+                            if success:
+                                st.session_state.last_save_status = {
+                                    "success": True,
+                                    "message": f"Deleted and saved clip: {clip.name}",
+                                }
+                            else:
+                                st.session_state.last_save_status = {
+                                    "success": False,
+                                    "message": f"Failed to save after deleting clip: {clip.name}",
+                                }
+                            st.rerun()
 
     except Exception as e:
         logger.exception(f"Error displaying clip management: {str(e)}")
@@ -669,7 +736,7 @@ def display_settings(config_manager):
         proxy_settings = config_manager.get_proxy_settings()
 
         # Display current proxy directory
-        st.info(f"Proxy directory: {config_manager.proxy_dir}")
+        st.info(f"Proxy directory: {config_manager.proxy_base}")
 
         # Add info about directory structure
         if config_manager.config["export"]["preserve_structure"]:

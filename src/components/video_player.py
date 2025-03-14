@@ -446,6 +446,13 @@ def play_clip_preview(
         None
     """
     try:
+        # If we're in preview mode (using preview_clip_path), don't show another video player
+        if (
+            "preview_clip_path" in st.session_state
+            and st.session_state.preview_clip_path
+        ):
+            return
+
         # Validate inputs
         if start_frame > end_frame:
             st.error("Start frame must be before end frame")

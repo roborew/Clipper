@@ -183,6 +183,74 @@ def display_welcome():
 def display_main_content(video_path):
     """Display the main content area with video player and controls"""
     try:
+        # Title with video name
+        st.title(f"Editing: {os.path.basename(video_path)}")
+
+        # Check if we have a preview to display - MOVED TO TOP
+        if (
+            "preview_clip_path" in st.session_state
+            and st.session_state.preview_clip_path
+        ):
+            preview_path = st.session_state.preview_clip_path
+            logger.info(f"Attempting to display preview from: {preview_path}")
+
+            st.markdown("### 🎬 CLIP PREVIEW SECTION")
+
+            if os.path.exists(preview_path):
+                logger.info("Preview file exists, displaying...")
+
+                # Create columns for preview title and close button
+                preview_header_col1, preview_header_col2 = st.columns([5, 1])
+
+                with preview_header_col1:
+                    st.success("✨ Preview loaded successfully!")
+                    st.caption(f"Playing: {os.path.basename(preview_path)}")
+
+                with preview_header_col2:
+                    if st.button("❌", key="close_preview", help="Close preview"):
+                        logger.info("Closing preview...")
+                        st.session_state.preview_clip_path = None
+                        st.rerun()
+
+                # Create a container for the video
+                video_container = st.container()
+                with video_container:
+                    try:
+                        with open(preview_path, "rb") as video_file:
+                            video_bytes = video_file.read()
+                            st.video(video_bytes, start_time=0)
+                            logger.info("Successfully displayed preview video")
+                    except Exception as e:
+                        logger.error(f"Error displaying preview video: {str(e)}")
+                        st.error(f"⚠️ Error playing preview: {str(e)}")
+                        st.error("Try clicking the preview button again")
+
+                # Display clip information if available
+                current_clip = clip_service.get_current_clip()
+                if current_clip:
+                    with st.expander("Clip Details", expanded=True):
+                        info_col1, info_col2, info_col3 = st.columns(3)
+                        with info_col1:
+                            st.metric("Start Frame", current_clip.start_frame)
+                        with info_col2:
+                            st.metric("End Frame", current_clip.end_frame)
+                        with info_col3:
+                            duration_frames = current_clip.get_duration_frames()
+                            if st.session_state.fps > 0:
+                                duration_seconds = (
+                                    duration_frames / st.session_state.fps
+                                )
+                                st.metric(
+                                    "Duration",
+                                    video_service.format_duration(duration_seconds),
+                                )
+
+                # Add separator after preview section
+                st.markdown("---")
+            else:
+                st.error(f"⚠️ Preview file not found: {os.path.basename(preview_path)}")
+                st.error("Please try clicking the preview button again")
+
         # Get video info
         video_info_key = f"video_info_{video_path}"
 
@@ -206,125 +274,53 @@ def display_main_content(video_path):
         # Get current clip if one is selected
         current_clip = clip_service.get_current_clip()
 
-        # Title with video name
-        st.title(f"Editing: {os.path.basename(video_path)}")
+        # Initialize editing_keyframe if not exists
+        if "editing_keyframe" not in st.session_state:
+            st.session_state.editing_keyframe = None
 
-        # If crop selection is active, display the crop selector
-        if st.session_state.crop_selection_active:
-            # Get the current frame
-            frame = video_service.get_frame(
-                video_path,  # video_service will automatically use proxy if available
-                st.session_state.current_frame,
+        # Get crop region for current frame if available
+        crop_region = None
+        if current_clip and current_clip.crop_keyframes:
+            crop_region = current_clip.get_crop_region_at_frame(
+                st.session_state.current_frame
             )
 
-            # Check if we're editing an existing keyframe
-            editing_existing = False
-            if (
-                hasattr(st.session_state, "editing_keyframe")
-                and st.session_state.editing_keyframe is not None
-            ):
-                editing_existing = True
-                edit_frame = st.session_state.editing_keyframe
-                # Use the frame of the keyframe being edited
-                st.session_state.current_frame = edit_frame
-                # Get the frame again if we changed the current frame
-                frame = video_service.get_frame(video_path, edit_frame)
+        # Display video player
+        st.session_state.current_frame = video_player.display_video_player(
+            video_path,  # video_service will automatically use proxy if available
+            st.session_state.current_frame,
+            st.session_state.fps,
+            st.session_state.total_frames,
+            on_frame_change=handle_frame_change,
+            crop_region=crop_region,
+            config_manager=config_manager,
+            clip=current_clip,
+        )
 
-            # Display crop selector
-            crop_region = simple_crop_selector.select_crop_region(
-                frame,
-                st.session_state.current_frame,
-                current_clip,
-                st.session_state.output_resolution,
-            )
+        # Create columns for the controls
+        col1, col2 = st.columns(2)
 
-            # If crop region is confirmed, add it as a keyframe
-            if crop_region is not None:
-                if current_clip:
-                    try:
-                        if editing_existing:
-                            # We're editing an existing keyframe
-                            frame_to_update = st.session_state.editing_keyframe
-                            clip_service.add_crop_keyframe(frame_to_update, crop_region)
-                            st.success(
-                                f"Updated crop keyframe at frame {frame_to_update}"
-                            )
-                            # Clear the editing flag
-                            st.session_state.editing_keyframe = None
-                        else:
-                            # Adding a new keyframe
-                            clip_service.add_crop_keyframe(
-                                st.session_state.current_frame, crop_region
-                            )
-                            st.success(
-                                f"Added crop keyframe at frame {st.session_state.current_frame}"
-                            )
-
-                        # Set crop selection to inactive and rerun
-                        st.session_state.crop_selection_active = False
-                        st.rerun()
-                    except Exception as e:
-                        logger.exception(
-                            f"Error adding/updating crop keyframe: {str(e)}"
-                        )
-                        st.error(f"Error adding/updating crop keyframe: {str(e)}")
-        else:
-            # Initialize editing_keyframe if not exists
-            if "editing_keyframe" not in st.session_state:
-                st.session_state.editing_keyframe = None
-
-            # Get crop region for current frame if available
-            crop_region = None
-            if current_clip and current_clip.crop_keyframes:
-                crop_region = current_clip.get_crop_region_at_frame(
-                    st.session_state.current_frame
-                )
-
-            # Display video player
-            st.session_state.current_frame = video_player.display_video_player(
-                video_path,  # video_service will automatically use proxy if available
-                st.session_state.current_frame,
-                st.session_state.fps,
-                st.session_state.total_frames,
-                on_frame_change=handle_frame_change,
-                crop_region=crop_region,
-                config_manager=config_manager,
+        with col1:
+            # Display clip controls
+            video_player.display_clip_controls(
                 clip=current_clip,
+                on_set_start=handle_set_start,
+                on_set_end=handle_set_end,
+                on_play_clip=handle_play_clip,
+                on_export_clip=handle_export_clip,
             )
 
-            # Create columns for the controls
-            col1, col2 = st.columns(2)
-
-            with col1:
-                # Display clip controls
-                video_player.display_clip_controls(
-                    clip=current_clip,
-                    on_set_start=handle_set_start,
-                    on_set_end=handle_set_end,
-                    on_play_clip=handle_play_clip,
-                    on_export_clip=handle_export_clip,
-                )
-
-            with col2:
-                # Display crop controls
-                display_crop_controls(
-                    current_clip=current_clip,
-                    current_frame=st.session_state.current_frame,
-                    crop_region=crop_region,
-                )
-
-            # Display keyframe list if clip has keyframes
-            if current_clip and current_clip.crop_keyframes:
-                video_player.display_keyframe_list(
-                    current_clip.crop_keyframes,
-                    st.session_state.current_frame,
-                    on_select_keyframe=handle_select_keyframe,
-                    on_delete_keyframe=handle_delete_keyframe,
-                )
+        with col2:
+            # Display crop controls
+            display_crop_controls(
+                current_clip=current_clip,
+                current_frame=st.session_state.current_frame,
+                crop_region=crop_region,
+            )
 
     except Exception as e:
         logger.exception(f"Error displaying main content: {str(e)}")
-        st.error(f"Error displaying video: {str(e)}")
+        st.error(f"Error displaying main content: {str(e)}")
 
 
 # Event handlers

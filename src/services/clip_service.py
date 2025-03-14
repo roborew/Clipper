@@ -22,6 +22,7 @@ class Clip:
         self,
         name=None,
         source_path=None,
+        proxy_path=None,
         start_frame=0,
         end_frame=0,
         crop_keyframes=None,
@@ -33,6 +34,7 @@ class Clip:
         Args:
             name: Name of the clip
             source_path: Path to the source video
+            proxy_path: Path to the proxy video for previews
             start_frame: Starting frame number
             end_frame: Ending frame number
             crop_keyframes: Dictionary of frame numbers to crop regions (x, y, width, height)
@@ -41,6 +43,7 @@ class Clip:
         self.id = str(uuid.uuid4())
         self.name = name or f"clip_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         self.source_path = source_path
+        self.proxy_path = proxy_path
         self.start_frame = start_frame
         self.end_frame = end_frame
         self.crop_keyframes = crop_keyframes or {}
@@ -55,6 +58,7 @@ class Clip:
             "id": self.id,
             "name": self.name,
             "source_path": str(self.source_path) if self.source_path else None,
+            "proxy_path": str(self.proxy_path) if self.proxy_path else None,
             "start_frame": self.start_frame,
             "end_frame": self.end_frame,
             "crop_keyframes": self.crop_keyframes,
@@ -71,6 +75,7 @@ class Clip:
         clip.id = data.get("id", str(uuid.uuid4()))
         clip.name = data.get("name", "Unnamed Clip")
         clip.source_path = data.get("source_path")
+        clip.proxy_path = data.get("proxy_path")
         clip.start_frame = data.get("start_frame", 0)
         clip.end_frame = data.get("end_frame", 0)
         clip.crop_keyframes = data.get("crop_keyframes", {})
@@ -328,10 +333,14 @@ def add_clip(source_path, start_frame, end_frame, name=None, output_resolution="
         The new clip object
     """
     try:
+        # Get proxy path from session state if available
+        proxy_path = st.session_state.get("proxy_path", None)
+
         # Create a new clip
         clip = Clip(
             name=name,
             source_path=source_path,
+            proxy_path=proxy_path,  # Set the proxy path from session state
             start_frame=start_frame,
             end_frame=end_frame,
             output_resolution=output_resolution,
