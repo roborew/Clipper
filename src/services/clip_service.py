@@ -367,11 +367,11 @@ def update_current_clip(
     Update the current clip in the session
 
     Args:
-        start_frame: New starting frame number
-        end_frame: New ending frame number
-        name: New name for the clip
-        crop_keyframes: New crop keyframes dictionary
-        output_resolution: New output resolution
+        start_frame: New starting frame number (optional)
+        end_frame: New ending frame number (optional)
+        name: New name for the clip (optional)
+        crop_keyframes: New crop keyframes dictionary (optional)
+        output_resolution: New output resolution (optional)
 
     Returns:
         True if successful, False otherwise
@@ -393,7 +393,7 @@ def update_current_clip(
 
         clip = st.session_state.clips[clip_index]
 
-        # Update clip properties
+        # Update clip properties if provided
         if start_frame is not None:
             clip.start_frame = start_frame
         if end_frame is not None:

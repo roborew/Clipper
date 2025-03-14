@@ -39,80 +39,40 @@ def display_video_player(
         The updated current frame number
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for playback: {proxy_path}")
+            video_path = proxy_path
+
         # Initialize session state for navigation
         if "nav_action" not in st.session_state:
             st.session_state.nav_action = None
 
-        # Initialize play state if not exists
-        if "is_playing" not in st.session_state:
-            st.session_state.is_playing = False
-        if "play_speed" not in st.session_state:
-            st.session_state.play_speed = 1.0  # Default playback speed multiplier
-        if "last_play_time" not in st.session_state:
-            st.session_state.last_play_time = None
-        if "auto_advance" not in st.session_state:
-            st.session_state.auto_advance = False
+        # Display the video with HTML components (half size)
+        st.subheader("Video Preview")
+        col_video1, col_video2 = st.columns([1, 1])
 
-        # Process navigation actions from previous render
-        if st.session_state.nav_action is not None:
-            action = st.session_state.nav_action
-            st.session_state.nav_action = None  # Reset the action
+        with col_video1:
+            # Calculate current time in seconds
+            current_time = current_frame / fps if fps > 0 else 0
 
-            if action == "first":
-                current_frame = 0
-            elif action == "prev":
-                current_frame = max(0, current_frame - 1)
-            elif action == "next":
-                current_frame = min(total_frames - 1, current_frame + 1)
-            elif action == "back10":
-                current_frame = max(0, current_frame - 10)
-            elif action == "forward10":
-                current_frame = min(total_frames - 1, current_frame + 10)
-            elif action == "last":
-                current_frame = total_frames - 1
-            elif action == "play_pause":
-                st.session_state.is_playing = not st.session_state.is_playing
-                if st.session_state.is_playing:
-                    st.session_state.last_play_time = datetime.datetime.now()
-                    st.session_state.auto_advance = True
-                else:
-                    st.session_state.auto_advance = False
+            # Display the video starting at the current frame
+            video_file = open(video_path, "rb")
+            video_bytes = video_file.read()
+            st.video(video_bytes, start_time=current_time)
 
-            # Call the frame change callback
-            if on_frame_change:
-                on_frame_change(current_frame)
+        with col_video2:
+            # Empty space to balance layout
+            st.write("")
 
-        # Handle playback if playing
-        if st.session_state.is_playing and st.session_state.auto_advance:
-            # Calculate how many frames to advance based on elapsed time
-            now = datetime.datetime.now()
-            if st.session_state.last_play_time:
-                elapsed = (now - st.session_state.last_play_time).total_seconds()
-                frames_to_advance = int(elapsed * fps * st.session_state.play_speed)
+        # Display current frame and controls side by side
+        st.subheader("Current Frame & Controls")
+        frame_col, controls_col = st.columns([3, 2])
 
-                if frames_to_advance > 0:
-                    # Advance frames
-                    current_frame = min(
-                        total_frames - 1, current_frame + frames_to_advance
-                    )
-                    st.session_state.last_play_time = now
-
-                    # Call the frame change callback
-                    if on_frame_change:
-                        on_frame_change(current_frame)
-
-                    # Stop at the end of the video
-                    if current_frame >= total_frames - 1:
-                        st.session_state.is_playing = False
-                        st.session_state.auto_advance = False
-            else:
-                st.session_state.last_play_time = now
-
-        # Create columns for the player layout
-        col1, col2 = st.columns([4, 1])
-
-        with col1:
-            # Display the current frame
+        with frame_col:
+            # Display current frame as an image for precise frame viewing
             frame = video_service.get_frame(video_path, current_frame)
 
             if frame is not None:
@@ -131,65 +91,53 @@ def display_video_player(
             else:
                 st.error(f"Could not load frame {current_frame}")
 
-        with col2:
+        with controls_col:
             # Video controls
-            st.subheader("Controls")
-
-            # Play/Pause button
-            play_col, speed_col = st.columns(2)
-            with play_col:
-                play_label = "⏸️ Pause" if st.session_state.is_playing else "▶️ Play"
-                if st.button(play_label, key="btn_play_pause"):
-                    st.session_state.nav_action = "play_pause"
-                    st.session_state.trigger_rerun = True
-
-            with speed_col:
-                # Playback speed selector
-                speed_options = [0.25, 0.5, 1.0, 2.0, 4.0]
-                speed_index = (
-                    speed_options.index(st.session_state.play_speed)
-                    if st.session_state.play_speed in speed_options
-                    else 2
-                )
-                new_speed = st.selectbox(
-                    "Speed", speed_options, index=speed_index, key="playback_speed"
-                )
-                if new_speed != st.session_state.play_speed:
-                    st.session_state.play_speed = new_speed
-                    if st.session_state.is_playing:
-                        st.session_state.last_play_time = datetime.datetime.now()
+            st.subheader("Frame Controls")
 
             # Frame navigation
             if st.button("⏮️ First Frame", key="btn_first"):
-                st.session_state.nav_action = "first"
-                st.session_state.trigger_rerun = True
+                current_frame = 0
+                if on_frame_change:
+                    on_frame_change(current_frame)
+                st.rerun()
 
             # Previous/Next frame buttons in a row
             prev_col, next_col = st.columns(2)
             with prev_col:
                 if st.button("⏪ Previous", key="btn_prev"):
-                    st.session_state.nav_action = "prev"
-                    st.session_state.trigger_rerun = True
+                    current_frame = max(0, current_frame - 1)
+                    if on_frame_change:
+                        on_frame_change(current_frame)
+                    st.rerun()
             with next_col:
                 if st.button("Next ⏩", key="btn_next"):
-                    st.session_state.nav_action = "next"
-                    st.session_state.trigger_rerun = True
+                    current_frame = min(total_frames - 1, current_frame + 1)
+                    if on_frame_change:
+                        on_frame_change(current_frame)
+                    st.rerun()
 
             # Jump buttons
             jump_col1, jump_col2 = st.columns(2)
             with jump_col1:
                 if st.button("-10 Frames", key="btn_back10"):
-                    st.session_state.nav_action = "back10"
-                    st.session_state.trigger_rerun = True
+                    current_frame = max(0, current_frame - 10)
+                    if on_frame_change:
+                        on_frame_change(current_frame)
+                    st.rerun()
             with jump_col2:
                 if st.button("+10 Frames", key="btn_forward10"):
-                    st.session_state.nav_action = "forward10"
-                    st.session_state.trigger_rerun = True
+                    current_frame = min(total_frames - 1, current_frame + 10)
+                    if on_frame_change:
+                        on_frame_change(current_frame)
+                    st.rerun()
 
             # Last frame button
             if st.button("Last Frame ⏭️", key="btn_last"):
-                st.session_state.nav_action = "last"
-                st.session_state.trigger_rerun = True
+                current_frame = total_frames - 1
+                if on_frame_change:
+                    on_frame_change(current_frame)
+                st.rerun()
 
             # Frame slider
             new_frame = st.slider("Frame", 0, max(0, total_frames - 1), current_frame)
@@ -197,14 +145,10 @@ def display_video_player(
                 current_frame = new_frame
                 if on_frame_change:
                     on_frame_change(current_frame)
+                st.rerun()
 
             # Timecode display
             st.text(f"Timecode: {video_service.format_timecode(current_frame, fps)}")
-
-        # Add a small delay and trigger rerun if playing to advance frames
-        if st.session_state.is_playing:
-            time.sleep(0.1)  # Small delay to prevent UI freezing
-            st.session_state.trigger_rerun = True
 
         return current_frame
 
@@ -315,7 +259,7 @@ def play_clip_preview(
     video_path, start_frame, end_frame, fps, crop_region=None, on_frame_change=None
 ):
     """
-    Play a preview of a clip
+    Play a preview of a clip using HTML5 video player
 
     Args:
         video_path: Path to the video file
@@ -334,85 +278,120 @@ def play_clip_preview(
             st.error("Start frame must be before end frame")
             return
 
-        # Create a placeholder for the video frame
-        frame_placeholder = st.empty()
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for clip preview: {proxy_path}")
+            video_path = proxy_path
 
-        # Create a progress bar
-        progress_bar = st.progress(0)
+        # Calculate start and end times in seconds
+        start_time = start_frame / fps if fps > 0 else 0
+        end_time = end_frame / fps if fps > 0 else 0
+        duration = end_time - start_time
 
         # Calculate total frames in clip
         total_frames = end_frame - start_frame + 1
 
-        # Display controls
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            play_button = st.button("▶️ Play", key="play_clip_btn")
-        with col2:
-            stop_button = st.button("⏹️ Stop", key="stop_clip_btn")
-        with col3:
-            speed_options = ["0.25x", "0.5x", "1x", "1.5x", "2x"]
-            selected_speed = st.selectbox(
-                "Speed", speed_options, index=2, key="clip_speed"
+        # Display video information
+        st.text(
+            f"Clip preview: {total_frames} frames ({video_service.format_duration(duration)})"
+        )
+
+        # Create compact layout for video preview
+        col_video1, col_video2 = st.columns([1, 1])
+
+        with col_video1:
+            # Display the video with HTML components to allow seeking
+            video_file = open(video_path, "rb")
+            video_bytes = video_file.read()
+            st.video(video_bytes, start_time=start_time)
+
+        with col_video2:
+            # Empty space to balance layout
+            st.write("")
+
+        # Initialize session state for current preview frame if not exists
+        if "preview_current_frame" not in st.session_state:
+            st.session_state.preview_current_frame = start_frame
+
+        # Display current frame and controls side by side
+        frame_col, controls_col = st.columns([3, 2])
+
+        with frame_col:
+            # Display the current frame as an image for precise frame viewing
+            frame = video_service.get_frame(
+                video_path, st.session_state.preview_current_frame
             )
-            speed_multiplier = float(selected_speed.replace("x", ""))
-
-        # Initialize playback state
-        is_playing = False
-        current_frame = start_frame
-
-        # Start playback if play button is clicked
-        if play_button:
-            is_playing = True
-
-        # Main playback loop
-        while is_playing and current_frame <= end_frame:
-            # Get the frame using video_service which will use proxy if available
-            frame = video_service.get_frame(video_path, current_frame)
-
-            if frame is None:
-                st.error(f"Could not read frame {current_frame}")
-                break
-
             if frame is not None:
-                # Apply crop if specified
-                if crop_region:
-                    # Get the crop region for this frame (could be interpolated)
-                    if callable(crop_region):
-                        frame_crop = crop_region(current_frame)
-                    else:
-                        frame_crop = crop_region
-
+                # Apply crop overlay if specified
+                if crop_region and callable(crop_region):
+                    frame_crop = crop_region(st.session_state.preview_current_frame)
                     if frame_crop:
-                        # Apply crop overlay
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                frame_placeholder.image(frame, use_container_width=True)
+                st.image(frame, use_container_width=True)
 
-                # Update progress
-                progress = (current_frame - start_frame) / (end_frame - start_frame)
-                progress_bar.progress(progress)
-
-                # Call frame change callback if provided
-                if on_frame_change:
-                    on_frame_change(current_frame)
-
-                # Sleep to maintain playback speed
-                time.sleep(1 / fps)
+                # Display frame information
+                st.caption(
+                    f"Frame: {st.session_state.preview_current_frame} / {end_frame} | "
+                    f"Time: {video_service.format_timecode(st.session_state.preview_current_frame, fps)}"
+                )
             else:
-                st.error(f"Could not load frame {current_frame}")
-                break
+                st.error(
+                    f"Could not load frame {st.session_state.preview_current_frame}"
+                )
 
-            # Stop playback if stop button is clicked
-            if stop_button:
-                is_playing = False
+        with controls_col:
+            # Add frame navigation controls
+            st.subheader("Frame Controls")
 
-            # Advance to the next frame
-            current_frame += 1
+            # Display current frame information
+            current_frame = st.session_state.preview_current_frame
+            st.text(f"Current Frame: {current_frame} / {end_frame}")
+            st.text(f"Time: {video_service.format_timecode(current_frame, fps)}")
 
-        # Set progress to 100% when done
-        progress_bar.progress(1.0)
-        st.success("Clip preview complete")
+            # Frame navigation
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                if st.button("⏮️ Start Frame", key="preview_first"):
+                    st.session_state.preview_current_frame = start_frame
+                    if on_frame_change:
+                        on_frame_change(start_frame)
+                    st.rerun()
+
+            with col2:
+                if st.button("Set In Point", key="set_in_point"):
+                    # Call the frame change callback to set in point
+                    if on_frame_change:
+                        on_frame_change(st.session_state.preview_current_frame)
+                    st.success(
+                        f"In point set at frame {st.session_state.preview_current_frame}"
+                    )
+
+            with col3:
+                if st.button("Set Out Point", key="set_out_point"):
+                    # Call the frame change callback to set out point
+                    if on_frame_change:
+                        on_frame_change(st.session_state.preview_current_frame)
+                    st.success(
+                        f"Out point set at frame {st.session_state.preview_current_frame}"
+                    )
+
+            # Frame slider for precise navigation
+            new_frame = st.slider(
+                "Frame",
+                start_frame,
+                end_frame,
+                st.session_state.preview_current_frame,
+                key="preview_frame_slider",
+            )
+            if new_frame != st.session_state.preview_current_frame:
+                st.session_state.preview_current_frame = new_frame
+                if on_frame_change:
+                    on_frame_change(new_frame)
+                st.rerun()
 
     except Exception as e:
         logger.exception(f"Error playing clip preview: {str(e)}")
