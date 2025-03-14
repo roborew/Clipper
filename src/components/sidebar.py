@@ -196,6 +196,13 @@ def display_video_selection(config_manager):
             # Display video information
             display_video_info(selected_video, config_manager)
 
+            # Load configuration for the selected video
+            clips_file = config_manager.get_clips_file_path(selected_video)
+            if clips_file.exists():
+                st.success(f"Loaded existing configuration from {clips_file}")
+            else:
+                st.info("Creating new configuration for this video")
+
             return selected_video
 
         return None
@@ -293,6 +300,34 @@ def display_clip_management():
     try:
         st.subheader("Clip Management")
 
+        # Get current video and config manager
+        current_video = st.session_state.get("current_video", None)
+        config_manager = st.session_state.get("config_manager", None)
+
+        # Add Reload Configuration button at the top
+        if current_video and config_manager:
+            clips_file = config_manager.get_clips_file_path(current_video)
+            col1, col2 = st.columns([3, 1])
+
+            with col1:
+                st.caption(f"Config: {os.path.basename(clips_file)}")
+
+            with col2:
+                if st.button(
+                    "🔄 Reload",
+                    key="reload_config_btn",
+                    help="Reload configuration from file",
+                ):
+                    success = clip_service.initialize_session_clips(config_manager)
+                    if success:
+                        if clips_file.exists():
+                            st.success(f"Reloaded configuration from {clips_file}")
+                        else:
+                            st.info("No existing configuration found. Starting fresh.")
+                    else:
+                        st.error("Failed to reload configuration")
+                    st.rerun()
+
         # Create New Clip button at the top of the clip management section
         if st.button("Create New Clip", key="create_new_clip_sidebar"):
             # Import here to avoid circular imports
@@ -313,6 +348,19 @@ def display_clip_management():
         if not clips:
             st.info("No clips created yet")
             return
+
+        # Show last save status if available
+        if (
+            "last_save_status" in st.session_state
+            and st.session_state.last_save_status is not None
+        ):
+            status = st.session_state.last_save_status
+            if isinstance(status, dict) and status.get("success"):
+                st.success(status.get("message", "Changes saved"))
+            elif isinstance(status, dict):
+                st.error(status.get("message", "Failed to save changes"))
+            # Clear the status after displaying
+            st.session_state.last_save_status = None
 
         # Display list of clips
         for i, clip in enumerate(clips):
@@ -338,14 +386,21 @@ def display_clip_management():
 
                     # Delete button
                     if st.button("Delete", key=f"delete_clip_{i}"):
+                        # Delete the clip
                         clip_service.delete_clip(i)
+                        # Auto-save after deletion
+                        success = clip_service.save_session_clips()
+                        if success:
+                            st.session_state.last_save_status = {
+                                "success": True,
+                                "message": f"Deleted and saved clip: {clip.name}",
+                            }
+                        else:
+                            st.session_state.last_save_status = {
+                                "success": False,
+                                "message": f"Failed to save after deleting clip: {clip.name}",
+                            }
                         st.rerun()
-
-        # Save clips button
-        if st.session_state.clip_modified:
-            if st.button("Save Clips", key="save_clips_btn_clips_section"):
-                clip_service.save_session_clips()
-                st.rerun()
 
     except Exception as e:
         logger.exception(f"Error displaying clip management: {str(e)}")
@@ -467,41 +522,6 @@ def display_settings(config_manager):
         # Clean up proxies section
         st.subheader("Maintenance")
         proxy_service.cleanup_proxy_files(config_manager)
-
-        # Configuration file management
-        st.subheader("Configuration")
-
-        # Get the current video path
-        current_video = st.session_state.get("current_video", None)
-
-        # Get the current clips file path
-        clips_file = config_manager.get_clips_file_path(current_video)
-        st.info(f"Clips file: {clips_file}")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-            # Save configuration button
-            if st.button("Save Clips", key="save_clips_btn"):
-                from src.services import clip_service
-
-                success = clip_service.save_session_clips(config_manager)
-                if success:
-                    st.success("Clips saved successfully")
-                else:
-                    st.error("Failed to save clips")
-
-        with col2:
-            # Load configuration button
-            if st.button("Reload Clips", key="reload_clips_btn"):
-                from src.services import clip_service
-
-                success = clip_service.initialize_session_clips(config_manager)
-                if success:
-                    st.success("Clips reloaded successfully")
-                    st.rerun()
-                else:
-                    st.error("Failed to reload clips")
 
     except Exception as e:
         logger.exception(f"Error displaying settings: {str(e)}")

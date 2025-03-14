@@ -362,11 +362,19 @@ def handle_set_start():
             # Update the clip
             clip_service.update_current_clip()
 
-            # Save clips
-            clip_service.save_session_clips()
+            # Auto-save the changes
+            success = clip_service.save_session_clips()
+            if success:
+                st.session_state.last_save_status = {
+                    "success": True,
+                    "message": f"Set and saved start frame to {current_clip.start_frame}",
+                }
+            else:
+                st.session_state.last_save_status = {
+                    "success": False,
+                    "message": "Failed to save changes",
+                }
 
-            # Show success message
-            st.success(f"Start frame set to {current_clip.start_frame}")
             logger.info(f"Start frame set to {current_clip.start_frame}")
 
             # Force a rerun to update the UI
@@ -405,11 +413,19 @@ def handle_set_end():
             # Update the clip
             clip_service.update_current_clip()
 
-            # Save clips
-            clip_service.save_session_clips()
+            # Auto-save the changes
+            success = clip_service.save_session_clips()
+            if success:
+                st.session_state.last_save_status = {
+                    "success": True,
+                    "message": f"Set and saved end frame to {current_clip.end_frame}",
+                }
+            else:
+                st.session_state.last_save_status = {
+                    "success": False,
+                    "message": "Failed to save changes",
+                }
 
-            # Show success message
-            st.success(f"End frame set to {current_clip.end_frame}")
             logger.info(f"End frame set to {current_clip.end_frame}")
 
             # Force a rerun to update the UI
@@ -600,11 +616,20 @@ def handle_new_clip(video_path=None):
             output_resolution=st.session_state.output_resolution,
         )
 
-        logger.info(f"Created new clip: {clip.name}")
-        st.success(f"Created new clip: {clip.name}")
+        # Auto-save after creating new clip
+        success = clip_service.save_session_clips()
+        if success:
+            st.session_state.last_save_status = {
+                "success": True,
+                "message": f"Created and saved new clip: {clip.name}",
+            }
+        else:
+            st.session_state.last_save_status = {
+                "success": False,
+                "message": "Failed to save new clip",
+            }
 
-        # Save clips to file
-        clip_service.save_session_clips()
+        logger.info(f"Created new clip: {clip.name}")
 
         # Set a flag to trigger rerun
         st.session_state.trigger_rerun = True
@@ -650,7 +675,7 @@ def display_crop_controls(current_clip=None, current_frame=0, crop_region=None):
 
             # Clear crop button
             if st.button("Clear Crop Keyframe", key=f"clear_crop_{current_frame}"):
-                handle_clear_crop(current_frame)
+                handle_clear_crop()
 
         # Select crop button
         if st.button(
@@ -686,36 +711,83 @@ def handle_select_crop():
         st.error(f"Error selecting crop: {str(e)}")
 
 
-def handle_clear_crop(frame_number=None):
+def handle_clear_crop():
     """Handle clear crop button click"""
     try:
         # Get current clip
         current_clip = clip_service.get_current_clip()
-
         if not current_clip:
             st.warning("No clip selected")
             return
 
-        # Use current frame if not specified
-        if frame_number is None:
-            frame_number = st.session_state.current_frame
+        # Clear crop keyframe for current frame
+        current_frame = st.session_state.current_frame
+        if str(current_frame) in current_clip.crop_keyframes:
+            del current_clip.crop_keyframes[str(current_frame)]
 
-        # Remove keyframe at current frame
-        success = clip_service.remove_crop_keyframe(frame_number)
+            # Update the clip
+            clip_service.update_current_clip()
 
+            # Auto-save the changes
+            success = clip_service.save_session_clips()
+            if success:
+                st.session_state.last_save_status = {
+                    "success": True,
+                    "message": f"Cleared and saved crop region at frame {current_frame}",
+                }
+            else:
+                st.session_state.last_save_status = {
+                    "success": False,
+                    "message": "Failed to save after clearing crop region",
+                }
+
+            logger.info(f"Cleared crop region at frame {current_frame}")
+
+            # Force a rerun to update the UI
+            st.session_state.trigger_rerun = True
+
+    except Exception as e:
+        logger.exception(f"Error clearing crop region: {str(e)}")
+        st.error(f"Error clearing crop region: {str(e)}")
+
+
+def handle_crop_update(crop_region):
+    """Handle crop region update"""
+    try:
+        # Get current clip
+        current_clip = clip_service.get_current_clip()
+        if not current_clip:
+            st.warning("No clip selected")
+            return
+
+        # Update crop keyframe
+        current_frame = st.session_state.current_frame
+        current_clip.crop_keyframes[str(current_frame)] = crop_region
+
+        # Update the clip
+        clip_service.update_current_clip()
+
+        # Auto-save the changes
+        success = clip_service.save_session_clips()
         if success:
-            logger.info(f"Removed crop keyframe at frame {frame_number}")
-            st.success(f"Removed crop keyframe at frame {frame_number}")
+            st.session_state.last_save_status = {
+                "success": True,
+                "message": f"Set and saved crop region at frame {current_frame}",
+            }
         else:
-            logger.warning(f"No keyframe at frame {frame_number}")
-            st.warning(f"No keyframe at frame {frame_number}")
+            st.session_state.last_save_status = {
+                "success": False,
+                "message": "Failed to save crop region changes",
+            }
 
-        # Set a flag to trigger rerun
+        logger.info(f"Updated crop region at frame {current_frame}")
+
+        # Force a rerun to update the UI
         st.session_state.trigger_rerun = True
 
     except Exception as e:
-        logger.exception(f"Error clearing crop: {str(e)}")
-        st.error(f"Error clearing crop: {str(e)}")
+        logger.exception(f"Error updating crop region: {str(e)}")
+        st.error(f"Error updating crop region: {str(e)}")
 
 
 if __name__ == "__main__":
