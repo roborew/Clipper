@@ -5,6 +5,8 @@ directories:
     configs: _configs
   proxy:
     base: proxy_videos
+    raw: RAW
+    clipped: CLIPPED
   source:
     base: data/source
     calibrated: 02_CALIBRATED_FOOTAGE

@@ -21,7 +21,11 @@ logger = logging.getLogger("clipper.proxy")
 
 
 def create_proxy_video(
-    source_path, progress_placeholder=None, progress_callback=None, config_manager=None
+    source_path,
+    progress_placeholder=None,
+    progress_callback=None,
+    config_manager=None,
+    is_clip=False,
 ):
     """
     Create a proxy (web-compatible) version of the video for faster playback
@@ -31,6 +35,7 @@ def create_proxy_video(
         progress_placeholder: Streamlit placeholder for progress updates
         progress_callback: Callback function for progress updates
         config_manager: ConfigManager instance
+        is_clip: Whether this is a clip preview (True) or raw video proxy (False)
 
     Returns:
         Path to the proxy video or None if creation failed
@@ -48,7 +53,7 @@ def create_proxy_video(
             return None
 
         # Get proxy path from config manager
-        proxy_path = config_manager.get_proxy_path(Path(source_path))
+        proxy_path = config_manager.get_proxy_path(Path(source_path), is_clip)
 
         # Check if proxy already exists
         if proxy_path.exists():
@@ -806,18 +811,30 @@ def cleanup_proxy_files(config_manager=None):
         if not config_manager:
             config_manager = st.session_state.config_manager
 
-        proxy_dir = config_manager.proxy_dir
+        # Get both proxy directories
+        proxy_raw_dir = config_manager.proxy_raw_dir
+        proxy_clipped_dir = config_manager.proxy_clipped_dir
 
-        # Display information about the proxy directory
-        if not proxy_dir.exists():
-            st.info(f"Proxy directory does not exist: {proxy_dir}")
+        # Display information about the proxy directories
+        if not proxy_raw_dir.exists() and not proxy_clipped_dir.exists():
+            st.info("No proxy directories exist")
             return False
 
-        # Count proxy files
-        proxy_files = list(proxy_dir.glob("**/*.mp4"))
-        file_count = len(proxy_files)
+        # Count proxy files in both directories
+        raw_files = (
+            list(proxy_raw_dir.glob("**/*.mp4")) if proxy_raw_dir.exists() else []
+        )
+        clipped_files = (
+            list(proxy_clipped_dir.glob("**/*.mp4"))
+            if proxy_clipped_dir.exists()
+            else []
+        )
 
-        if file_count == 0:
+        raw_count = len(raw_files)
+        clipped_count = len(clipped_files)
+        total_count = raw_count + clipped_count
+
+        if total_count == 0:
             st.info("No proxy files to clean up.")
             return False
 
@@ -825,8 +842,11 @@ def cleanup_proxy_files(config_manager=None):
         if "cleanup_confirm_state" not in st.session_state:
             st.session_state.cleanup_confirm_state = "initial"
 
-        # Show button with file count
-        if st.button(f"Clean Up {file_count} Proxy Videos", key="cleanup_proxy_btn"):
+        # Show button with file count breakdown
+        if st.button(
+            f"Clean Up Proxy Videos ({raw_count} raw, {clipped_count} clipped)",
+            key="cleanup_proxy_btn",
+        ):
             # Set state to confirmation
             st.session_state.cleanup_confirm_state = "confirm"
             st.rerun()
@@ -837,35 +857,49 @@ def cleanup_proxy_files(config_manager=None):
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("Yes, Delete All Proxies", key="confirm_cleanup"):
-                    # Recursively find and delete all files in proxy directory
                     deleted_count = 0
-                    for file in proxy_dir.glob("**/*"):
-                        if file.is_file():
+                    dir_count = 0
+
+                    # Function to clean up a directory
+                    def cleanup_directory(directory):
+                        nonlocal deleted_count, dir_count
+                        if not directory.exists():
+                            return
+
+                        # Delete all files
+                        for file in directory.glob("**/*"):
+                            if file.is_file():
+                                try:
+                                    file.unlink()
+                                    deleted_count += 1
+                                    logger.info(f"Deleted proxy file: {file}")
+                                except Exception as e:
+                                    logger.error(
+                                        f"Error deleting proxy file {file}: {str(e)}"
+                                    )
+
+                        # Remove empty directories (except the root directory)
+                        for dir_path in sorted(
+                            [p for p in directory.glob("**/*") if p.is_dir()],
+                            reverse=True,
+                        ):
                             try:
-                                file.unlink()
-                                deleted_count += 1
-                                logger.info(f"Deleted proxy file: {file}")
+                                if dir_path != directory and not any(
+                                    dir_path.iterdir()
+                                ):
+                                    dir_path.rmdir()
+                                    dir_count += 1
+                                    logger.info(
+                                        f"Removed empty proxy directory: {dir_path}"
+                                    )
                             except Exception as e:
                                 logger.error(
-                                    f"Error deleting proxy file {file}: {str(e)}"
+                                    f"Error removing proxy directory {dir_path}: {str(e)}"
                                 )
 
-                    # Remove empty directories (except the root proxy directory)
-                    dir_count = 0
-                    for dir_path in sorted(
-                        [p for p in proxy_dir.glob("**/*") if p.is_dir()], reverse=True
-                    ):
-                        try:
-                            if dir_path != proxy_dir and not any(dir_path.iterdir()):
-                                dir_path.rmdir()
-                                dir_count += 1
-                                logger.info(
-                                    f"Removed empty proxy directory: {dir_path}"
-                                )
-                        except Exception as e:
-                            logger.error(
-                                f"Error removing proxy directory {dir_path}: {str(e)}"
-                            )
+                    # Clean up both directories
+                    cleanup_directory(proxy_raw_dir)
+                    cleanup_directory(proxy_clipped_dir)
 
                     # Reset proxy path in session state if it was deleted
                     if (
@@ -896,3 +930,212 @@ def cleanup_proxy_files(config_manager=None):
         logger.error(f"Error cleaning up proxy files: {str(e)}")
         st.error(f"Error cleaning up proxy files: {str(e)}")
         return False
+
+
+def create_clip_preview(
+    source_path,
+    clip_name,
+    start_frame,
+    end_frame,
+    progress_placeholder=None,
+    config_manager=None,
+):
+    """
+    Create a preview video for a clip
+
+    Args:
+        source_path: Path to the source video
+        clip_name: Name of the clip
+        start_frame: Start frame of the clip
+        end_frame: End frame of the clip
+        progress_placeholder: Streamlit placeholder for progress updates
+        config_manager: ConfigManager instance
+
+    Returns:
+        Path to the preview video or None if creation failed
+    """
+    try:
+        if not config_manager:
+            config_manager = st.session_state.config_manager
+
+        # Get preview path
+        preview_path = config_manager.get_clip_preview_path(
+            Path(source_path), clip_name
+        )
+
+        # Check if preview already exists
+        if preview_path.exists():
+            logger.info(f"Clip preview already exists: {preview_path}")
+            return str(preview_path)
+
+        # Ensure the parent directory exists
+        preview_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Get video duration for progress calculation
+        duration_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(source_path),
+        ]
+
+        try:
+            duration_cmd_str = " ".join(
+                (
+                    f'"{arg}"'
+                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                    else str(arg)
+                )
+                for arg in duration_cmd
+            )
+            duration_result = subprocess.run(
+                duration_cmd_str,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=True,
+            )
+            duration = (
+                float(duration_result.stdout.strip())
+                if duration_result.returncode == 0
+                else 0
+            )
+        except Exception as e:
+            logger.warning(f"Could not determine video duration: {str(e)}")
+            duration = 0
+
+        # Get video FPS
+        fps_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=r_frame_rate",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(source_path),
+        ]
+
+        try:
+            fps_cmd_str = " ".join(
+                (
+                    f'"{arg}"'
+                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                    else str(arg)
+                )
+                for arg in fps_cmd
+            )
+            fps_result = subprocess.run(
+                fps_cmd_str,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=True,
+            )
+            if fps_result.returncode == 0:
+                fps_str = fps_result.stdout.strip()
+                if "/" in fps_str:
+                    num, den = map(int, fps_str.split("/"))
+                    fps = num / den
+                else:
+                    fps = float(fps_str)
+            else:
+                fps = 30  # Default to 30 fps if we can't determine it
+        except Exception as e:
+            logger.warning(f"Could not determine video FPS: {str(e)}")
+            fps = 30
+
+        # Calculate start and end times in seconds
+        start_time = start_frame / fps
+        end_time = end_frame / fps
+
+        # Create ffmpeg command for clip preview
+        proxy_settings = config_manager.get_proxy_settings()
+        cmd = [
+            "ffmpeg",
+            "-y",  # Overwrite output file if it exists
+            "-ss",
+            str(start_time),
+            "-i",
+            str(source_path),
+            "-t",
+            str(end_time - start_time),
+            "-vf",
+            f"scale={proxy_settings['width']}:-2",  # Scale width to proxy width, maintain aspect ratio
+            "-c:v",
+            "libx264",
+            "-crf",
+            str(proxy_settings["quality"]),
+            "-preset",
+            "medium",
+            "-c:a",
+            "aac",
+            "-b:a",
+            proxy_settings["audio_bitrate"],
+            str(preview_path),
+        ]
+
+        # Show progress
+        if progress_placeholder:
+            progress_placeholder.text("Creating clip preview...")
+            progress_bar = st.progress(0)
+
+        # Convert command list to string for shell execution
+        cmd_str = " ".join(
+            (
+                f'"{arg}"'
+                if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                else str(arg)
+            )
+            for arg in cmd
+        )
+
+        # Start the conversion process
+        process = subprocess.Popen(
+            cmd_str,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            shell=True,
+        )
+
+        # Monitor progress
+        while True:
+            line = process.stderr.readline()
+            if not line:
+                break
+            # Update progress if possible
+            if progress_placeholder and duration > 0:
+                time_match = re.search(r"time=(\d+):(\d+):(\d+.\d+)", line)
+                if time_match:
+                    hours, minutes, seconds = map(float, time_match.groups())
+                    current_time = hours * 3600 + minutes * 60 + seconds
+                    progress = min(current_time / duration, 1.0)
+                    progress_bar.progress(progress)
+
+        # Wait for process to complete
+        process.wait()
+
+        # Check if preview was created successfully
+        if os.path.exists(preview_path):
+            logger.info(f"Clip preview created successfully: {preview_path}")
+            if progress_placeholder:
+                progress_placeholder.success("✅ Clip preview created successfully!")
+            return str(preview_path)
+        else:
+            logger.error("Failed to create clip preview")
+            if progress_placeholder:
+                progress_placeholder.error("Failed to create clip preview")
+            return None
+
+    except Exception as e:
+        logger.exception(f"Error creating clip preview: {str(e)}")
+        if progress_placeholder:
+            progress_placeholder.error(f"Error creating clip preview: {str(e)}")
+        return None

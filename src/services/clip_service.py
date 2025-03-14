@@ -472,7 +472,7 @@ def delete_clip(clip_index=None):
 
 def add_crop_keyframe(frame_number, crop_region, clip_index=None):
     """
-    Add a crop keyframe to a clip
+    Add a crop keyframe to a clip and save changes
 
     Args:
         frame_number: Frame number for the keyframe
@@ -510,9 +510,26 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
         # Mark as modified
         st.session_state.clip_modified = True
 
-        logger.info(f"Added crop keyframe at frame {frame_number} to clip {clip.name}")
+        # Auto-save the changes
+        success = save_session_clips()
+        if success:
+            logger.info(
+                f"Added and saved crop keyframe at frame {frame_number} to clip {clip.name}"
+            )
+            st.session_state.last_save_status = {
+                "success": True,
+                "message": f"Added and saved crop keyframe at frame {frame_number}",
+            }
+        else:
+            logger.warning(
+                f"Failed to save after adding crop keyframe at frame {frame_number}"
+            )
+            st.session_state.last_save_status = {
+                "success": False,
+                "message": "Failed to save after adding crop keyframe",
+            }
 
-        return True
+        return success
 
     except Exception as e:
         logger.exception(f"Error adding crop keyframe: {str(e)}")

@@ -115,6 +115,7 @@ class FrameAnimator {
     const frameCounter = document.createElement("span");
     frameCounter.id = `${this.containerId}-counter`;
     frameCounter.textContent = `Frame: ${this.startFrame} / ${this.endFrame}`;
+    frameCounter.style.color = "white";
 
     // Add elements to controls
     controls.appendChild(playButton);

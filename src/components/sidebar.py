@@ -105,22 +105,26 @@ def display_video_selection(config_manager):
 
             # Try to find a camera type in the path
             camera_type = "Other"
-            for part in parts:
+            session_folder = "Unknown"
+            for i, part in enumerate(parts):
                 # Look for common camera type patterns in the path
                 if any(
                     cam in part.upper()
                     for cam in ["SONY", "GP", "GOPRO", "CANON", "NIKON", "CAM"]
                 ):
                     camera_type = part
+                    # Try to get the session folder (next folder after camera type)
+                    if i + 1 < len(parts):
+                        session_folder = parts[i + 1]
                     break
 
             # Add to camera groups
             if camera_type not in camera_groups:
                 camera_groups[camera_type] = []
-            camera_groups[camera_type].append(video_path)
+            camera_groups[camera_type].append((video_path, session_folder))
 
-        # Add "All" option
-        camera_groups["All Videos"] = video_files
+        # Add "All" option with all videos
+        camera_groups["All Videos"] = [(v, get_session_folder(v)) for v in video_files]
 
         # Sort camera types
         camera_types = sorted(list(camera_groups.keys()))
@@ -147,15 +151,15 @@ def display_video_selection(config_manager):
         # Get videos for the selected camera
         filtered_videos = camera_groups[selected_camera]
 
-        # Create a selectbox with video filenames and proxy indicators
+        # Create a selectbox with video filenames, session folders, and proxy indicators
         video_options = []
-        for v in filtered_videos:
+        for v, session in filtered_videos:
             basename = os.path.basename(v)
             if videos_with_proxies.get(str(v), False):
                 # Add green tick for videos with proxies
-                video_options.append(f"✅ {basename}")
+                video_options.append(f"✅ [{session}] {basename}")
             else:
-                video_options.append(basename)
+                video_options.append(f"[{session}] {basename}")
 
         # Add a "None" option at the beginning
         video_options.insert(0, "Select a video...")
@@ -191,17 +195,40 @@ def display_video_selection(config_manager):
             selected_index = (
                 video_options.index(selected_option) - 1
             )  # Adjust for the "None" option
-            selected_video = filtered_videos[selected_index]
+            selected_video = filtered_videos[selected_index][
+                0
+            ]  # Get just the path, not the session
 
             # Display video information
             display_video_info(selected_video, config_manager)
 
+            # Add regenerate proxy button at the bottom of video tab
+            st.markdown("---")  # Add separator
+            if proxy_service.proxy_exists_for_video(selected_video, config_manager):
+                if st.button("🔄 Regenerate Proxy", key="regenerate_proxy_bottom"):
+                    proxy_path = config_manager.get_proxy_path(Path(selected_video))
+                    try:
+                        # Delete existing proxy
+                        if os.path.exists(proxy_path):
+                            os.remove(proxy_path)
+                            st.info("Deleted existing proxy, generating new one...")
+                            st.rerun()
+                    except Exception as e:
+                        logger.exception(f"Error deleting proxy: {str(e)}")
+                        st.error("Failed to delete existing proxy")
+
             # Load configuration for the selected video
             clips_file = config_manager.get_clips_file_path(selected_video)
-            if clips_file.exists():
-                st.success(f"Loaded existing configuration from {clips_file}")
+
+            # Always try to initialize clips when a video is selected
+            success = clip_service.initialize_session_clips(config_manager)
+            if success:
+                if clips_file.exists():
+                    st.success(f"Loaded existing configuration from {clips_file}")
+                else:
+                    st.info("Creating new configuration for this video")
             else:
-                st.info("Creating new configuration for this video")
+                st.error("Failed to initialize configuration")
 
             return selected_video
 
@@ -211,6 +238,19 @@ def display_video_selection(config_manager):
         logger.exception(f"Error displaying video selection: {str(e)}")
         st.error(f"Error displaying video selection: {str(e)}")
         return None
+
+
+def get_session_folder(video_path):
+    """Helper function to extract session folder from video path"""
+    parts = Path(video_path).parts
+    for i, part in enumerate(parts):
+        if any(
+            cam in part.upper()
+            for cam in ["SONY", "GP", "GOPRO", "CANON", "NIKON", "CAM"]
+        ):
+            if i + 1 < len(parts):
+                return parts[i + 1]
+    return "Unknown"
 
 
 def display_video_info(video_path, config_manager):
@@ -225,41 +265,116 @@ def display_video_info(video_path, config_manager):
         None
     """
     try:
-        # Check if video info is already in session state
-        video_info_key = f"video_info_{video_path}"
+        # Import here to avoid circular imports
+        from src.services import video_service
 
-        if video_info_key not in st.session_state:
-            # Import here to avoid circular imports
-            from src.services import video_service
+        # First verify the original video file exists and is accessible
+        if not os.path.exists(video_path):
+            st.error(f"Video file not found: {video_path}")
+            logger.error(f"Video file not found: {video_path}")
+            return
 
-            # Get video information
-            video_info = video_service.get_video_info(video_path)
+        if not os.access(video_path, os.R_OK):
+            st.error(f"Cannot read video file (check permissions): {video_path}")
+            logger.error(f"Cannot read video file (check permissions): {video_path}")
+            return
 
-            # Store in session state
-            st.session_state[video_info_key] = video_info
-        else:
-            video_info = st.session_state[video_info_key]
+        # Display file path for debugging
+        st.caption(f"Loading video: {video_path}")
 
-        if video_info:
-            # Display video information
-            st.text(f"Resolution: {video_info['width']}x{video_info['height']}")
-            st.text(f"Duration: {video_info['duration_formatted']}")
-            st.text(f"FPS: {video_info['fps']:.2f}")
-            st.text(f"Frames: {video_info['total_frames']}")
+        # Clear any cached video info
+        video_info_keys = [
+            key
+            for key in st.session_state.keys()
+            if key.startswith(("video_info_", "original_video_info_"))
+        ]
+        for key in video_info_keys:
+            del st.session_state[key]
 
-            # Check if proxy exists
-            proxy_exists = proxy_service.proxy_exists_for_video(
-                video_path, config_manager
+        # Temporarily remove proxy path from session state to get original video info
+        proxy_path_backup = st.session_state.pop("proxy_path", None)
+
+        # Get original video info
+        original_video_info = video_service.get_video_info(video_path)
+
+        # Restore proxy path if it existed
+        if proxy_path_backup:
+            st.session_state.proxy_path = proxy_path_backup
+
+        # Verify frame count makes sense with duration
+        if original_video_info:
+            expected_frames = int(
+                original_video_info["duration"] * original_video_info["fps"]
+            )
+            if (
+                abs(expected_frames - original_video_info["total_frames"])
+                > original_video_info["fps"]
+            ):
+                logger.warning(
+                    f"Frame count mismatch: Got {original_video_info['total_frames']}, expected ~{expected_frames}"
+                )
+                # Use the calculated frame count instead
+                original_video_info["total_frames"] = expected_frames
+
+        # Check if proxy exists and get proxy info
+        proxy_exists = proxy_service.proxy_exists_for_video(video_path, config_manager)
+        proxy_path = None
+        proxy_video_info = None
+
+        if proxy_exists:
+            proxy_path = config_manager.get_proxy_path(Path(video_path))
+            st.caption(f"Checking proxy: {proxy_path}")
+
+            # Verify proxy file exists and is readable
+            if not os.path.exists(proxy_path):
+                st.warning(f"Proxy file marked as existing but not found: {proxy_path}")
+                logger.warning(f"Proxy file not found: {proxy_path}")
+                proxy_exists = False
+            elif not os.access(proxy_path, os.R_OK):
+                st.warning(f"Cannot read proxy file (check permissions): {proxy_path}")
+                logger.warning(f"Cannot read proxy file: {proxy_path}")
+                proxy_exists = False
+            else:
+                # Get proxy video info
+                proxy_video_info = video_service.get_video_info(proxy_path)
+                if not proxy_video_info:
+                    st.warning(
+                        "Could not read proxy video information - will regenerate"
+                    )
+                    logger.warning(f"Could not read proxy video info: {proxy_path}")
+                    proxy_exists = False
+
+        if original_video_info:
+            # Display original video information
+            st.text(
+                f"Original Resolution: {original_video_info['width']}x{original_video_info['height']}"
+            )
+            st.text(f"Duration: {original_video_info['duration_formatted']}")
+            st.text(f"FPS: {original_video_info['fps']:.2f}")
+            st.text(
+                f"Frames: {original_video_info['total_frames']} ({expected_frames} expected)"
             )
 
-            if proxy_exists:
-                st.success("Proxy: Available")
-
-                # Get proxy path
-                proxy_path = config_manager.get_proxy_path(Path(video_path))
-
+            if proxy_exists and proxy_video_info:
+                st.success("✅ Proxy: Available")
+                st.text(
+                    f"Proxy Resolution: {proxy_video_info['width']}x{proxy_video_info['height']}"
+                )
+                st.text(f"Proxy Frames: {proxy_video_info['total_frames']}")
                 # Store proxy path in session state
                 st.session_state.proxy_path = str(proxy_path)
+
+                # Show warning if frame counts don't match
+                if (
+                    abs(
+                        proxy_video_info["total_frames"]
+                        - original_video_info["total_frames"]
+                    )
+                    > 10
+                ):
+                    st.warning(
+                        "⚠️ Proxy may be incomplete - use regenerate button below to create a new one"
+                    )
             else:
                 st.warning(
                     "Proxy: Not available - Generating proxy for smoother performance..."
@@ -277,7 +392,14 @@ def display_video_info(video_path, config_manager):
 
                 if proxy_path:
                     st.session_state.proxy_path = proxy_path
-                    st.success("Proxy video created successfully!")
+                    # Get and display the new proxy's resolution
+                    new_proxy_info = video_service.get_video_info(proxy_path)
+                    if new_proxy_info:
+                        st.success("✅ Proxy video created successfully!")
+                        st.text(
+                            f"Proxy Resolution: {new_proxy_info['width']}x{new_proxy_info['height']}"
+                        )
+                        st.text(f"Proxy Frames: {new_proxy_info['total_frames']}")
                 else:
                     st.error(
                         "Failed to create proxy video. Using original video (may be slower)."
@@ -304,42 +426,130 @@ def display_clip_management():
         current_video = st.session_state.get("current_video", None)
         config_manager = st.session_state.get("config_manager", None)
 
-        # Add Reload Configuration button at the top
-        if current_video and config_manager:
-            clips_file = config_manager.get_clips_file_path(current_video)
-            col1, col2 = st.columns([3, 1])
+        # Always show the configuration status and reload button
+        if config_manager:
+            clips_file = (
+                config_manager.get_clips_file_path(current_video)
+                if current_video
+                else None
+            )
+
+            # Create columns for the config info and buttons
+            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
             with col1:
-                st.caption(f"Config: {os.path.basename(clips_file)}")
+                if current_video:
+                    # Show unsaved indicator if there are modifications
+                    if st.session_state.get("clip_modified", False):
+                        st.caption(
+                            f"Config*: {os.path.basename(clips_file) if clips_file else 'None'} (unsaved)"
+                        )
+                    else:
+                        st.caption(
+                            f"Config: {os.path.basename(clips_file) if clips_file else 'None'}"
+                        )
+                else:
+                    st.caption("No video selected")
 
             with col2:
-                if st.button(
+                # Save button - only enabled if there are unsaved changes
+                save_button = st.button(
+                    "💾 Save",
+                    key="save_config_btn",
+                    help="Save current configuration",
+                    disabled=not (
+                        current_video and st.session_state.get("clip_modified", False)
+                    ),
+                )
+                if save_button and current_video:
+                    success = clip_service.save_session_clips(config_manager)
+                    if success:
+                        st.success("Configuration saved successfully")
+                    else:
+                        st.error("Failed to save configuration")
+                    st.rerun()
+
+            with col3:
+                reload_button = st.button(
                     "🔄 Reload",
                     key="reload_config_btn",
                     help="Reload configuration from file",
-                ):
-                    success = clip_service.initialize_session_clips(config_manager)
-                    if success:
-                        if clips_file.exists():
-                            st.success(f"Reloaded configuration from {clips_file}")
-                        else:
-                            st.info("No existing configuration found. Starting fresh.")
+                    disabled=not current_video,
+                )
+                if reload_button and current_video:
+                    if st.session_state.get("clip_modified", False):
+                        st.warning(
+                            "You have unsaved changes. Save first or they will be lost!"
+                        )
+                        if st.button("Reload anyway", key="reload_anyway"):
+                            success = clip_service.initialize_session_clips(
+                                config_manager
+                            )
+                            if success:
+                                if clips_file and clips_file.exists():
+                                    st.success(
+                                        f"Reloaded configuration from {clips_file}"
+                                    )
+                                else:
+                                    st.info("No existing configuration found")
+                            else:
+                                st.error("Failed to reload configuration")
+                            st.rerun()
                     else:
-                        st.error("Failed to reload configuration")
-                    st.rerun()
+                        success = clip_service.initialize_session_clips(config_manager)
+                        if success:
+                            if clips_file and clips_file.exists():
+                                st.success(f"Reloaded configuration from {clips_file}")
+                            else:
+                                st.info("No existing configuration found")
+                        else:
+                            st.error("Failed to reload configuration")
+                        st.rerun()
 
-        # Create New Clip button at the top of the clip management section
-        if st.button("Create New Clip", key="create_new_clip_sidebar"):
-            # Import here to avoid circular imports
-            from src.app import handle_new_clip
+            # Show Generate Config button only when we have a video but no config file
+            with col4:
+                if current_video and (not clips_file or not clips_file.exists()):
+                    if st.button(
+                        "➕ Generate",
+                        key="generate_config_btn",
+                        help="Generate new configuration file",
+                    ):
+                        try:
+                            # Create empty config file
+                            if clips_file:
+                                # Ensure directory exists
+                                os.makedirs(os.path.dirname(clips_file), exist_ok=True)
+                                # Create empty clips list
+                                with open(clips_file, "w") as f:
+                                    f.write("[]")
+                                st.success(f"Generated new config file: {clips_file}")
+                                # Initialize clips
+                                clip_service.initialize_session_clips(config_manager)
+                                st.rerun()
+                        except Exception as e:
+                            logger.exception(f"Error generating config file: {str(e)}")
+                            st.error("Failed to generate config file")
 
-            # Create a new clip using the current video
-            handle_new_clip()
-            st.rerun()
+        # Create New Clip button (only enabled if video is selected)
+        if st.button(
+            "Create New Clip", key="create_new_clip_sidebar", disabled=not current_video
+        ):
+            if current_video:
+                # Import here to avoid circular imports
+                from src.app import handle_new_clip
+
+                # Create a new clip using the current video
+                handle_new_clip()
+                st.rerun()
+
+        # Display clips section
+        if not current_video:
+            st.info("Select a video to manage clips")
+            return
 
         # Check if clips are initialized
         if "clips" not in st.session_state:
-            st.info("No clips available")
+            st.info("No clips loaded")
             return
 
         # Get clips from session state
