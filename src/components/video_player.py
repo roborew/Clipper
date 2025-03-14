@@ -446,8 +446,8 @@ def display_keyframe_list(
         for frame in keyframe_frames:
             # Create a container for this keyframe
             with st.container():
-                # Use columns for layout
-                col1, col2, col3 = st.columns([3, 1, 1])
+                # Use columns for layout - add an extra column for edit button
+                col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
 
                 with col1:
                     # Highlight current frame
@@ -463,6 +463,18 @@ def display_keyframe_list(
                             on_select_keyframe(frame)
 
                 with col3:
+                    # Edit keyframe button
+                    if st.button(f"Edit", key=f"edit_{frame}"):
+                        # Go to this frame
+                        if on_select_keyframe:
+                            on_select_keyframe(frame)
+                        # Set crop selection mode
+                        st.session_state.crop_selection_active = True
+                        # Store the frame being edited
+                        st.session_state.editing_keyframe = frame
+                        st.rerun()
+
+                with col4:
                     # Delete keyframe button
                     if on_delete_keyframe:
                         if st.button(f"Delete", key=f"delete_{frame}"):

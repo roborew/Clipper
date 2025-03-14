@@ -217,6 +217,19 @@ def display_main_content(video_path):
                 st.session_state.current_frame,
             )
 
+            # Check if we're editing an existing keyframe
+            editing_existing = False
+            if (
+                hasattr(st.session_state, "editing_keyframe")
+                and st.session_state.editing_keyframe is not None
+            ):
+                editing_existing = True
+                edit_frame = st.session_state.editing_keyframe
+                # Use the frame of the keyframe being edited
+                st.session_state.current_frame = edit_frame
+                # Get the frame again if we changed the current frame
+                frame = video_service.get_frame(video_path, edit_frame)
+
             # Display crop selector
             crop_region = simple_crop_selector.select_crop_region(
                 frame,
@@ -229,19 +242,37 @@ def display_main_content(video_path):
             if crop_region is not None:
                 if current_clip:
                     try:
-                        clip_service.add_crop_keyframe(
-                            st.session_state.current_frame, crop_region
-                        )
-                        st.success(
-                            f"Added crop keyframe at frame {st.session_state.current_frame}"
-                        )
+                        if editing_existing:
+                            # We're editing an existing keyframe
+                            frame_to_update = st.session_state.editing_keyframe
+                            clip_service.add_crop_keyframe(frame_to_update, crop_region)
+                            st.success(
+                                f"Updated crop keyframe at frame {frame_to_update}"
+                            )
+                            # Clear the editing flag
+                            st.session_state.editing_keyframe = None
+                        else:
+                            # Adding a new keyframe
+                            clip_service.add_crop_keyframe(
+                                st.session_state.current_frame, crop_region
+                            )
+                            st.success(
+                                f"Added crop keyframe at frame {st.session_state.current_frame}"
+                            )
+
                         # Set crop selection to inactive and rerun
                         st.session_state.crop_selection_active = False
                         st.rerun()
                     except Exception as e:
-                        logger.exception(f"Error adding crop keyframe: {str(e)}")
-                        st.error(f"Error adding crop keyframe: {str(e)}")
+                        logger.exception(
+                            f"Error adding/updating crop keyframe: {str(e)}"
+                        )
+                        st.error(f"Error adding/updating crop keyframe: {str(e)}")
         else:
+            # Initialize editing_keyframe if not exists
+            if "editing_keyframe" not in st.session_state:
+                st.session_state.editing_keyframe = None
+
             # Get crop region for current frame if available
             crop_region = None
             if current_clip and current_clip.crop_keyframes:
