@@ -26,6 +26,13 @@ def get_frame(video_path, frame_number, config_manager=None):
         The frame as a numpy array, or None if the frame could not be retrieved
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for frame extraction: {proxy_path}")
+            video_path = proxy_path
+
         # Open the video file
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
@@ -80,6 +87,13 @@ def get_video_info(video_path):
         Dictionary with video information or None if the video could not be opened
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for video info: {proxy_path}")
+            video_path = proxy_path
+
         # Open the video file
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
@@ -378,6 +392,13 @@ def export_clip(
         True if export was successful, False otherwise
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for clip export: {proxy_path}")
+            source_path = proxy_path
+
         logger.info(f"Exporting clip from {source_path} to {output_path}")
         logger.info(f"Frames: {start_frame} to {end_frame}")
 

@@ -254,23 +254,27 @@ def display_video_info(video_path, config_manager):
                 # Store proxy path in session state
                 st.session_state.proxy_path = str(proxy_path)
             else:
-                st.warning("Proxy: Not available")
+                st.warning(
+                    "Proxy: Not available - Generating proxy for smoother performance..."
+                )
 
-                # Create proxy button
-                if st.button("Create Proxy", key="create_proxy_btn"):
-                    # Create a placeholder for progress
-                    progress_placeholder = st.empty()
+                # Create a placeholder for progress
+                progress_placeholder = st.empty()
 
-                    # Create proxy video
-                    proxy_path = proxy_service.create_proxy_video(
-                        video_path,
-                        progress_placeholder=progress_placeholder,
-                        config_manager=config_manager,
+                # Automatically create proxy video
+                proxy_path = proxy_service.create_proxy_video(
+                    video_path,
+                    progress_placeholder=progress_placeholder,
+                    config_manager=config_manager,
+                )
+
+                if proxy_path:
+                    st.session_state.proxy_path = proxy_path
+                    st.success("Proxy video created successfully!")
+                else:
+                    st.error(
+                        "Failed to create proxy video. Using original video (may be slower)."
                     )
-
-                    if proxy_path:
-                        st.session_state.proxy_path = proxy_path
-                        st.rerun()
         else:
             st.error("Could not get video information")
 

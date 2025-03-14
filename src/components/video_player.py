@@ -315,42 +315,63 @@ def play_clip_preview(
     video_path, start_frame, end_frame, fps, crop_region=None, on_frame_change=None
 ):
     """
-    Play a preview of the clip
+    Play a preview of a clip
 
     Args:
         video_path: Path to the video file
-        start_frame: Starting frame number
-        end_frame: Ending frame number
+        start_frame: Start frame number
+        end_frame: End frame number
         fps: Frames per second
-        crop_region: Optional crop region to display
+        crop_region: Function to get crop region at a specific frame
         on_frame_change: Callback function when frame changes
 
     Returns:
         None
     """
     try:
-        # Create a placeholder for the preview
-        preview_placeholder = st.empty()
+        # Validate inputs
+        if start_frame > end_frame:
+            st.error("Start frame must be before end frame")
+            return
 
-        # Calculate total frames and duration
-        total_frames = end_frame - start_frame + 1
-        duration_seconds = total_frames / fps if fps > 0 else 0
-
-        # Display preview information
-        st.text(
-            f"Playing clip preview: {total_frames} frames ({video_service.format_duration(duration_seconds)})"
-        )
+        # Create a placeholder for the video frame
+        frame_placeholder = st.empty()
 
         # Create a progress bar
         progress_bar = st.progress(0)
 
-        # Play the clip
-        for i in range(total_frames):
-            # Calculate current frame
-            current_frame = start_frame + i
+        # Calculate total frames in clip
+        total_frames = end_frame - start_frame + 1
 
-            # Get the frame
+        # Display controls
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            play_button = st.button("▶️ Play", key="play_clip_btn")
+        with col2:
+            stop_button = st.button("⏹️ Stop", key="stop_clip_btn")
+        with col3:
+            speed_options = ["0.25x", "0.5x", "1x", "1.5x", "2x"]
+            selected_speed = st.selectbox(
+                "Speed", speed_options, index=2, key="clip_speed"
+            )
+            speed_multiplier = float(selected_speed.replace("x", ""))
+
+        # Initialize playback state
+        is_playing = False
+        current_frame = start_frame
+
+        # Start playback if play button is clicked
+        if play_button:
+            is_playing = True
+
+        # Main playback loop
+        while is_playing and current_frame <= end_frame:
+            # Get the frame using video_service which will use proxy if available
             frame = video_service.get_frame(video_path, current_frame)
+
+            if frame is None:
+                st.error(f"Could not read frame {current_frame}")
+                break
 
             if frame is not None:
                 # Apply crop if specified
@@ -366,10 +387,10 @@ def play_clip_preview(
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                preview_placeholder.image(frame, use_container_width=True)
+                frame_placeholder.image(frame, use_container_width=True)
 
                 # Update progress
-                progress = i / max(1, total_frames - 1)
+                progress = (current_frame - start_frame) / (end_frame - start_frame)
                 progress_bar.progress(progress)
 
                 # Call frame change callback if provided
@@ -381,6 +402,13 @@ def play_clip_preview(
             else:
                 st.error(f"Could not load frame {current_frame}")
                 break
+
+            # Stop playback if stop button is clicked
+            if stop_button:
+                is_playing = False
+
+            # Advance to the next frame
+            current_frame += 1
 
         # Set progress to 100% when done
         progress_bar.progress(1.0)

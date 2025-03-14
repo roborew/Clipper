@@ -12,6 +12,10 @@ from queue import Queue
 import streamlit as st
 import logging
 
+# Configure logging to suppress Streamlit context warnings
+streamlit_logger = logging.getLogger("streamlit")
+streamlit_logger.setLevel(logging.ERROR)
+
 logger = logging.getLogger("clipper.proxy")
 
 
@@ -77,7 +81,6 @@ def create_proxy_video(
                 progress_bar = st.progress(0)
 
         # Get video duration for progress calculation
-        source_path_str = str(source_path)
         duration_cmd = [
             "ffprobe",
             "-v",
@@ -86,13 +89,29 @@ def create_proxy_video(
             "format=duration",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
-            source_path_str,
+            str(source_path),
         ]
 
         try:
             logger.info(f"Running duration command: {' '.join(duration_cmd)}")
+            # Convert command list to a string for shell=True
+            # Ensure proper quoting for paths with spaces
+            duration_cmd_str = " ".join(
+                (
+                    f'"{arg}"'
+                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                    else str(arg)
+                )
+                for arg in duration_cmd
+            )
+            logger.info(f"Running shell command: {duration_cmd_str}")
+
             duration_result = subprocess.run(
-                duration_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                duration_cmd_str,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=True,
             )
             if duration_result.returncode != 0:
                 logger.warning(
@@ -107,30 +126,113 @@ def create_proxy_video(
             logger.warning(f"Could not determine video duration: {str(e)}")
             duration = 0
 
-        # Command to create a lower-resolution, web-compatible proxy using settings from config
-        # Handle spaces in file paths by ensuring they're properly escaped
-        source_path_str = str(source_path)
-        proxy_path_str = str(proxy_path)
+        # Create a queue to communicate between threads
+        progress_queue = Queue()
+        stop_event = threading.Event()
 
-        # Try a different approach for handling spaces in file paths
-        # Use a single string command with shell=True
-        ffmpeg_cmd_str = (
-            f'ffmpeg -y -i "{source_path_str}" '
-            f'-c:v libx264 -preset fast -crf {proxy_settings["quality"]} '
-            f'-vf scale={proxy_settings["width"]}:-2 '
-            f'-c:a aac -b:a {proxy_settings["audio_bitrate"]} '
-            f"-movflags +faststart -fflags +genpts "
-            f'"{proxy_path_str}"'
-        )
+        # Function to monitor progress
+        def monitor_progress(process, duration, queue, stop_event):
+            # Suppress Streamlit context warnings in this thread
+            import logging
+
+            logging.getLogger("streamlit").setLevel(logging.ERROR)
+
+            pattern = re.compile(r"time=(\d+):(\d+):(\d+\.\d+)")
+
+            while process.poll() is None and not stop_event.is_set():
+                try:
+                    # Read line from stderr
+                    line = process.stderr.readline()
+
+                    # Convert to string if it's bytes
+                    if isinstance(line, bytes):
+                        output = line.decode("utf-8", errors="replace")
+                    else:
+                        output = line
+
+                    # Check for progress information
+                    match = pattern.search(output)
+                    if match and duration > 0:
+                        h, m, s = map(float, match.groups())
+                        current_time = h * 3600 + m * 60 + s
+                        progress = min(current_time / duration, 1.0)
+
+                        # Calculate remaining time
+                        if current_time > 0:
+                            remaining = (
+                                (duration - current_time) / current_time * current_time
+                            )
+                        else:
+                            remaining = 0
+
+                        # Put progress info in queue
+                        progress_info = {
+                            "progress": progress,
+                            "remaining": remaining,
+                            "current_time": current_time,
+                        }
+                        queue.put(progress_info)
+
+                        # Call the progress callback if provided
+                        if progress_callback:
+                            try:
+                                progress_callback(progress_info)
+                            except Exception as callback_error:
+                                # Silently ignore Streamlit context errors
+                                pass
+                except Exception as e:
+                    # Don't log Streamlit context errors as they're expected in threads
+                    if "ScriptRunContext" not in str(e):
+                        logger.error(f"Error in progress monitoring: {str(e)}")
+                    continue
+
+            # Signal completion
+            final_progress = {"progress": 1.0, "remaining": 0, "current_time": duration}
+            queue.put(final_progress)
+            if progress_callback:
+                progress_callback(final_progress)
+            logger.info("Monitor thread completed")
+
+        # Command to create a lower-resolution, web-compatible proxy using settings from config
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(source_path),
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
+            "-crf",
+            str(proxy_settings["quality"]),
+            "-vf",
+            f"scale={proxy_settings['width']}:-2",  # Use width from config (now fixed to 960)
+            "-c:a",
+            "aac",
+            "-b:a",
+            proxy_settings["audio_bitrate"],
+            str(proxy_path),
+        ]
 
         # Log the command for debugging
-        logger.info(f"Starting ffmpeg conversion with shell: {ffmpeg_cmd_str}")
+        logger.info(f"Starting ffmpeg conversion: {' '.join(cmd)}")
 
         # Start the conversion process with pipe for stderr
         try:
-            # Use shell=True to handle spaces in file paths
+            # Convert command list to a string for shell=True
+            # Ensure proper quoting for paths with spaces
+            cmd_str = " ".join(
+                (
+                    f'"{arg}"'
+                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                    else str(arg)
+                )
+                for arg in cmd
+            )
+            logger.info(f"Running shell command: {cmd_str}")
+
             process = subprocess.Popen(
-                ffmpeg_cmd_str,
+                cmd_str,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
@@ -277,9 +379,16 @@ def create_proxy_video(
 
                 return None
 
+            # Final progress update for non-duration case
             if actual_progress_placeholder:
-                progress_bar.progress(1.0)
-                actual_progress_placeholder.text("Proxy video created successfully!")
+                try:
+                    progress_bar.progress(1.0)
+                    actual_progress_placeholder.text(
+                        "Proxy video created successfully!"
+                    )
+                except Exception:
+                    # Ignore Streamlit context errors
+                    pass
 
         if os.path.exists(proxy_path):
             proxy_size = os.path.getsize(proxy_path) / (1024 * 1024)
@@ -298,17 +407,30 @@ def create_proxy_video(
                 "stream=codec_type",
                 "-of",
                 "default=noprint_wrappers=1:nokey=1",
-                proxy_path_str,
+                str(proxy_path),
             ]
 
             try:
-                logger.info(f"Running verification command: {' '.join(verify_cmd)}")
+                logger.debug(f"Running verification command: {' '.join(verify_cmd)}")
+                # Convert command list to a string for shell=True
+                # Ensure proper quoting for paths with spaces
+                verify_cmd_str = " ".join(
+                    (
+                        f'"{arg}"'
+                        if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                        else str(arg)
+                    )
+                    for arg in verify_cmd
+                )
+                logger.debug(f"Running shell command: {verify_cmd_str}")
+
                 verify_result = subprocess.run(
-                    verify_cmd,
+                    verify_cmd_str,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    timeout=10,
+                    timeout=5,
+                    shell=True,
                 )
                 if (
                     verify_result.returncode != 0
@@ -466,7 +588,6 @@ def proxy_exists_for_video(video_path, config_manager=None):
 
     # Verify the proxy file is valid
     try:
-        proxy_path_str = str(proxy_path)
         verify_cmd = [
             "ffprobe",
             "-v",
@@ -477,16 +598,29 @@ def proxy_exists_for_video(video_path, config_manager=None):
             "stream=codec_type",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
-            proxy_path_str,
+            str(proxy_path),
         ]
 
         logger.debug(f"Running verification command: {' '.join(verify_cmd)}")
+        # Convert command list to a string for shell=True
+        # Ensure proper quoting for paths with spaces
+        verify_cmd_str = " ".join(
+            (
+                f'"{arg}"'
+                if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                else str(arg)
+            )
+            for arg in verify_cmd
+        )
+        logger.debug(f"Running shell command: {verify_cmd_str}")
+
         verify_result = subprocess.run(
-            verify_cmd,
+            verify_cmd_str,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             timeout=5,
+            shell=True,
         )
 
         if verify_result.returncode != 0 or "video" not in verify_result.stdout.strip():
@@ -579,8 +713,9 @@ def proxy_progress_callback(progress_info):
         else:
             st.session_state.proxy_time_remaining = "Calculating..."
     except Exception as e:
-        if "ScriptRunContext" not in str(e):
-            logger.error(f"Error in proxy progress callback: {str(e)}")
+        # Silently ignore all errors in this callback, especially Streamlit context errors
+        # These are expected when running in a background thread
+        pass
 
 
 def cleanup_proxy_files(config_manager=None):

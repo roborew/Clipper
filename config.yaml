@@ -13,12 +13,12 @@ export:
   preserve_structure: true
 patterns:
   video_extensions:
-  - .mp4
-  - .avi
-  - .mov
-  - .mkv
+    - .mp4
+    - .avi
+    - .mov
+    - .mkv
 proxy:
   audio_bitrate: 128k
   enabled: true
   quality: 28
-  width: 961
+  width: 960

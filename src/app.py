@@ -78,6 +78,15 @@ def main():
     if st.session_state.get("display_logs", False):
         logging_utils.display_logs()
 
+    # Process the current video if proxy generation is active
+    if (
+        st.session_state.proxy_generation_active
+        and st.session_state.proxy_current_video
+        and st.session_state.proxy_current_index < st.session_state.proxy_total_videos
+    ):
+        # Create proxy for the current video
+        proxy_service.create_proxy_video(st.session_state.proxy_current_video)
+
 
 def initialize_session_state():
     """Initialize session state variables"""
@@ -106,6 +115,25 @@ def initialize_session_state():
 
         if "proxy_generation_active" not in st.session_state:
             st.session_state.proxy_generation_active = False
+
+        # Add missing proxy-related session state variables
+        if "proxy_current_video" not in st.session_state:
+            st.session_state.proxy_current_video = None
+
+        if "proxy_current_index" not in st.session_state:
+            st.session_state.proxy_current_index = 0
+
+        if "proxy_total_videos" not in st.session_state:
+            st.session_state.proxy_total_videos = 0
+
+        if "proxy_videos_to_process" not in st.session_state:
+            st.session_state.proxy_videos_to_process = []
+
+        if "proxy_completed_videos" not in st.session_state:
+            st.session_state.proxy_completed_videos = []
+
+        if "proxy_failed_videos" not in st.session_state:
+            st.session_state.proxy_failed_videos = []
 
         if "crop_selection_active" not in st.session_state:
             st.session_state.crop_selection_active = False
@@ -185,11 +213,7 @@ def display_main_content(video_path):
         if st.session_state.crop_selection_active:
             # Get the current frame
             frame = video_service.get_frame(
-                (
-                    st.session_state.proxy_path
-                    if "proxy_path" in st.session_state
-                    else video_path
-                ),
+                video_path,  # video_service will automatically use proxy if available
                 st.session_state.current_frame,
             )
 
@@ -227,11 +251,7 @@ def display_main_content(video_path):
 
             # Display video player
             st.session_state.current_frame = video_player.display_video_player(
-                (
-                    st.session_state.proxy_path
-                    if "proxy_path" in st.session_state
-                    else video_path
-                ),
+                video_path,  # video_service will automatically use proxy if available
                 st.session_state.current_frame,
                 st.session_state.fps,
                 st.session_state.total_frames,
@@ -350,12 +370,8 @@ def handle_play_clip():
             st.warning("No clip selected")
             return
 
-        # Get video path
-        video_path = (
-            st.session_state.proxy_path
-            if "proxy_path" in st.session_state
-            else current_clip.source_path
-        )
+        # Get video path - video_service will automatically use proxy if available
+        video_path = current_clip.source_path
 
         # Play the clip
         video_player.play_clip_preview(

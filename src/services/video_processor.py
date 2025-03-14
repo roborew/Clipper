@@ -44,20 +44,36 @@ class VideoProcessor:
         try:
             import subprocess
 
+            # Create command list
+            cmd = [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "default=noprint_wrappers=1:nokey=1",
+                video_path,
+            ]
+
+            # Convert command list to a string for shell=True
+            # Ensure proper quoting for paths with spaces
+            cmd_str = " ".join(
+                (
+                    f'"{arg}"'
+                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                    else str(arg)
+                )
+                for arg in cmd
+            )
+            logger.info(f"Running shell command: {cmd_str}")
+
             result = subprocess.run(
-                [
-                    "ffprobe",
-                    "-v",
-                    "error",
-                    "-show_entries",
-                    "format=duration",
-                    "-of",
-                    "default=noprint_wrappers=1:nokey=1",
-                    video_path,
-                ],
+                cmd_str,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
+                shell=True,
             )
             if result.stdout.strip():
                 duration = float(result.stdout.strip())
