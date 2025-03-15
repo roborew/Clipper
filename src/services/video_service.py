@@ -87,14 +87,7 @@ def get_video_info(video_path):
         Dictionary with video information or None if the video could not be opened
     """
     try:
-        # Check if we should use proxy video
-        if "proxy_path" in st.session_state and st.session_state.proxy_path:
-            # Use proxy video if available
-            proxy_path = st.session_state.proxy_path
-            logger.debug(f"Using proxy video for video info: {proxy_path}")
-            video_path = proxy_path
-
-        # Open the video file
+        # Open the video file with the exact path provided
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
             logger.error(f"Could not open video file: {video_path}")

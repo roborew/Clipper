@@ -278,11 +278,12 @@ def display_main_content(video_path):
         if "editing_keyframe" not in st.session_state:
             st.session_state.editing_keyframe = None
 
-        # Get crop region for current frame if available
+        # Get crop region for current frame if we have a clip
         crop_region = None
-        if current_clip and current_clip.crop_keyframes:
+        if current_clip:
             crop_region = current_clip.get_crop_region_at_frame(
-                st.session_state.current_frame
+                st.session_state.current_frame,
+                use_proxy=True,  # Use proxy resolution for UI display
             )
 
         # Get the current frame for crop selection
@@ -310,7 +311,7 @@ def display_main_content(video_path):
             st.session_state.fps,
             st.session_state.total_frames,
             on_frame_change=handle_frame_change,
-            crop_region=crop_region,
+            crop_region=crop_region,  # Just pass the crop region directly
             config_manager=config_manager,
             clip=current_clip,
         )
@@ -487,7 +488,11 @@ def handle_play_clip():
             current_clip.start_frame,
             current_clip.end_frame,
             st.session_state.fps,
-            crop_region=current_clip.get_crop_region_at_frame,
+            crop_region=lambda frame: (
+                current_clip.get_crop_region_at_frame(frame, use_proxy=True)
+                if current_clip
+                else None
+            ),
             on_frame_change=handle_frame_change,
         )
 
@@ -527,9 +532,13 @@ def handle_export_clip():
         progress_placeholder.info(f"Exporting clip to {export_path}...")
 
         # Get crop region function
-        crop_region_func = None
-        if current_clip.crop_keyframes:
-            crop_region_func = current_clip.get_crop_region_at_frame
+        crop_region_func = lambda frame: (
+            current_clip.get_crop_region_at_frame(
+                frame, use_proxy=False  # Use source resolution for export
+            )
+            if current_clip
+            else None
+        )
 
         # Export the clip
         success = video_service.export_clip(
@@ -537,9 +546,7 @@ def handle_export_clip():
             export_path,
             current_clip.start_frame,
             current_clip.end_frame,
-            crop_region=(
-                crop_region_func(current_clip.start_frame) if crop_region_func else None
-            ),
+            crop_region=crop_region_func(current_clip.start_frame),
             output_resolution=current_clip.output_resolution,
             config_manager=st.session_state.config_manager,
         )
@@ -786,16 +793,10 @@ def handle_crop_update(crop_region):
             st.warning("No clip selected")
             return
 
-        # Update both crop keyframes
+        # Add crop keyframe using clip_service which handles proper scaling
         current_frame = st.session_state.current_frame
-        current_clip.crop_keyframes[str(current_frame)] = crop_region
-        current_clip.crop_keyframes_proxy[str(current_frame)] = crop_region
+        success = clip_service.add_crop_keyframe(current_frame, crop_region)
 
-        # Update the clip
-        clip_service.update_current_clip()
-
-        # Auto-save the changes
-        success = clip_service.save_session_clips()
         if success:
             st.session_state.last_save_status = {
                 "success": True,

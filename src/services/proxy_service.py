@@ -451,22 +451,6 @@ def create_proxy_video(
 
                 return None
 
-            # Final progress update for non-duration case
-            if actual_progress_placeholder:
-                try:
-                    progress_bar.progress(1.0)
-                    # Calculate total processing time
-                    total_time = time.time() - start_time
-                    minutes = int(total_time / 60)
-                    seconds = int(total_time % 60)
-
-                    actual_progress_placeholder.text(
-                        f"Proxy video created successfully in {minutes}m {seconds}s!"
-                    )
-                except Exception:
-                    # Ignore Streamlit context errors
-                    pass
-
         if os.path.exists(proxy_path):
             proxy_size = os.path.getsize(proxy_path) / (1024 * 1024)
             logger.info(
@@ -940,25 +924,25 @@ def create_clip_preview(
     crop_region=None,
     progress_placeholder=None,
     config_manager=None,
-    crop_keyframes=None,  # Original keyframes
-    crop_keyframes_proxy=None,  # Proxy-specific keyframes
+    crop_keyframes=None,  # Original keyframes (not used for preview)
+    crop_keyframes_proxy=None,  # Proxy-specific keyframes (used for preview)
 ):
     """
-    Create a preview video for a clip
+    Create a preview of a clip with optional cropping
 
     Args:
         source_path: Path to the source video
         clip_name: Name of the clip
-        start_frame: Start frame number
-        end_frame: End frame number
-        crop_region: Optional tuple of (x, y, width, height) for static cropping
+        start_frame: Starting frame number
+        end_frame: Ending frame number
+        crop_region: Optional static crop region (x, y, width, height)
         progress_placeholder: Streamlit placeholder for progress updates
         config_manager: ConfigManager instance
-        crop_keyframes: Original keyframes (for reference)
-        crop_keyframes_proxy: Dictionary of frame numbers to crop regions for dynamic cropping in proxy video
+        crop_keyframes: Original keyframes (not used for preview)
+        crop_keyframes_proxy: Proxy-specific keyframes (used for preview)
 
     Returns:
-        Path to the preview video or None if creation failed
+        Path to the preview file if successful, None otherwise
     """
     try:
         logger.info(f"Creating clip preview for {clip_name}")

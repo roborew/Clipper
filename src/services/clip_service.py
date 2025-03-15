@@ -9,6 +9,7 @@ from pathlib import Path
 import streamlit as st
 import logging
 from datetime import datetime
+from src.services import video_service
 
 logger = logging.getLogger("clipper.clip")
 
@@ -34,8 +35,8 @@ class Clip:
 
         Args:
             name: Name of the clip
-            source_path: Path to the source video
-            proxy_path: Path to the proxy video for previews
+            source_path: Path to the source video (will be stored as relative path)
+            proxy_path: Path to the proxy video for previews (will be stored as relative path)
             start_frame: Starting frame number
             end_frame: Ending frame number
             crop_keyframes: Dictionary of frame numbers to crop regions (x, y, width, height)
@@ -44,8 +45,33 @@ class Clip:
         """
         self.id = str(uuid.uuid4())
         self.name = name or f"clip_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+        # Convert source path to relative if it contains data/source or data/prept
+        if source_path:
+            source_path = str(source_path)
+            if "data/source" in source_path:
+                source_path = os.path.join(
+                    "data/source", source_path.split("data/source/")[-1]
+                )
+            elif "data/prept" in source_path:
+                source_path = os.path.join(
+                    "data/prept", source_path.split("data/prept/")[-1]
+                )
         self.source_path = source_path
+
+        # Convert proxy path to relative if it contains data/source or data/prept
+        if proxy_path:
+            proxy_path = str(proxy_path)
+            if "data/source" in proxy_path:
+                proxy_path = os.path.join(
+                    "data/source", proxy_path.split("data/source/")[-1]
+                )
+            elif "data/prept" in proxy_path:
+                proxy_path = os.path.join(
+                    "data/prept", proxy_path.split("data/prept/")[-1]
+                )
         self.proxy_path = proxy_path
+
         self.start_frame = start_frame
         self.end_frame = end_frame
         self.crop_keyframes = crop_keyframes or {}
@@ -60,8 +86,8 @@ class Clip:
         return {
             "id": self.id,
             "name": self.name,
-            "source_path": str(self.source_path) if self.source_path else None,
-            "proxy_path": str(self.proxy_path) if self.proxy_path else None,
+            "source_path": self.source_path,  # Already stored as relative path
+            "proxy_path": self.proxy_path,  # Already stored as relative path
             "start_frame": self.start_frame,
             "end_frame": self.end_frame,
             "crop_keyframes": self.crop_keyframes,
@@ -78,8 +104,32 @@ class Clip:
         clip = cls()
         clip.id = data.get("id", str(uuid.uuid4()))
         clip.name = data.get("name", "Unnamed Clip")
-        clip.source_path = data.get("source_path")
-        clip.proxy_path = data.get("proxy_path")
+
+        # Ensure paths are relative when loading from dict
+        source_path = data.get("source_path")
+        if source_path:
+            if "data/source" in source_path:
+                source_path = os.path.join(
+                    "data/source", source_path.split("data/source/")[-1]
+                )
+            elif "data/prept" in source_path:
+                source_path = os.path.join(
+                    "data/prept", source_path.split("data/prept/")[-1]
+                )
+        clip.source_path = source_path
+
+        proxy_path = data.get("proxy_path")
+        if proxy_path:
+            if "data/source" in proxy_path:
+                proxy_path = os.path.join(
+                    "data/source", proxy_path.split("data/source/")[-1]
+                )
+            elif "data/prept" in proxy_path:
+                proxy_path = os.path.join(
+                    "data/prept", proxy_path.split("data/prept/")[-1]
+                )
+        clip.proxy_path = proxy_path
+
         clip.start_frame = data.get("start_frame", 0)
         clip.end_frame = data.get("end_frame", 0)
         clip.crop_keyframes = data.get("crop_keyframes", {})
@@ -101,21 +151,25 @@ class Clip:
         """Get the duration of the clip in frames"""
         return max(0, self.end_frame - self.start_frame + 1)
 
-    def get_crop_region_at_frame(self, frame_number):
+    def get_crop_region_at_frame(self, frame_number, use_proxy=True):
         """
         Get the crop region at a specific frame by interpolating between keyframes
 
         Args:
             frame_number: Frame number to get crop region for
+            use_proxy: Whether to return proxy resolution crop region (True) or source resolution (False)
 
         Returns:
             Tuple of (x, y, width, height) or None if no crop keyframes exist
         """
-        if not self.crop_keyframes:
+        # Choose which keyframes to use based on use_proxy flag
+        keyframes = self.crop_keyframes_proxy if use_proxy else self.crop_keyframes
+
+        if not keyframes:
             return None
 
         # Convert string keys to integers
-        keyframes = {int(k): v for k, v in self.crop_keyframes.items()}
+        keyframes = {int(k): v for k, v in keyframes.items()}
 
         # If the exact frame has a keyframe, return it
         if frame_number in keyframes:
@@ -347,17 +401,35 @@ def add_clip(source_path, start_frame, end_frame, name=None, output_resolution="
             logger.error("No config manager found in session state")
             return None
 
-        # Get proxy path from config manager
+        # Convert source path to relative path if it contains data/source or data/prept
+        source_path = str(source_path)  # Ensure string type
+        if "data/source" in source_path:
+            source_path = os.path.join(
+                "data/source", source_path.split("data/source/")[-1]
+            )
+        elif "data/prept" in source_path:
+            source_path = os.path.join(
+                "data/prept", source_path.split("data/prept/")[-1]
+            )
+
+        # Get proxy path from config manager and ensure it's relative
         proxy_path = str(
             config_manager.get_proxy_path(Path(source_path), is_clip=False)
         )
+        if "data/source" in proxy_path:
+            proxy_path = os.path.join(
+                "data/source", proxy_path.split("data/source/")[-1]
+            )
+        elif "data/prept" in proxy_path:
+            proxy_path = os.path.join("data/prept", proxy_path.split("data/prept/")[-1])
+
         if os.path.exists(proxy_path):
-            logger.info(f"Using proxy path: {proxy_path}")
+            logger.info(f"Using relative proxy path: {proxy_path}")
         else:
             logger.info(f"Proxy path not found: {proxy_path}")
             proxy_path = None
 
-        # Create a new clip
+        # Create a new clip with relative paths
         clip = Clip(
             name=name,
             source_path=source_path,
@@ -376,7 +448,7 @@ def add_clip(source_path, start_frame, end_frame, name=None, output_resolution="
         st.session_state.clip_modified = True
 
         logger.info(
-            f"Added new clip: {clip.name} ({clip.start_frame} to {clip.end_frame})"
+            f"Added new clip: {clip.name} ({clip.start_frame} to {clip.end_frame}) with relative paths"
         )
 
         return clip
@@ -510,7 +582,7 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
 
     Args:
         frame_number: Frame number for the keyframe
-        crop_region: Tuple of (x, y, width, height)
+        crop_region: Tuple of (x, y, width, height) from the proxy resolution
         clip_index: Index of the clip (uses current clip if None)
 
     Returns:
@@ -535,9 +607,52 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
         # Get the clip
         clip = st.session_state.clips[clip_index]
 
-        # Add the keyframe to both keyframe sets
-        clip.crop_keyframes[str(frame_number)] = crop_region
-        clip.crop_keyframes_proxy[str(frame_number)] = crop_region
+        # Get video info for both source and proxy
+        # If proxy_path is None, use source_path for both
+        # If source_path is None, use proxy_path for both
+        video_path = clip.source_path or clip.proxy_path
+        if not video_path:
+            logger.error("No valid video path found")
+            return False
+
+        # Get video info
+        video_info = video_service.get_video_info(video_path)
+        if not video_info:
+            logger.error("Could not get video info")
+            return False
+
+        # Get target dimensions based on output resolution
+        target_width, target_height = video_service.calculate_crop_dimensions(
+            clip.output_resolution
+        )
+
+        # Calculate the relative position and size in the video for proxy
+        x, y, width, height = crop_region
+        rel_x = x / video_info["width"]  # Relative X position (0-1)
+        rel_y = y / video_info["height"]  # Relative Y position (0-1)
+        rel_width = width / video_info["width"]  # Relative width (0-1)
+        rel_height = height / video_info["height"]  # Relative height (0-1)
+
+        # Calculate crop region for proxy video (maintain relative position and size)
+        proxy_crop = (
+            int(rel_x * video_info["width"]),
+            int(rel_y * video_info["height"]),
+            int(rel_width * video_info["width"]),
+            int(rel_height * video_info["height"]),
+        )
+
+        # Calculate crop region for source video using target dimensions
+        # Scale the x and y positions proportionally to the target dimensions
+        source_crop = (
+            int(rel_x * target_width),  # Scale X relative to target width
+            int(rel_y * target_height),  # Scale Y relative to target height
+            target_width,  # Use target width from output resolution
+            target_height,  # Use target height from output resolution
+        )
+
+        # Add the keyframes - proxy resolution in proxy_keyframes, source resolution in crop_keyframes
+        clip.crop_keyframes_proxy[str(frame_number)] = proxy_crop
+        clip.crop_keyframes[str(frame_number)] = source_crop
 
         # Update modification timestamp
         clip.update()

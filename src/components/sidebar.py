@@ -645,9 +645,10 @@ def display_clip_management():
                             progress_placeholder = st.empty()
                             progress_placeholder.info("Generating clip preview...")
 
-                            # Get the current crop region for the start frame
+                            # Get crop region for current frame
                             crop_region = clip.get_crop_region_at_frame(
-                                clip.start_frame
+                                clip.start_frame,
+                                use_proxy=True,  # Use proxy resolution for UI display
                             )
 
                             logger.info(f"Preview button clicked for clip {clip.name}")
@@ -683,7 +684,7 @@ def display_clip_management():
                                 clip.name,
                                 clip.start_frame,
                                 clip.end_frame,
-                                crop_region=None,  # Don't use static crop region
+                                crop_region=crop_region,
                                 crop_keyframes=clip.crop_keyframes,  # Keep original keyframes
                                 crop_keyframes_proxy=clip.crop_keyframes,  # Pass same keyframes for proxy
                                 progress_placeholder=progress_placeholder,

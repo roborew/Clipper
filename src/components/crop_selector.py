@@ -54,8 +54,8 @@ def select_crop_region_direct(frame, current_frame, clip, output_resolution="108
 
         # Check if there's an existing crop region for this frame
         existing_crop = None
-        if clip and clip.crop_keyframes:
-            existing_crop = clip.get_crop_region_at_frame(current_frame)
+        if clip:
+            existing_crop = clip.get_crop_region_at_frame(current_frame, use_proxy=True)
 
         # Initialize crop region
         if existing_crop:

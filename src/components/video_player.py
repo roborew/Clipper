@@ -155,31 +155,15 @@ def display_video_player(
                         frame = video_service.get_frame(video_path, frame_idx)
 
                         if frame is not None:
-                            # Get the interpolated crop region for this specific frame
+                            # Get crop region for current frame
                             frame_crop = None
-                            # First try to get crop region from clip keyframes if available
-                            if (
-                                clip
-                                and hasattr(clip, "crop_keyframes")
-                                and clip.crop_keyframes
-                            ):
-                                frame_crop = clip.get_crop_region_at_frame(frame_idx)
-                                logger.debug(
-                                    f"Frame {frame_idx} interpolated crop region from clip: {frame_crop}"
-                                )
-                            # Fall back to provided crop_region if no clip keyframes
-                            elif crop_region and callable(crop_region):
-                                frame_crop = crop_region(frame_idx)
-                                logger.debug(
-                                    f"Frame {frame_idx} function crop region: {frame_crop}"
-                                )
-                            elif crop_region:
-                                frame_crop = crop_region
-                                logger.debug(
-                                    f"Frame {frame_idx} static crop region: {frame_crop}"
+                            if clip:
+                                frame_crop = clip.get_crop_region_at_frame(
+                                    frame_idx,
+                                    use_proxy=True,  # Use proxy resolution for UI display
                                 )
 
-                            # Apply the crop overlay to the frame
+                            # Apply crop overlay if specified
                             if frame_crop:
                                 frame = video_service.draw_crop_overlay(
                                     frame, frame_crop
@@ -240,9 +224,12 @@ def display_video_player(
             frame = video_service.get_frame(video_path, current_frame)
 
             if frame is not None:
+                # Get crop region for current frame
+                frame_crop = crop_region  # Use crop region directly
+
                 # Apply crop overlay if specified
-                if crop_region:
-                    frame = video_service.draw_crop_overlay(frame, crop_region)
+                if frame_crop:
+                    frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
                 st.image(frame, use_container_width=True)
@@ -534,11 +521,14 @@ def play_clip_preview(
             frame = video_service.get_frame(video_path, current_frame)
 
             if frame is not None:
-                # Apply crop overlay if specified
+                # Get crop region for current frame
+                frame_crop = None
                 if crop_region and callable(crop_region):
                     frame_crop = crop_region(current_frame)
-                    if frame_crop:
-                        frame = video_service.draw_crop_overlay(frame, frame_crop)
+
+                # Apply crop overlay if specified
+                if frame_crop:
+                    frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
                 st.image(frame, use_container_width=True)
@@ -594,33 +584,15 @@ def play_clip_preview(
                                 frame = video_service.get_frame(video_path, frame_idx)
 
                                 if frame is not None:
-                                    # Get the interpolated crop region for this specific frame
+                                    # Get crop region for current frame
                                     frame_crop = None
-                                    # First try to get crop region from clip keyframes if available
-                                    if (
-                                        clip
-                                        and hasattr(clip, "crop_keyframes")
-                                        and clip.crop_keyframes
-                                    ):
+                                    if clip:
                                         frame_crop = clip.get_crop_region_at_frame(
-                                            frame_idx
-                                        )
-                                        logger.debug(
-                                            f"Frame {frame_idx} interpolated crop region from clip: {frame_crop}"
-                                        )
-                                    # Fall back to provided crop_region if no clip keyframes
-                                    elif crop_region and callable(crop_region):
-                                        frame_crop = crop_region(frame_idx)
-                                        logger.debug(
-                                            f"Frame {frame_idx} function crop region: {frame_crop}"
-                                        )
-                                    elif crop_region:
-                                        frame_crop = crop_region
-                                        logger.debug(
-                                            f"Frame {frame_idx} static crop region: {frame_crop}"
+                                            frame_idx,
+                                            use_proxy=True,  # Use proxy resolution for UI display
                                         )
 
-                                    # Apply the crop overlay to the frame
+                                    # Apply crop overlay if specified
                                     if frame_crop:
                                         frame = video_service.draw_crop_overlay(
                                             frame, frame_crop
