@@ -940,6 +940,7 @@ def create_clip_preview(
     crop_region=None,
     progress_placeholder=None,
     config_manager=None,
+    crop_keyframes=None,  # Add crop_keyframes parameter
 ):
     """
     Create a preview video for a clip
@@ -947,11 +948,12 @@ def create_clip_preview(
     Args:
         source_path: Path to the source video
         clip_name: Name of the clip
-        start_frame: Start frame of the clip
-        end_frame: End frame of the clip
-        crop_region: Optional tuple of (x, y, width, height) for cropping
+        start_frame: Start frame number
+        end_frame: End frame number
+        crop_region: Optional tuple of (x, y, width, height) for static cropping
         progress_placeholder: Streamlit placeholder for progress updates
         config_manager: ConfigManager instance
+        crop_keyframes: Dictionary of frame numbers to crop regions for dynamic cropping
 
     Returns:
         Path to the preview video or None if creation failed
@@ -960,7 +962,16 @@ def create_clip_preview(
         logger.info(f"Creating clip preview for {clip_name}")
         logger.info(f"Source: {source_path}")
         logger.info(f"Frames: {start_frame} to {end_frame}")
-        logger.info(f"Crop region: {crop_region}")
+        logger.info(f"Static crop region: {crop_region}")
+        logger.info(f"Crop keyframes: {crop_keyframes}")
+
+        # Verify source video exists
+        if not os.path.exists(source_path):
+            error_msg = f"Source video not found: {source_path}"
+            logger.error(error_msg)
+            if progress_placeholder:
+                progress_placeholder.error(error_msg)
+            return None
 
         if not config_manager:
             config_manager = st.session_state.config_manager
@@ -971,52 +982,9 @@ def create_clip_preview(
         )
         logger.info(f"Preview path: {preview_path}")
 
-        # Check if preview already exists
-        if preview_path.exists():
-            logger.info(f"Clip preview already exists: {preview_path}")
-            return str(preview_path)
-
         # Ensure the parent directory exists
         preview_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created preview directory: {preview_path.parent}")
-
-        # Get video duration for progress calculation
-        duration_cmd = [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            str(source_path),
-        ]
-
-        try:
-            duration_cmd_str = " ".join(
-                (
-                    f'"{arg}"'
-                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
-                    else str(arg)
-                )
-                for arg in duration_cmd
-            )
-            duration_result = subprocess.run(
-                duration_cmd_str,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-            )
-            duration = (
-                float(duration_result.stdout.strip())
-                if duration_result.returncode == 0
-                else 0
-            )
-            logger.info(f"Video duration: {duration} seconds")
-        except Exception as e:
-            logger.warning(f"Could not determine video duration: {str(e)}")
-            duration = 0
 
         # Get video FPS
         fps_cmd = [
@@ -1034,12 +1002,7 @@ def create_clip_preview(
 
         try:
             fps_cmd_str = " ".join(
-                (
-                    f'"{arg}"'
-                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
-                    else str(arg)
-                )
-                for arg in fps_cmd
+                f'"{arg}"' if " " in str(arg) else str(arg) for arg in fps_cmd
             )
             fps_result = subprocess.run(
                 fps_cmd_str,
@@ -1056,7 +1019,10 @@ def create_clip_preview(
                 else:
                     fps = float(fps_str)
             else:
-                fps = 30  # Default to 30 fps if we can't determine it
+                logger.warning(
+                    f"Could not get FPS, using default. Error: {fps_result.stderr}"
+                )
+                fps = 30
             logger.info(f"Video FPS: {fps}")
         except Exception as e:
             logger.warning(f"Could not determine video FPS: {str(e)}")
@@ -1073,8 +1039,80 @@ def create_clip_preview(
         # Build the video filter string
         vf_filters = []
 
-        # Add crop filter if crop region is provided
-        if crop_region:
+        # Add crop filter based on keyframes or static crop region
+        if crop_keyframes:
+            # Sort keyframes by frame number and convert to timestamps
+            sorted_keyframes = sorted([(int(k), v) for k, v in crop_keyframes.items()])
+
+            # Get the constant width and height from first keyframe
+            _, first_crop = sorted_keyframes[0]
+            width = first_crop[2]  # Width is the 3rd value
+            height = first_crop[3]  # Height is the 4th value
+
+            # Build expressions for x and y positions
+            expressions = []
+
+            # Width and height are constant
+            expressions.append(f"w='{width}'")
+            expressions.append(f"h='{height}'")
+
+            # Build x position expression (interpolating)
+            x_expr = []
+            for i in range(len(sorted_keyframes)):
+                curr_frame, curr_crop = sorted_keyframes[i]
+                curr_t = (curr_frame - start_frame) / fps
+                curr_x = curr_crop[0]  # X is the 1st value
+
+                if i == 0:
+                    # Before first keyframe
+                    x_expr.append(f"if(lt(t,{curr_t}),{curr_x}")
+                if i < len(sorted_keyframes) - 1:
+                    # Between keyframes
+                    next_frame, next_crop = sorted_keyframes[i + 1]
+                    next_t = (next_frame - start_frame) / fps
+                    next_x = next_crop[0]
+                    x_expr.append(
+                        f",if(between(t,{curr_t},{next_t}),lerp({curr_x},{next_x},(t-{curr_t})/({next_t}-{curr_t}))"
+                    )
+
+            # After last keyframe
+            last_frame, last_crop = sorted_keyframes[-1]
+            last_x = last_crop[0]
+            x_expr.append(f",{last_x}")
+            x_expr.append(")" * len(sorted_keyframes))
+            expressions.append(f"x='{''.join(x_expr)}'")
+
+            # Build y position expression (interpolating)
+            y_expr = []
+            for i in range(len(sorted_keyframes)):
+                curr_frame, curr_crop = sorted_keyframes[i]
+                curr_t = (curr_frame - start_frame) / fps
+                curr_y = curr_crop[1]  # Y is the 2nd value
+
+                if i == 0:
+                    # Before first keyframe
+                    y_expr.append(f"if(lt(t,{curr_t}),{curr_y}")
+                if i < len(sorted_keyframes) - 1:
+                    # Between keyframes
+                    next_frame, next_crop = sorted_keyframes[i + 1]
+                    next_t = (next_frame - start_frame) / fps
+                    next_y = next_crop[1]
+                    y_expr.append(
+                        f",if(between(t,{curr_t},{next_t}),lerp({curr_y},{next_y},(t-{curr_t})/({next_t}-{curr_t}))"
+                    )
+
+            # After last keyframe
+            last_frame, last_crop = sorted_keyframes[-1]
+            last_y = last_crop[1]
+            y_expr.append(f",{last_y}")
+            y_expr.append(")" * len(sorted_keyframes))
+            expressions.append(f"y='{''.join(y_expr)}'")
+
+            # Create the dynamic crop filter
+            vf_filters.append(f"crop={':'.join(expressions)}")
+
+        elif crop_region:
+            # Static crop
             x, y, width, height = crop_region
             vf_filters.append(f"crop={width}:{height}:{x}:{y}")
 
@@ -1111,11 +1149,7 @@ def create_clip_preview(
 
         # Convert command to string with proper quoting
         cmd_str = " ".join(
-            (
-                f'"{arg}"'
-                if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
-                else str(arg)
-            )
+            f'"{arg}"' if " " in str(arg) or ":" in str(arg) else str(arg)
             for arg in cmd
         )
         logger.info(f"Running ffmpeg command: {cmd_str}")
@@ -1132,11 +1166,15 @@ def create_clip_preview(
             universal_newlines=True,
         )
 
+        # Collect all stderr output
+        stderr_output = []
+
         # Monitor progress
         while True:
             line = process.stderr.readline()
             if not line:
                 break
+            stderr_output.append(line.strip())
             if progress_placeholder and "time=" in line:
                 # Extract current time from ffmpeg output
                 time_match = re.search(r"time=(\d+:\d+:\d+.\d+)", line)
@@ -1152,14 +1190,15 @@ def create_clip_preview(
 
         if process.returncode == 0:
             logger.info(f"Successfully created clip preview: {preview_path}")
+            if progress_placeholder:
+                progress_placeholder.success("Preview created successfully!")
             return str(preview_path)
         else:
-            error_output = process.stderr.read()
-            logger.error(f"Error creating clip preview: {error_output}")
+            error_output = "\n".join(stderr_output)
+            error_msg = f"Error creating clip preview. ffmpeg error:\n{error_output}"
+            logger.error(error_msg)
             if progress_placeholder:
-                progress_placeholder.error(
-                    f"Error creating clip preview: {error_output}"
-                )
+                progress_placeholder.error(error_msg)
             return None
 
     except Exception as e:

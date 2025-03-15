@@ -75,15 +75,45 @@ class FrameAnimator {
     // Clear the container
     container.innerHTML = "";
 
+    // Create top controls container
+    const topControls = document.createElement("div");
+    topControls.style.display = "flex";
+    topControls.style.alignItems = "center";
+    topControls.style.marginBottom = "10px";
+    topControls.style.gap = "10px"; // Add space between elements
+    container.appendChild(topControls);
+
+    // Create play button
+    const playButton = document.createElement("button");
+    playButton.id = `${this.containerId}-play`;
+    playButton.textContent = "Play";
+    playButton.style.padding = "5px 15px";
+    playButton.style.backgroundColor = "#4CAF50";
+    playButton.style.color = "white";
+    playButton.style.border = "none";
+    playButton.style.borderRadius = "4px";
+    playButton.style.cursor = "pointer";
+    playButton.style.display = "none"; // Hide until preloading is complete
+    playButton.style.minWidth = "80px"; // Ensure consistent width
+    topControls.appendChild(playButton);
+
     // Create a loading message
     const loadingMsg = document.createElement("div");
     loadingMsg.id = `${this.containerId}-loading`;
     loadingMsg.textContent = `Preloading ${this.frames.length} frames starting from frame ${this.startFrame}...`;
-    loadingMsg.style.padding = "10px";
-    loadingMsg.style.marginBottom = "10px";
+    loadingMsg.style.padding = "5px 10px";
     loadingMsg.style.backgroundColor = "#f0f0f0";
     loadingMsg.style.borderRadius = "4px";
-    container.appendChild(loadingMsg);
+    loadingMsg.style.flex = "1"; // Take remaining space
+    topControls.appendChild(loadingMsg);
+
+    // Frame counter
+    const frameCounter = document.createElement("span");
+    frameCounter.id = `${this.containerId}-counter`;
+    frameCounter.textContent = `Frame: ${this.startFrame} / ${this.endFrame}`;
+    frameCounter.style.color = "white";
+    frameCounter.style.minWidth = "150px"; // Ensure consistent width
+    topControls.appendChild(frameCounter);
 
     // Create image element
     const img = document.createElement("img");
@@ -91,36 +121,6 @@ class FrameAnimator {
     img.style.width = "100%";
     img.style.display = "none"; // Hide until preloading is complete
     container.appendChild(img);
-
-    // Create controls
-    const controls = document.createElement("div");
-    controls.style.marginTop = "10px";
-    controls.style.display = "flex";
-    controls.style.alignItems = "center";
-
-    // Play button
-    const playButton = document.createElement("button");
-    playButton.id = `${this.containerId}-play`;
-    playButton.textContent = "Play";
-    playButton.style.marginRight = "10px";
-    playButton.style.padding = "5px 10px";
-    playButton.style.backgroundColor = "#4CAF50";
-    playButton.style.color = "white";
-    playButton.style.border = "none";
-    playButton.style.borderRadius = "4px";
-    playButton.style.cursor = "pointer";
-    playButton.style.display = "none"; // Hide until preloading is complete
-
-    // Frame counter
-    const frameCounter = document.createElement("span");
-    frameCounter.id = `${this.containerId}-counter`;
-    frameCounter.textContent = `Frame: ${this.startFrame} / ${this.endFrame}`;
-    frameCounter.style.color = "white";
-
-    // Add elements to controls
-    controls.appendChild(playButton);
-    controls.appendChild(frameCounter);
-    container.appendChild(controls);
 
     // Add event listeners
     playButton.addEventListener("click", () => this.togglePlayback());

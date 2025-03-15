@@ -205,11 +205,28 @@ class ConfigManager:
         Returns:
             Path to the clip preview video
         """
-        relative_path = self.get_relative_source_path(video_path)
+        # First check if the provided path is a proxy video
+        if str(video_path).startswith(str(self.proxy_raw_dir)):
+            try:
+                # Extract the relative path from the proxy path
+                relative_path = Path(
+                    str(video_path).replace(str(self.proxy_raw_dir), "").lstrip("/")
+                )
+                # Remove the _proxy.mp4 suffix if present
+                if relative_path.stem.endswith("_proxy"):
+                    relative_path = relative_path.with_stem(relative_path.stem[:-6])
+            except Exception as e:
+                logger.warning(f"Could not extract relative path from proxy path: {e}")
+                relative_path = None
+        else:
+            # Get relative path from source directory
+            relative_path = self.get_relative_source_path(video_path)
 
         if relative_path is None:
             # Fall back to using just the filename
             base_name = video_path.stem
+            if base_name.endswith("_proxy"):
+                base_name = base_name[:-6]
             preview_path = (
                 self.proxy_clipped_dir / f"{base_name}_{clip_name}_preview.mp4"
             )

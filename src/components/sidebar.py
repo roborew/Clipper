@@ -630,12 +630,32 @@ def display_clip_management():
                             # Always generate a new preview for the clip
                             from src.services import proxy_service
 
+                            # Get the proxy path from config manager
+                            proxy_path = str(
+                                config_manager.get_proxy_path(
+                                    Path(clip.source_path), is_clip=False
+                                )
+                            )
+                            source_video = clip.source_path
+
+                            # Use proxy if it exists
+                            if os.path.exists(proxy_path):
+                                source_video = proxy_path
+                                logger.info(
+                                    f"Using proxy video for preview: {source_video}"
+                                )
+                            else:
+                                logger.info(
+                                    f"Using source video for preview: {source_video}"
+                                )
+
                             preview_path = proxy_service.create_clip_preview(
-                                clip.source_path,
+                                source_video,  # Use proxy video as source
                                 clip.name,
                                 clip.start_frame,
                                 clip.end_frame,
-                                crop_region=crop_region,  # Pass the crop region
+                                crop_region=None,  # Don't use static crop region
+                                crop_keyframes=clip.crop_keyframes,  # Pass all keyframes
                                 progress_placeholder=progress_placeholder,
                                 config_manager=config_manager,
                             )

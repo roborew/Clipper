@@ -285,6 +285,24 @@ def display_main_content(video_path):
                 st.session_state.current_frame
             )
 
+        # Get the current frame for crop selection
+        if st.session_state.get("crop_selection_active", False):
+            frame = video_service.get_frame(video_path, st.session_state.current_frame)
+            if frame is not None:
+                # Show the crop selector
+                new_crop_region = simple_crop_selector.select_crop_region(
+                    frame,
+                    st.session_state.current_frame,
+                    current_clip,
+                    st.session_state.output_resolution,
+                )
+                if new_crop_region is not None:
+                    # Update the crop region
+                    handle_crop_update(new_crop_region)
+                    # Exit crop selection mode
+                    st.session_state.crop_selection_active = False
+                    st.rerun()
+
         # Display video player
         st.session_state.current_frame = video_player.display_video_player(
             video_path,  # video_service will automatically use proxy if available
@@ -678,6 +696,15 @@ def display_crop_controls(current_clip=None, current_frame=0, crop_region=None):
             "Select Crop at Current Frame", key=f"select_crop_{current_frame}"
         ):
             handle_select_crop()
+
+        # Display keyframe list if there are keyframes
+        if current_clip.crop_keyframes:
+            video_player.display_keyframe_list(
+                current_clip.crop_keyframes,
+                current_frame,
+                on_select_keyframe=handle_select_keyframe,
+                on_delete_keyframe=handle_delete_keyframe,
+            )
     else:
         st.info("Create or select a clip to enable crop controls")
 

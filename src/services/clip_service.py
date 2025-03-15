@@ -333,14 +333,27 @@ def add_clip(source_path, start_frame, end_frame, name=None, output_resolution="
         The new clip object
     """
     try:
-        # Get proxy path from session state if available
-        proxy_path = st.session_state.get("proxy_path", None)
+        # Get config manager from session state
+        config_manager = st.session_state.get("config_manager", None)
+        if not config_manager:
+            logger.error("No config manager found in session state")
+            return None
+
+        # Get proxy path from config manager
+        proxy_path = str(
+            config_manager.get_proxy_path(Path(source_path), is_clip=False)
+        )
+        if os.path.exists(proxy_path):
+            logger.info(f"Using proxy path: {proxy_path}")
+        else:
+            logger.info(f"Proxy path not found: {proxy_path}")
+            proxy_path = None
 
         # Create a new clip
         clip = Clip(
             name=name,
             source_path=source_path,
-            proxy_path=proxy_path,  # Set the proxy path from session state
+            proxy_path=proxy_path,
             start_frame=start_frame,
             end_frame=end_frame,
             output_resolution=output_resolution,
