@@ -982,6 +982,15 @@ def create_clip_preview(
         )
         logger.info(f"Preview path: {preview_path}")
 
+        # Delete existing preview file if it exists
+        if preview_path.exists():
+            try:
+                preview_path.unlink()
+                logger.info(f"Deleted existing preview file: {preview_path}")
+            except Exception as e:
+                logger.error(f"Error deleting existing preview file: {str(e)}")
+                # Continue anyway as ffmpeg will overwrite the file
+
         # Ensure the parent directory exists
         preview_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created preview directory: {preview_path.parent}")
@@ -1071,9 +1080,13 @@ def create_clip_preview(
                     next_frame, next_crop = sorted_keyframes[i + 1]
                     next_t = (next_frame - start_frame) / fps
                     next_x = next_crop[0]
+                    # Use a custom minterplot-like approach for smooth motion
                     x_expr.append(
                         f",if(between(t,{curr_t},{next_t}),lerp({curr_x},{next_x},(t-{curr_t})/({next_t}-{curr_t}))"
                     )
+                    # x_expr.append(
+                    #     f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    # )
 
             # After last keyframe
             last_frame, last_crop = sorted_keyframes[-1]
@@ -1097,9 +1110,13 @@ def create_clip_preview(
                     next_frame, next_crop = sorted_keyframes[i + 1]
                     next_t = (next_frame - start_frame) / fps
                     next_y = next_crop[1]
+                    # Use a custom minterplot-like approach for smooth motion
                     y_expr.append(
                         f",if(between(t,{curr_t},{next_t}),lerp({curr_y},{next_y},(t-{curr_t})/({next_t}-{curr_t}))"
                     )
+                    # y_expr.append(
+                    #     f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    # )
 
             # After last keyframe
             last_frame, last_crop = sorted_keyframes[-1]
@@ -1118,6 +1135,9 @@ def create_clip_preview(
 
         # Add scale filter
         vf_filters.append(f"scale={proxy_settings['width']}:-2")
+
+        # Add minterpolate filter for smoother motion
+        # vf_filters.append("minterpolate=fps=60")
 
         # Combine filters
         vf_string = ",".join(vf_filters)
