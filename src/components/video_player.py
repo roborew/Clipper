@@ -245,7 +245,7 @@ def display_video_player(
                     frame = video_service.draw_crop_overlay(frame, crop_region)
 
                 # Display the frame
-                st.image(frame, use_container_width=True)
+                st.image(frame, use_column_width=True)
 
                 # Display frame information
                 st.caption(
@@ -305,12 +305,23 @@ def display_video_player(
                 st.rerun()
 
             # Frame slider
-            new_frame = st.slider("Frame", 0, max(0, total_frames - 1), current_frame)
+            def handle_slider_change():
+                """Handle slider change event after release"""
+                if on_frame_change:
+                    on_frame_change(st.session_state.frame_slider)
+                st.rerun()
+
+            new_frame = st.slider(
+                "Frame",
+                0,
+                max(0, total_frames - 1),
+                current_frame,
+                key="frame_slider",
+                on_change=handle_slider_change,
+            )
             if new_frame != current_frame:
                 current_frame = new_frame
-                if on_frame_change:
-                    on_frame_change(current_frame)
-                st.rerun()
+                # Remove the immediate frame change handling here since it's handled in on_change
 
             # Timecode display
             st.text(f"Timecode: {video_service.format_timecode(current_frame, fps)}")
@@ -530,7 +541,7 @@ def play_clip_preview(
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                st.image(frame, use_container_width=True)
+                st.image(frame, use_column_width=True)
 
                 # Display frame information
                 st.caption(
@@ -730,18 +741,23 @@ def play_clip_preview(
                 )
 
             # Frame slider for precise navigation
+            def handle_preview_slider_change():
+                """Handle preview slider change event after release"""
+                if on_frame_change:
+                    on_frame_change(st.session_state.preview_frame_slider)
+                st.rerun()
+
             new_frame = st.slider(
                 "Frame",
                 start_frame,
                 end_frame,
                 st.session_state.preview_current_frame,
                 key="preview_frame_slider",
+                on_change=handle_preview_slider_change,
             )
             if new_frame != st.session_state.preview_current_frame:
                 st.session_state.preview_current_frame = new_frame
-                if on_frame_change:
-                    on_frame_change(new_frame)
-                st.rerun()
+                # Remove the immediate frame change handling here since it's handled in on_change
 
     except Exception as e:
         logger.exception(f"Error playing clip preview: {str(e)}")
