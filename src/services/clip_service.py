@@ -26,6 +26,7 @@ class Clip:
         start_frame=0,
         end_frame=0,
         crop_keyframes=None,
+        crop_keyframes_proxy=None,
         output_resolution="1080p",
     ):
         """
@@ -38,6 +39,7 @@ class Clip:
             start_frame: Starting frame number
             end_frame: Ending frame number
             crop_keyframes: Dictionary of frame numbers to crop regions (x, y, width, height)
+            crop_keyframes_proxy: Dictionary of frame numbers to crop regions for proxy video
             output_resolution: Target resolution for export
         """
         self.id = str(uuid.uuid4())
@@ -47,6 +49,7 @@ class Clip:
         self.start_frame = start_frame
         self.end_frame = end_frame
         self.crop_keyframes = crop_keyframes or {}
+        self.crop_keyframes_proxy = crop_keyframes_proxy or {}
         self.output_resolution = output_resolution
         self.export_path = None
         self.created_at = datetime.now().isoformat()
@@ -62,6 +65,7 @@ class Clip:
             "start_frame": self.start_frame,
             "end_frame": self.end_frame,
             "crop_keyframes": self.crop_keyframes,
+            "crop_keyframes_proxy": self.crop_keyframes_proxy,
             "output_resolution": self.output_resolution,
             "export_path": str(self.export_path) if self.export_path else None,
             "created_at": self.created_at,
@@ -79,6 +83,10 @@ class Clip:
         clip.start_frame = data.get("start_frame", 0)
         clip.end_frame = data.get("end_frame", 0)
         clip.crop_keyframes = data.get("crop_keyframes", {})
+        # Initialize crop_keyframes_proxy with the same values as crop_keyframes if not present
+        clip.crop_keyframes_proxy = data.get(
+            "crop_keyframes_proxy", clip.crop_keyframes.copy()
+        )
         clip.output_resolution = data.get("output_resolution", "1080p")
         clip.export_path = data.get("export_path")
         clip.created_at = data.get("created_at", datetime.now().isoformat())
@@ -383,6 +391,7 @@ def update_current_clip(
     end_frame=None,
     name=None,
     crop_keyframes=None,
+    crop_keyframes_proxy=None,
     output_resolution=None,
 ):
     """
@@ -393,6 +402,7 @@ def update_current_clip(
         end_frame: New ending frame number (optional)
         name: New name for the clip (optional)
         crop_keyframes: New crop keyframes dictionary (optional)
+        crop_keyframes_proxy: New crop keyframes dictionary for proxy video (optional)
         output_resolution: New output resolution (optional)
 
     Returns:
@@ -424,6 +434,8 @@ def update_current_clip(
             clip.name = name
         if crop_keyframes is not None:
             clip.crop_keyframes = crop_keyframes
+        if crop_keyframes_proxy is not None:
+            clip.crop_keyframes_proxy = crop_keyframes_proxy
         if output_resolution is not None:
             clip.output_resolution = output_resolution
 
@@ -523,8 +535,9 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
         # Get the clip
         clip = st.session_state.clips[clip_index]
 
-        # Add the keyframe
+        # Add the keyframe to both keyframe sets
         clip.crop_keyframes[str(frame_number)] = crop_region
+        clip.crop_keyframes_proxy[str(frame_number)] = crop_region
 
         # Update modification timestamp
         clip.update()
@@ -591,13 +604,18 @@ def remove_crop_keyframe(frame_number, clip_index=None):
         # Convert frame number to string for dictionary key
         frame_key = str(frame_number)
 
-        # Check if keyframe exists
-        if frame_key not in clip.crop_keyframes:
+        # Check if keyframe exists in either set
+        keyframe_exists = False
+        if frame_key in clip.crop_keyframes:
+            del clip.crop_keyframes[frame_key]
+            keyframe_exists = True
+        if frame_key in clip.crop_keyframes_proxy:
+            del clip.crop_keyframes_proxy[frame_key]
+            keyframe_exists = True
+
+        if not keyframe_exists:
             logger.warning(f"No keyframe at frame {frame_number} in clip {clip.name}")
             return False
-
-        # Remove the keyframe
-        del clip.crop_keyframes[frame_key]
 
         # Update modification timestamp
         clip.update()

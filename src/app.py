@@ -743,31 +743,34 @@ def handle_clear_crop():
             st.warning("No clip selected")
             return
 
-        # Clear crop keyframe for current frame
+        # Clear crop keyframe for current frame from both keyframe sets
         current_frame = st.session_state.current_frame
-        if str(current_frame) in current_clip.crop_keyframes:
-            del current_clip.crop_keyframes[str(current_frame)]
+        frame_key = str(current_frame)
+        if frame_key in current_clip.crop_keyframes:
+            del current_clip.crop_keyframes[frame_key]
+        if frame_key in current_clip.crop_keyframes_proxy:
+            del current_clip.crop_keyframes_proxy[frame_key]
 
-            # Update the clip
-            clip_service.update_current_clip()
+        # Update the clip
+        clip_service.update_current_clip()
 
-            # Auto-save the changes
-            success = clip_service.save_session_clips()
-            if success:
-                st.session_state.last_save_status = {
-                    "success": True,
-                    "message": f"Cleared and saved crop region at frame {current_frame}",
-                }
-            else:
-                st.session_state.last_save_status = {
-                    "success": False,
-                    "message": "Failed to save after clearing crop region",
-                }
+        # Auto-save the changes
+        success = clip_service.save_session_clips()
+        if success:
+            st.session_state.last_save_status = {
+                "success": True,
+                "message": f"Cleared and saved crop region at frame {current_frame}",
+            }
+        else:
+            st.session_state.last_save_status = {
+                "success": False,
+                "message": "Failed to save after clearing crop region",
+            }
 
-            logger.info(f"Cleared crop region at frame {current_frame}")
+        logger.info(f"Cleared crop region at frame {current_frame}")
 
-            # Force a rerun to update the UI
-            st.session_state.trigger_rerun = True
+        # Force a rerun to update the UI
+        st.session_state.trigger_rerun = True
 
     except Exception as e:
         logger.exception(f"Error clearing crop region: {str(e)}")
@@ -783,9 +786,10 @@ def handle_crop_update(crop_region):
             st.warning("No clip selected")
             return
 
-        # Update crop keyframe
+        # Update both crop keyframes
         current_frame = st.session_state.current_frame
         current_clip.crop_keyframes[str(current_frame)] = crop_region
+        current_clip.crop_keyframes_proxy[str(current_frame)] = crop_region
 
         # Update the clip
         clip_service.update_current_clip()

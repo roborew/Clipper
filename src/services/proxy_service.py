@@ -940,7 +940,8 @@ def create_clip_preview(
     crop_region=None,
     progress_placeholder=None,
     config_manager=None,
-    crop_keyframes=None,  # Add crop_keyframes parameter
+    crop_keyframes=None,  # Original keyframes
+    crop_keyframes_proxy=None,  # Proxy-specific keyframes
 ):
     """
     Create a preview video for a clip
@@ -953,7 +954,8 @@ def create_clip_preview(
         crop_region: Optional tuple of (x, y, width, height) for static cropping
         progress_placeholder: Streamlit placeholder for progress updates
         config_manager: ConfigManager instance
-        crop_keyframes: Dictionary of frame numbers to crop regions for dynamic cropping
+        crop_keyframes: Original keyframes (for reference)
+        crop_keyframes_proxy: Dictionary of frame numbers to crop regions for dynamic cropping in proxy video
 
     Returns:
         Path to the preview video or None if creation failed
@@ -963,7 +965,8 @@ def create_clip_preview(
         logger.info(f"Source: {source_path}")
         logger.info(f"Frames: {start_frame} to {end_frame}")
         logger.info(f"Static crop region: {crop_region}")
-        logger.info(f"Crop keyframes: {crop_keyframes}")
+        logger.info(f"Original keyframes: {crop_keyframes}")
+        logger.info(f"Proxy keyframes: {crop_keyframes_proxy}")
 
         # Verify source video exists
         if not os.path.exists(source_path):
@@ -1049,9 +1052,11 @@ def create_clip_preview(
         vf_filters = []
 
         # Add crop filter based on keyframes or static crop region
-        if crop_keyframes:
+        if crop_keyframes_proxy:
             # Sort keyframes by frame number and convert to timestamps
-            sorted_keyframes = sorted([(int(k), v) for k, v in crop_keyframes.items()])
+            sorted_keyframes = sorted(
+                [(int(k), v) for k, v in crop_keyframes_proxy.items()]
+            )
 
             # Get the constant width and height from first keyframe
             _, first_crop = sorted_keyframes[0]

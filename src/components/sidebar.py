@@ -25,19 +25,48 @@ def display_sidebar(config_manager):
     try:
         st.sidebar.title("Clipper")
 
+        # Initialize active tab in session state if not present
+        if "active_sidebar_tab" not in st.session_state:
+            st.session_state.active_sidebar_tab = "Videos"
+
         # Create tabs for different sidebar sections
-        video_tab, clips_tab, settings_tab = st.sidebar.tabs(
-            ["Videos", "Clips", "Settings"]
-        )
+        tabs = ["Videos", "Clips", "Settings"]
+        video_tab, clips_tab, settings_tab = st.sidebar.tabs(tabs)
+
+        selected_video = None
 
         with video_tab:
             selected_video = display_video_selection(config_manager)
+            if video_tab._active:
+                st.session_state.active_sidebar_tab = "Videos"
 
         with clips_tab:
+            if clips_tab._active:
+                st.session_state.active_sidebar_tab = "Clips"
+                # Auto-initialize config when clips tab is active
+                current_video = st.session_state.get("current_video", None)
+                if current_video:
+                    clips_file = config_manager.get_clips_file_path(current_video)
+                    # If config doesn't exist, create it
+                    if not clips_file.exists():
+                        try:
+                            os.makedirs(os.path.dirname(clips_file), exist_ok=True)
+                            with open(clips_file, "w") as f:
+                                f.write("[]")
+                            logger.info(f"Created new config file: {clips_file}")
+                        except Exception as e:
+                            logger.exception(f"Error creating config file: {str(e)}")
+                            st.error("Failed to create config file")
+                    # Always try to initialize clips
+                    success = clip_service.initialize_session_clips(config_manager)
+                    if not success:
+                        st.error("Failed to initialize clips configuration")
             display_clip_management()
 
         with settings_tab:
             display_settings(config_manager)
+            if settings_tab._active:
+                st.session_state.active_sidebar_tab = "Settings"
 
         # Display proxy generation progress if active
         if (
@@ -655,7 +684,8 @@ def display_clip_management():
                                 clip.start_frame,
                                 clip.end_frame,
                                 crop_region=None,  # Don't use static crop region
-                                crop_keyframes=clip.crop_keyframes,  # Pass all keyframes
+                                crop_keyframes=clip.crop_keyframes,  # Keep original keyframes
+                                crop_keyframes_proxy=clip.crop_keyframes,  # Pass same keyframes for proxy
                                 progress_placeholder=progress_placeholder,
                                 config_manager=config_manager,
                             )

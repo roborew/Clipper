@@ -96,7 +96,7 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
         overlay_frame = cv2.addWeighted(overlay_frame, 1, mask, alpha, 0)
 
         # Display the frame with overlay
-        st.image(overlay_frame, use_column_width=True)
+        st.image(overlay_frame, use_container_width=True)
 
         # Display current crop position
         st.write(f"Position: X={x}, Y={y}, Width={width}, Height={height}")
