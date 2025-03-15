@@ -1081,12 +1081,12 @@ def create_clip_preview(
                     next_t = (next_frame - start_frame) / fps
                     next_x = next_crop[0]
                     # Use a custom minterplot-like approach for smooth motion
-                    x_expr.append(
-                        f",if(between(t,{curr_t},{next_t}),lerp({curr_x},{next_x},(t-{curr_t})/({next_t}-{curr_t}))"
-                    )
                     # x_expr.append(
-                    #     f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    #     f",if(between(t,{curr_t},{next_t}),lerp({curr_x},{next_x},(t-{curr_t})/({next_t}-{curr_t}))"
                     # )
+                    x_expr.append(
+                        f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    )
 
             # After last keyframe
             last_frame, last_crop = sorted_keyframes[-1]
@@ -1111,12 +1111,12 @@ def create_clip_preview(
                     next_t = (next_frame - start_frame) / fps
                     next_y = next_crop[1]
                     # Use a custom minterplot-like approach for smooth motion
-                    y_expr.append(
-                        f",if(between(t,{curr_t},{next_t}),lerp({curr_y},{next_y},(t-{curr_t})/({next_t}-{curr_t}))"
-                    )
                     # y_expr.append(
-                    #     f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    #     f",if(between(t,{curr_t},{next_t}),lerp({curr_y},{next_y},(t-{curr_t})/({next_t}-{curr_t}))"
                     # )
+                    y_expr.append(
+                        f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                    )
 
             # After last keyframe
             last_frame, last_crop = sorted_keyframes[-1]
@@ -1145,7 +1145,7 @@ def create_clip_preview(
 
         cmd = [
             "ffmpeg",
-            "-y",  # Overwrite output file if it exists
+            "-y",
             "-ss",
             str(start_time),
             "-i",
@@ -1157,13 +1157,13 @@ def create_clip_preview(
             "-c:v",
             "libx264",
             "-crf",
-            str(proxy_settings["quality"]),
+            "18",  # Lower CRF for higher quality (0-51, lower is better)
             "-preset",
-            "medium",
-            "-c:a",
-            "aac",
-            "-b:a",
-            proxy_settings["audio_bitrate"],
+            "veryslow",  # Better compression
+            "-pix_fmt",
+            "yuv420p",  # Explicit pixel format
+            "-color_range",
+            "tv",  # Explicit color range
             str(preview_path),
         ]
 
