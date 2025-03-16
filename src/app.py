@@ -429,8 +429,6 @@ def display_main_content(video_path):
                 clip=current_clip,
                 on_set_start=handle_set_start,
                 on_set_end=handle_set_end,
-                on_play_clip=handle_play_clip,
-                on_export_clip=handle_export_clip,
             )
 
         with col2:
@@ -457,47 +455,17 @@ def handle_set_start():
     """Handle set start frame button click"""
     try:
         # Get current clip
-        if (
-            "current_clip_index" not in st.session_state
-            or st.session_state.current_clip_index < 0
-        ):
-            # Create a new clip if none is selected
-            handle_new_clip(
-                st.session_state.proxy_path
-                if "proxy_path" in st.session_state
-                else None
-            )
+        current_clip = clip_service.get_current_clip()
+        if not current_clip:
+            st.warning("No clip selected")
+            return
 
         # Update start frame
-        current_clip = clip_service.get_current_clip()
-        if current_clip:
-            # Use the current frame as the start frame
-            current_clip.start_frame = st.session_state.current_frame
+        current_clip.start_frame = st.session_state.current_frame
+        clip_service.update_current_clip()
 
-            # If start frame is after end frame, adjust end frame
-            if current_clip.start_frame > current_clip.end_frame:
-                current_clip.end_frame = current_clip.start_frame
-
-            # Update the clip
-            clip_service.update_current_clip()
-
-            # Auto-save the changes
-            success = clip_service.save_session_clips()
-            if success:
-                st.session_state.last_save_status = {
-                    "success": True,
-                    "message": f"Set and saved start frame to {current_clip.start_frame}",
-                }
-            else:
-                st.session_state.last_save_status = {
-                    "success": False,
-                    "message": "Failed to save changes",
-                }
-
-            logger.info(f"Start frame set to {current_clip.start_frame}")
-
-            # Force a rerun to update the UI
-            st.session_state.trigger_rerun = True
+        # Show success message
+        st.success(f"Start frame set to {current_clip.start_frame}")
 
     except Exception as e:
         logger.exception(f"Error setting start frame: {str(e)}")
@@ -508,170 +476,21 @@ def handle_set_end():
     """Handle set end frame button click"""
     try:
         # Get current clip
-        if (
-            "current_clip_index" not in st.session_state
-            or st.session_state.current_clip_index < 0
-        ):
-            # Create a new clip if none is selected
-            handle_new_clip(
-                st.session_state.proxy_path
-                if "proxy_path" in st.session_state
-                else None
-            )
-
-        # Update end frame
         current_clip = clip_service.get_current_clip()
-        if current_clip:
-            # Use the current frame as the end frame
-            current_clip.end_frame = st.session_state.current_frame
-
-            # If end frame is before start frame, adjust start frame
-            if current_clip.end_frame < current_clip.start_frame:
-                current_clip.start_frame = current_clip.end_frame
-
-            # Update the clip
-            clip_service.update_current_clip()
-
-            # Auto-save the changes
-            success = clip_service.save_session_clips()
-            if success:
-                st.session_state.last_save_status = {
-                    "success": True,
-                    "message": f"Set and saved end frame to {current_clip.end_frame}",
-                }
-            else:
-                st.session_state.last_save_status = {
-                    "success": False,
-                    "message": "Failed to save changes",
-                }
-
-            logger.info(f"End frame set to {current_clip.end_frame}")
-
-            # Force a rerun to update the UI
-            st.session_state.trigger_rerun = True
-
-    except Exception as e:
-        logger.exception(f"Error setting end frame: {str(e)}")
-        st.error(f"Error setting end frame: {str(e)}")
-
-
-def handle_play_clip():
-    """Handle play clip button click"""
-    try:
-        # Get current clip
-        current_clip = clip_service.get_current_clip()
-
-        if not current_clip:
-            st.warning("No clip selected. Please select or create a clip first.")
-            return
-
-        # Validate clip frames
-        if current_clip.start_frame >= current_clip.end_frame:
-            st.warning(
-                "Invalid clip: Start frame must be before end frame. Please set valid in/out points."
-            )
-            return
-
-        # Get video path - video_service will automatically use proxy if available
-        video_path = current_clip.source_path
-
-        # Show clip information
-        st.subheader(f"Playing Clip: {current_clip.name}")
-        st.info(
-            f"Frames: {current_clip.start_frame} to {current_clip.end_frame} ({current_clip.get_duration_frames()} frames)"
-        )
-
-        # Calculate duration
-        if st.session_state.fps > 0:
-            duration_seconds = current_clip.get_duration_frames() / st.session_state.fps
-            st.info(f"Duration: {video_service.format_duration(duration_seconds)}")
-
-        # Play the clip
-        video_player.play_clip_preview(
-            video_path,
-            current_clip.start_frame,
-            current_clip.end_frame,
-            st.session_state.fps,
-            crop_region=lambda frame: (
-                current_clip.get_crop_region_at_frame(frame, use_proxy=True)
-                if current_clip
-                else None
-            ),
-            on_frame_change=handle_frame_change,
-        )
-
-    except Exception as e:
-        logger.exception(f"Error playing clip: {str(e)}")
-        st.error(f"Error playing clip: {str(e)}")
-
-
-def handle_export_clip():
-    """Handle export clip button click"""
-    try:
-        # Get current clip
-        current_clip = clip_service.get_current_clip()
-
         if not current_clip:
             st.warning("No clip selected")
             return
 
-        # Create export directory if it doesn't exist
-        export_dir = st.session_state.config_manager.get_export_dir()
-        export_dir.mkdir(parents=True, exist_ok=True)
+        # Update end frame
+        current_clip.end_frame = st.session_state.current_frame
+        clip_service.update_current_clip()
 
-        # Generate export filename
-        clip_name = current_clip.name.replace(" ", "_")
-        export_path = export_dir / f"{clip_name}.mp4"
-
-        # Check if file already exists
-        if export_path.exists():
-            # Add timestamp to filename
-            from datetime import datetime
-
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            export_path = export_dir / f"{clip_name}_{timestamp}.mp4"
-
-        # Show export progress
-        progress_placeholder = st.empty()
-        progress_placeholder.info(f"Exporting clip to {export_path}...")
-
-        # Get crop region function
-        crop_region_func = lambda frame: (
-            current_clip.get_crop_region_at_frame(
-                frame, use_proxy=False  # Use source resolution for export
-            )
-            if current_clip
-            else None
-        )
-
-        # Export the clip
-        success = video_service.export_clip(
-            current_clip.source_path,
-            export_path,
-            current_clip.start_frame,
-            current_clip.end_frame,
-            crop_region=crop_region_func(current_clip.start_frame),
-            output_resolution=current_clip.output_resolution,
-            config_manager=st.session_state.config_manager,
-        )
-
-        if success:
-            # Update clip with export path
-            current_clip.export_path = str(export_path)
-            clip_service.update_current_clip()
-
-            # Save clips
-            clip_service.save_session_clips()
-
-            progress_placeholder.success(f"Clip exported to {export_path}")
-            logger.info(f"Clip exported to {export_path}")
-        else:
-            progress_placeholder.error("Failed to export clip")
-            logger.error("Failed to export clip")
+        # Show success message
+        st.success(f"End frame set to {current_clip.end_frame}")
 
     except Exception as e:
-        logger.exception(f"Error exporting clip: {str(e)}")
-        st.error(f"Error exporting clip: {str(e)}")
+        logger.exception(f"Error setting end frame: {str(e)}")
+        st.error(f"Error setting end frame: {str(e)}")
 
 
 def handle_select_keyframe(frame_number):

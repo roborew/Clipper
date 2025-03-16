@@ -410,8 +410,6 @@ def display_clip_controls(
     clip=None,
     on_set_start=None,
     on_set_end=None,
-    on_play_clip=None,
-    on_export_clip=None,
 ):
     """
     Display clip editing controls
@@ -420,8 +418,6 @@ def display_clip_controls(
         clip: Current clip object
         on_set_start: Callback for setting start frame
         on_set_end: Callback for setting end frame
-        on_play_clip: Callback for playing the clip
-        on_export_clip: Callback for exporting the clip
 
     Returns:
         None
@@ -457,17 +453,6 @@ def display_clip_controls(
                     # Update current frame to end frame
                     st.session_state.current_frame = clip.end_frame
                     st.rerun()
-
-        # Play and export buttons
-        play_col, export_col = st.columns(2)
-
-        with play_col:
-            if on_play_clip and clip:
-                st.button("▶️ Play Clip", on_click=on_play_clip)
-
-        with export_col:
-            if on_export_clip and clip:
-                st.button("Export Clip", on_click=on_export_clip)
 
         # Display clip duration if clip exists
         if clip:
