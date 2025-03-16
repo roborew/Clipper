@@ -576,7 +576,18 @@ def handle_select_keyframe(frame_number):
         # Update current frame
         st.session_state.current_frame = frame_number
 
-        logger.debug(f"Selected keyframe at frame {frame_number}")
+        # Get current clip
+        current_clip = clip_service.get_current_clip()
+
+        # Log selection of keyframe
+        if current_clip and str(frame_number) in current_clip.crop_keyframes_proxy:
+            keyframe_crop = current_clip.crop_keyframes_proxy[str(frame_number)]
+            logger.info(
+                f"Selected keyframe at frame {frame_number} with crop {keyframe_crop}"
+            )
+        else:
+            logger.debug(f"Selected keyframe at frame {frame_number}")
+
         # Set a flag to trigger rerun
         st.session_state.trigger_rerun = True
 

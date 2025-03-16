@@ -38,30 +38,76 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
         )
         aspect_ratio = target_width / target_height
 
+        # Check if we're editing an existing keyframe from the proxy crop keyframes
+        existing_crop = None
+        first_time_editing = False
+
+        if clip:
+            # If editing an existing keyframe, get its crop values
+            if (
+                "editing_keyframe" in st.session_state
+                and st.session_state.editing_keyframe is not None
+            ):
+                # Get the crop region from proxy keyframes for the editing frame
+                editing_frame = st.session_state.editing_keyframe
+                editing_frame_str = str(editing_frame)
+                first_time_editing = True
+
+                if editing_frame_str in clip.crop_keyframes_proxy:
+                    existing_crop = clip.crop_keyframes_proxy[editing_frame_str]
+                    logger.info(
+                        f"Editing existing keyframe at frame {editing_frame} with crop {existing_crop}"
+                    )
+                else:
+                    # If we're in editing mode but no keyframe exists, check for interpolated values
+                    existing_crop = clip.get_crop_region_at_frame(
+                        editing_frame, use_proxy=True
+                    )
+            else:
+                # Not editing, just get current frame crop if available
+                existing_crop = clip.get_crop_region_at_frame(
+                    current_frame, use_proxy=True
+                )
+
         # Calculate default crop size based on output resolution
-        # Instead of filling the entire frame, we'll use a reasonable size
-        # that maintains the correct aspect ratio
+        if existing_crop:
+            # Use existing crop region from the keyframe we're editing
+            crop_width = existing_crop[2]
+            crop_height = existing_crop[3]
+            x = existing_crop[0]
+            y = existing_crop[1]
+            logger.info(
+                f"Using existing crop region: X={x}, Y={y}, Width={crop_width}, Height={crop_height}"
+            )
+        else:
+            # Start with a crop that's about 70% of the frame height
+            crop_height = int(frame_height * 0.7)
+            crop_width = int(crop_height * aspect_ratio)
 
-        # Start with a crop that's about 70% of the frame height
-        crop_height = int(frame_height * 0.7)
-        crop_width = int(crop_height * aspect_ratio)
+            # Make sure the crop isn't larger than the frame
+            if crop_width > frame_width:
+                crop_width = frame_width
+                crop_height = int(crop_width / aspect_ratio)
 
-        # Make sure the crop isn't larger than the frame
-        if crop_width > frame_width:
-            crop_width = frame_width
-            crop_height = int(crop_width / aspect_ratio)
+            # Center the crop region
+            x = max(0, (frame_width - crop_width) // 2)
+            y = max(0, (frame_height - crop_height) // 2)
 
-        # Initialize position in session state if not already set
-        if "crop_x" not in st.session_state:
-            st.session_state.crop_x = max(0, (frame_width - crop_width) // 2)
-        if "crop_y" not in st.session_state:
-            st.session_state.crop_y = max(0, (frame_height - crop_height) // 2)
-        if "crop_width" not in st.session_state:
+        # Initialize position in session state if not already set or if first time editing a keyframe
+        if "crop_x" not in st.session_state or first_time_editing:
+            st.session_state.crop_x = x
+        if "crop_y" not in st.session_state or first_time_editing:
+            st.session_state.crop_y = y
+        if "crop_width" not in st.session_state or first_time_editing:
             st.session_state.crop_width = crop_width
-        if "crop_height" not in st.session_state:
+        if "crop_height" not in st.session_state or first_time_editing:
             st.session_state.crop_height = crop_height
         if "move_amount" not in st.session_state:
             st.session_state.move_amount = 10
+
+        # Clear the editing flag once we've initialized the crop values
+        if "editing_keyframe" in st.session_state:
+            st.session_state.editing_keyframe = None
 
         # Get current position from session state
         x = st.session_state.crop_x
