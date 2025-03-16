@@ -476,7 +476,7 @@ def display_clip_management():
             )
 
             # Create columns for the config info and buttons
-            col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+            col1 = st.columns([1])[0]
 
             with col1:
                 if current_video:
@@ -492,7 +492,6 @@ def display_clip_management():
                 else:
                     st.caption("No video selected")
 
-            with col2:
                 # Save button - only enabled if there are unsaved changes
                 save_button = st.button(
                     "💾 Save",
@@ -510,7 +509,6 @@ def display_clip_management():
                         st.error("Failed to save configuration")
                     st.rerun()
 
-            with col3:
                 reload_button = st.button(
                     "🔄 Reload",
                     key="reload_config_btn",
@@ -547,8 +545,7 @@ def display_clip_management():
                             st.error("Failed to reload configuration")
                         st.rerun()
 
-            # Show Generate Config button only when we have a video but no config file
-            with col4:
+                # Show Generate Config button only when we have a video but no config file
                 if current_video and (not clips_file or not clips_file.exists()):
                     if st.button(
                         "➕ Generate",
@@ -570,6 +567,36 @@ def display_clip_management():
                         except Exception as e:
                             logger.exception(f"Error generating config file: {str(e)}")
                             st.error("Failed to generate config file")
+
+                # Add batch status update section
+                st.markdown("---")  # Add separator
+                st.caption("Batch Status Update")
+
+                # Status selector for batch update
+                batch_status_options = ["Draft", "Process", "Complete"]
+                batch_status = st.selectbox(
+                    "Set All Clips To",
+                    options=batch_status_options,
+                    key="batch_status_selector",
+                )
+
+                # Update All button
+                if st.button("Update All", key="update_all_status_btn"):
+                    if "clips" in st.session_state and st.session_state.clips:
+                        # Update all clips to the selected status
+                        for clip in st.session_state.clips:
+                            if clip.status != batch_status:
+                                clip.status = batch_status
+                                clip.update()  # Update modification timestamp
+
+                        # Mark as modified to enable saving
+                        st.session_state.clip_modified = True
+                        st.info(
+                            f"Updated all clips to '{batch_status}' status. Click Save to apply changes."
+                        )
+                        st.rerun()
+                    else:
+                        st.warning("No clips to update")
 
         # Create New Clip button (only enabled if video is selected)
         if st.button(
@@ -630,38 +657,38 @@ def display_clip_management():
                     st.text(f"Duration: {clip.get_duration_frames()} frames")
                     st.text(f"Keyframes: {len(clip.crop_keyframes)}")
 
-                    # Add status selector
-                    status_options = ["Draft", "Process", "Complete"]
-                    new_status = st.selectbox(
-                        "Status",
-                        options=status_options,
-                        index=(
-                            status_options.index(clip.status)
-                            if clip.status in status_options
-                            else 0
-                        ),
-                        key=f"status_selector_{i}",
-                    )
+                    # Create a single column for vertical button layout
+                    col1 = st.columns([1])[0]
 
-                    # Update status if changed
-                    if new_status != clip.status:
-                        clip.status = new_status
-                        st.session_state.clip_modified = True
-                        st.session_state.clips[i] = clip
-                        # Display info message about status change
-                        st.info(
-                            f"Status changed to '{new_status}'. Click Save to apply changes."
-                        )
-
-                    # Create columns for buttons
-                    btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
-
-                    with btn_col1:
+                    with col1:
+                        # Select button
                         if st.button("Select", key=f"select_clip_{i}"):
                             st.session_state.current_clip_index = i
                             st.rerun()
 
-                    with btn_col2:
+                        # Delete button (in red)
+                        if st.button(
+                            "Delete",
+                            key=f"delete_clip_{i}",
+                            type="primary",
+                            use_container_width=True,
+                        ):
+                            # Delete the clip
+                            clip_service.delete_clip(i)
+                            # Auto-save after deletion
+                            success = clip_service.save_session_clips()
+                            if success:
+                                st.session_state.last_save_status = {
+                                    "success": True,
+                                    "message": f"Deleted and saved clip: {clip.name}",
+                                }
+                            else:
+                                st.session_state.last_save_status = {
+                                    "success": False,
+                                    "message": f"Failed to save after deleting clip: {clip.name}",
+                                }
+                            st.rerun()
+
                         # Preview button
                         if st.button("Preview", key=f"preview_clip_{i}"):
                             # Create progress placeholder
@@ -735,7 +762,6 @@ def display_clip_management():
                                 logger.error("Failed to generate preview")
                                 progress_placeholder.error("Failed to generate preview")
 
-                    with btn_col3:
                         # Add a checkbox for CV optimization
                         cv_optimized = st.checkbox(
                             "Optimize for CV",
@@ -743,6 +769,7 @@ def display_clip_management():
                             help="Export with maximum quality for computer vision learning",
                         )
 
+                        # Export button
                         if st.button("Export", key=f"export_clip_{i}"):
                             # Create progress placeholder
                             progress_placeholder = st.empty()
@@ -831,23 +858,29 @@ def display_clip_management():
                                 logger.error("Failed to export clip")
                                 progress_placeholder.error("Failed to export clip")
 
-                    with btn_col4:
-                        if st.button("Delete", key=f"delete_clip_{i}"):
-                            # Delete the clip
-                            clip_service.delete_clip(i)
-                            # Auto-save after deletion
-                            success = clip_service.save_session_clips()
-                            if success:
-                                st.session_state.last_save_status = {
-                                    "success": True,
-                                    "message": f"Deleted and saved clip: {clip.name}",
-                                }
-                            else:
-                                st.session_state.last_save_status = {
-                                    "success": False,
-                                    "message": f"Failed to save after deleting clip: {clip.name}",
-                                }
-                            st.rerun()
+                        # Status selector at the bottom
+                        st.markdown("---")  # Add a separator
+                        status_options = ["Draft", "Process", "Complete"]
+                        new_status = st.selectbox(
+                            "Status",
+                            options=status_options,
+                            index=(
+                                status_options.index(clip.status)
+                                if clip.status in status_options
+                                else 0
+                            ),
+                            key=f"status_selector_{i}",
+                        )
+
+                        # Update status if changed
+                        if new_status != clip.status:
+                            clip.status = new_status
+                            st.session_state.clip_modified = True
+                            st.session_state.clips[i] = clip
+                            # Display info message about status change
+                            st.info(
+                                f"Status changed to '{new_status}'. Click Save to apply changes."
+                            )
 
     except Exception as e:
         logger.exception(f"Error displaying clip management: {str(e)}")
