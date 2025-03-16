@@ -92,9 +92,22 @@ def display_video_player(
         if "show_previews" not in st.session_state:
             st.session_state.show_previews = True
 
+        # Initialize frame navigation state
+        if "frame_to_navigate" not in st.session_state:
+            st.session_state.frame_to_navigate = None
+
         # Store the current frame in session state for the JavaScript animation
         if "js_current_frame" not in st.session_state:
             st.session_state.js_current_frame = current_frame
+
+        # Check if we need to process a navigation update from previous run
+        if st.session_state.frame_to_navigate is not None:
+            current_frame = st.session_state.frame_to_navigate
+            # Call the frame change callback if provided
+            if on_frame_change:
+                on_frame_change(current_frame)
+            # Reset navigation state
+            st.session_state.frame_to_navigate = None
 
         # Initialize original_frame to avoid scope issues
         original_frame = current_frame
@@ -260,56 +273,67 @@ def display_video_player(
             # Video controls
             st.subheader("Frame Controls")
 
-            # Frame navigation
-            if st.button("⏮️ First Frame", key="btn_first"):
-                current_frame = 0
-                if on_frame_change:
-                    on_frame_change(current_frame)
-                st.rerun()
+            # Navigation action functions
+            def go_to_first_frame():
+                st.session_state.frame_to_navigate = 0
+
+            def go_to_previous_frame():
+                st.session_state.frame_to_navigate = max(0, current_frame - 1)
+
+            def go_to_next_frame():
+                st.session_state.frame_to_navigate = min(
+                    total_frames - 1, current_frame + 1
+                )
+
+            def go_back_10_frames():
+                st.session_state.frame_to_navigate = max(0, current_frame - 10)
+
+            def go_forward_10_frames():
+                st.session_state.frame_to_navigate = min(
+                    total_frames - 1, current_frame + 10
+                )
+
+            def go_to_last_frame():
+                st.session_state.frame_to_navigate = total_frames - 1
+
+            # Frame navigation buttons
+            if st.button("⏮️ First Frame", key="btn_first", on_click=go_to_first_frame):
+                pass  # Action handled in on_click
 
             # Previous/Next frame buttons in a row
             prev_col, next_col = st.columns(2)
             with prev_col:
-                if st.button("⏪ Previous", key="btn_prev"):
-                    current_frame = max(0, current_frame - 1)
-                    if on_frame_change:
-                        on_frame_change(current_frame)
-                    st.rerun()
+                if st.button(
+                    "⏪ Previous", key="btn_prev", on_click=go_to_previous_frame
+                ):
+                    pass  # Action handled in on_click
             with next_col:
-                if st.button("Next ⏩", key="btn_next"):
-                    current_frame = min(total_frames - 1, current_frame + 1)
-                    if on_frame_change:
-                        on_frame_change(current_frame)
-                    st.rerun()
+                if st.button("Next ⏩", key="btn_next", on_click=go_to_next_frame):
+                    pass  # Action handled in on_click
 
             # Jump buttons
             jump_col1, jump_col2 = st.columns(2)
             with jump_col1:
-                if st.button("-10 Frames", key="btn_back10"):
-                    current_frame = max(0, current_frame - 10)
-                    if on_frame_change:
-                        on_frame_change(current_frame)
-                    st.rerun()
+                if st.button(
+                    "-10 Frames", key="btn_back10", on_click=go_back_10_frames
+                ):
+                    pass  # Action handled in on_click
             with jump_col2:
-                if st.button("+10 Frames", key="btn_forward10"):
-                    current_frame = min(total_frames - 1, current_frame + 10)
-                    if on_frame_change:
-                        on_frame_change(current_frame)
-                    st.rerun()
+                if st.button(
+                    "+10 Frames", key="btn_forward10", on_click=go_forward_10_frames
+                ):
+                    pass  # Action handled in on_click
 
             # Last frame button
-            if st.button("Last Frame ⏭️", key="btn_last"):
-                current_frame = total_frames - 1
-                if on_frame_change:
-                    on_frame_change(current_frame)
-                st.rerun()
+            if st.button("Last Frame ⏭️", key="btn_last", on_click=go_to_last_frame):
+                pass  # Action handled in on_click
 
             # Frame slider
             def handle_slider_change():
                 """Handle slider change event after release"""
                 if on_frame_change:
                     on_frame_change(st.session_state.frame_slider)
-                st.rerun()
+                # Removed st.rerun() as it's a no-op in callbacks
 
             new_frame = st.slider(
                 "Frame",
@@ -492,6 +516,25 @@ def play_clip_preview(
         if "show_previews" not in st.session_state:
             st.session_state.show_previews = True
 
+        # Initialize preview frame navigation state
+        if "preview_frame_to_navigate" not in st.session_state:
+            st.session_state.preview_frame_to_navigate = None
+
+        # Initialize session state for current preview frame if not exists
+        if "preview_current_frame" not in st.session_state:
+            st.session_state.preview_current_frame = start_frame
+
+        # Check if we need to process a navigation update from previous run
+        if st.session_state.preview_frame_to_navigate is not None:
+            st.session_state.preview_current_frame = (
+                st.session_state.preview_frame_to_navigate
+            )
+            # Call the frame change callback if provided
+            if on_frame_change:
+                on_frame_change(st.session_state.preview_current_frame)
+            # Reset navigation state
+            st.session_state.preview_frame_to_navigate = None
+
         # Add a toggle to show/hide previews (same as in display_video_player)
         st.session_state.show_previews = st.checkbox(
             "Show Video Previews",
@@ -519,24 +562,25 @@ def play_clip_preview(
                 # Display in/out points with go-to buttons
                 st.subheader("Clip Points")
 
+                # Define navigation functions
+                def go_to_start_frame():
+                    st.session_state.preview_frame_to_navigate = start_frame
+
+                def go_to_end_frame():
+                    st.session_state.preview_frame_to_navigate = end_frame
+
                 # Use a flat layout for in/out points
                 st.text(f"In Point: {start_frame}")
-                if st.button("Go to In Point", key="goto_in_point"):
-                    st.session_state.preview_current_frame = start_frame
-                    if on_frame_change:
-                        on_frame_change(start_frame)
-                    st.rerun()
+                if st.button(
+                    "Go to In Point", key="goto_in_point", on_click=go_to_start_frame
+                ):
+                    pass  # Action handled in on_click
 
                 st.text(f"Out Point: {end_frame}")
-                if st.button("Go to Out Point", key="goto_out_point"):
-                    st.session_state.preview_current_frame = end_frame
-                    if on_frame_change:
-                        on_frame_change(end_frame)
-                    st.rerun()
-
-        # Initialize session state for current preview frame if not exists
-        if "preview_current_frame" not in st.session_state:
-            st.session_state.preview_current_frame = start_frame
+                if st.button(
+                    "Go to Out Point", key="goto_out_point", on_click=go_to_end_frame
+                ):
+                    pass  # Action handled in on_click
 
         # Display current frame and controls side by side
         frame_col, controls_col = st.columns([3, 2])
@@ -636,8 +680,8 @@ def play_clip_preview(
                                             img_str
                                         )
 
-                            # Update progress
-                            progress_bar.progress((i + 1) / frame_range)
+                                # Update progress
+                                progress_bar.progress((i + 1) / frame_range)
 
                             st.success(
                                 f"Prepared {len(st.session_state.preview_animation_frames)} frames for animation from frame {start_frame} to {start_frame + len(st.session_state.preview_animation_frames) - 1}"
@@ -689,35 +733,48 @@ def play_clip_preview(
             st.text(f"Current Frame: {current_frame} / {end_frame}")
             st.text(f"Time: {video_service.format_timecode(current_frame, fps)}")
 
-            # Frame navigation - use a flat layout
-            if st.button("⏮️ Start Frame", key="preview_first"):
-                st.session_state.preview_current_frame = start_frame
-                if on_frame_change:
-                    on_frame_change(start_frame)
-                st.rerun()
+            # Define frame navigation functions
+            def go_to_start_frame():
+                st.session_state.preview_frame_to_navigate = start_frame
 
-            if st.button("Set In Point", key="set_in_point"):
-                # Call the frame change callback to set in point
+            def set_in_point():
                 if on_frame_change:
                     on_frame_change(st.session_state.preview_current_frame)
-                st.success(
+                st.session_state.message = (
                     f"In point set at frame {st.session_state.preview_current_frame}"
                 )
 
-            if st.button("Set Out Point", key="set_out_point"):
-                # Call the frame change callback to set out point
+            def set_out_point():
                 if on_frame_change:
                     on_frame_change(st.session_state.preview_current_frame)
-                st.success(
+                st.session_state.message = (
                     f"Out point set at frame {st.session_state.preview_current_frame}"
                 )
+
+            # Frame navigation - use a flat layout
+            if st.button(
+                "⏮️ Start Frame", key="preview_first", on_click=go_to_start_frame
+            ):
+                pass  # Action handled in on_click
+
+            if st.button("Set In Point", key="set_in_point", on_click=set_in_point):
+                pass  # Action handled in on_click
+
+            # Display success message if one exists
+            if "message" in st.session_state and st.session_state.message:
+                st.success(st.session_state.message)
+                # Clear message after displaying it
+                st.session_state.message = ""
+
+            if st.button("Set Out Point", key="set_out_point", on_click=set_out_point):
+                pass  # Action handled in on_click
 
             # Frame slider for precise navigation
             def handle_preview_slider_change():
                 """Handle preview slider change event after release"""
                 if on_frame_change:
                     on_frame_change(st.session_state.preview_frame_slider)
-                st.rerun()
+                # Removed st.rerun() as it's a no-op in callbacks
 
             new_frame = st.slider(
                 "Frame",
