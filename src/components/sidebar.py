@@ -631,7 +631,7 @@ def display_clip_management():
                     st.text(f"Keyframes: {len(clip.crop_keyframes)}")
 
                     # Create columns for buttons
-                    btn_col1, btn_col2, btn_col3 = st.columns(3)
+                    btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
 
                     with btn_col1:
                         if st.button("Select", key=f"select_clip_{i}"):
@@ -713,6 +713,102 @@ def display_clip_management():
                                 progress_placeholder.error("Failed to generate preview")
 
                     with btn_col3:
+                        # Add a checkbox for CV optimization
+                        cv_optimized = st.checkbox(
+                            "Optimize for CV",
+                            key=f"cv_optimized_{i}",
+                            help="Export with maximum quality for computer vision learning",
+                        )
+
+                        if st.button("Export", key=f"export_clip_{i}"):
+                            # Create progress placeholder
+                            progress_placeholder = st.empty()
+                            if cv_optimized:
+                                progress_placeholder.info(
+                                    "Exporting clip with CV optimization..."
+                                )
+                            else:
+                                progress_placeholder.info("Exporting clip...")
+
+                            logger.info(f"Export button clicked for clip {clip.name}")
+                            logger.info(f"Source path: {clip.source_path}")
+                            logger.info(f"Start frame: {clip.start_frame}")
+                            logger.info(f"End frame: {clip.end_frame}")
+                            logger.info(f"CV optimization: {cv_optimized}")
+
+                            # Always use the original high-quality source video for export
+                            source_video = clip.source_path
+
+                            # Get crop region for current frame
+                            crop_region = clip.get_crop_region_at_frame(
+                                clip.start_frame,
+                                use_proxy=False,  # Use source resolution for export
+                            )
+
+                            # Export the clip using the original source video and full-resolution keyframes
+                            from src.services import proxy_service
+
+                            # Debug log to verify the crop keyframes being used
+                            logger.info(
+                                f"Full-resolution crop keyframes before export: {clip.crop_keyframes}"
+                            )
+                            if len(clip.crop_keyframes) == 0:
+                                logger.warning(
+                                    "No crop keyframes available for high-resolution export"
+                                )
+
+                            # Also log the proxy crop keyframes for comparison
+                            logger.info(
+                                f"Proxy crop keyframes for reference: {clip.crop_keyframes_proxy}"
+                            )
+
+                            # Verify that there are keyframes within the clip range
+                            in_range_keyframes = [
+                                k
+                                for k in clip.crop_keyframes.keys()
+                                if clip.start_frame <= int(k) <= clip.end_frame
+                            ]
+                            if not in_range_keyframes:
+                                logger.warning(
+                                    f"No crop keyframes in range {clip.start_frame}-{clip.end_frame}. "
+                                    f"Available keyframes: {list(clip.crop_keyframes.keys())}"
+                                )
+
+                            export_path = proxy_service.export_clip(
+                                source_video,
+                                clip.name,
+                                clip.start_frame,
+                                clip.end_frame,
+                                crop_region=crop_region,
+                                crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
+                                output_resolution=clip.output_resolution,
+                                progress_placeholder=progress_placeholder,
+                                config_manager=config_manager,
+                                cv_optimized=cv_optimized,  # Pass the CV optimization flag
+                            )
+
+                            if export_path:
+                                logger.info(f"Clip exported to: {export_path}")
+                                # Update clip's export path
+                                clip.export_path = export_path
+                                clip.update()  # Mark as modified
+                                st.session_state.clip_modified = True
+
+                                # Store the export path in session state for the main page
+                                logger.info(
+                                    f"Setting export path in session state: {export_path}"
+                                )
+                                st.session_state.exported_clip_path = export_path
+                                st.session_state.current_clip_index = i
+                                st.session_state.trigger_rerun = True
+                                progress_placeholder.success(
+                                    "Export completed! Switching to main view..."
+                                )
+                            else:
+                                logger.error("Failed to export clip")
+                                progress_placeholder.error("Failed to export clip")
+
+                    with btn_col4:
                         if st.button("Delete", key=f"delete_clip_{i}"):
                             # Delete the clip
                             clip_service.delete_clip(i)

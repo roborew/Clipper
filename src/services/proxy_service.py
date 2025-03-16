@@ -945,29 +945,30 @@ def create_clip_preview(
         Path to the preview file if successful, None otherwise
     """
     try:
-        logger.info(f"Creating clip preview for {clip_name}")
+        logger.info(f"Creating preview for {clip_name}")
         logger.info(f"Source: {source_path}")
         logger.info(f"Frames: {start_frame} to {end_frame}")
         logger.info(f"Static crop region: {crop_region}")
-        logger.info(f"Original keyframes: {crop_keyframes}")
-        logger.info(f"Proxy keyframes: {crop_keyframes_proxy}")
+        logger.info(f"Crop keyframes proxy: {crop_keyframes_proxy}")
 
-        # Verify source video exists
-        if not os.path.exists(source_path):
-            error_msg = f"Source video not found: {source_path}"
-            logger.error(error_msg)
-            if progress_placeholder:
-                progress_placeholder.error(error_msg)
-            return None
-
+        # Get configurations
         if not config_manager:
             config_manager = st.session_state.config_manager
+        proxy_settings = config_manager.get_proxy_settings()
+        logger.info(f"Proxy settings: {proxy_settings}")
 
         # Get preview path
         preview_path = config_manager.get_clip_preview_path(
             Path(source_path), clip_name
         )
         logger.info(f"Preview path: {preview_path}")
+
+        # Check if preview already exists and processing is requested to be skipped
+        if preview_path.exists() and proxy_settings.get("skip_existing", False):
+            logger.info(f"Preview already exists: {preview_path}")
+            if progress_placeholder:
+                progress_placeholder.success("Preview file already exists!")
+            return str(preview_path)
 
         # Delete existing preview file if it exists
         if preview_path.exists():
@@ -982,7 +983,7 @@ def create_clip_preview(
         preview_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Created preview directory: {preview_path.parent}")
 
-        # Get video FPS
+        # Get video FPS for timestamp calculation
         fps_cmd = [
             "ffprobe",
             "-v",
@@ -1029,9 +1030,6 @@ def create_clip_preview(
         end_time = end_frame / fps
         logger.info(f"Time range: {start_time} to {end_time} seconds")
 
-        # Create ffmpeg command for clip preview
-        proxy_settings = config_manager.get_proxy_settings()
-
         # Build the video filter string
         vf_filters = []
 
@@ -1047,6 +1045,8 @@ def create_clip_preview(
             width = first_crop[2]  # Width is the 3rd value
             height = first_crop[3]  # Height is the 4th value
 
+            logger.info(f"Using crop dimensions width={width}, height={height}")
+
             # Build expressions for x and y positions
             expressions = []
 
@@ -1058,8 +1058,14 @@ def create_clip_preview(
             x_expr = []
             for i in range(len(sorted_keyframes)):
                 curr_frame, curr_crop = sorted_keyframes[i]
-                curr_t = (curr_frame - start_frame) / fps
+                # Make sure we're using the frame relative to the clip start time
+                # Negative times can cause issues in ffmpeg filtering
+                curr_t = max(0, (curr_frame - start_frame) / fps)
                 curr_x = curr_crop[0]  # X is the 1st value
+
+                logger.info(
+                    f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with x={curr_x}"
+                )
 
                 if i == 0:
                     # Before first keyframe
@@ -1067,12 +1073,21 @@ def create_clip_preview(
                 if i < len(sorted_keyframes) - 1:
                     # Between keyframes
                     next_frame, next_crop = sorted_keyframes[i + 1]
-                    next_t = (next_frame - start_frame) / fps
+                    next_t = max(0, (next_frame - start_frame) / fps)
                     next_x = next_crop[0]
-                    # Use a custom minterplot-like approach for smooth motion
-                    # x_expr.append(
-                    #     f",if(between(t,{curr_t},{next_t}),lerp({curr_x},{next_x},(t-{curr_t})/({next_t}-{curr_t}))"
-                    # )
+
+                    # Skip keyframes with identical timestamps (can happen if keyframes are too close)
+                    if (
+                        abs(next_t - curr_t) < 0.001
+                    ):  # If less than 1ms apart, consider them identical
+                        logger.warning(
+                            f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
+                        )
+                        continue
+
+                    logger.info(
+                        f"Interpolating x from {curr_x} to {next_x} between {curr_t:.3f}s and {next_t:.3f}s"
+                    )
                     x_expr.append(
                         f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
                     )
@@ -1082,14 +1097,21 @@ def create_clip_preview(
             last_x = last_crop[0]
             x_expr.append(f",{last_x}")
             x_expr.append(")" * len(sorted_keyframes))
-            expressions.append(f"x='{''.join(x_expr)}'")
+            x_expr_final = f"x='{''.join(x_expr)}'"
+            expressions.append(x_expr_final)
+            logger.info(f"X expression: {x_expr_final}")
 
-            # Build y position expression (interpolating)
+            # Build y position expression (interpolating) - with same improvements as x expression
             y_expr = []
             for i in range(len(sorted_keyframes)):
                 curr_frame, curr_crop = sorted_keyframes[i]
-                curr_t = (curr_frame - start_frame) / fps
+                # Make sure we're using the frame relative to the clip start time
+                curr_t = max(0, (curr_frame - start_frame) / fps)
                 curr_y = curr_crop[1]  # Y is the 2nd value
+
+                logger.info(
+                    f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with y={curr_y}"
+                )
 
                 if i == 0:
                     # Before first keyframe
@@ -1097,12 +1119,21 @@ def create_clip_preview(
                 if i < len(sorted_keyframes) - 1:
                     # Between keyframes
                     next_frame, next_crop = sorted_keyframes[i + 1]
-                    next_t = (next_frame - start_frame) / fps
+                    next_t = max(0, (next_frame - start_frame) / fps)
                     next_y = next_crop[1]
-                    # Use a custom minterplot-like approach for smooth motion
-                    # y_expr.append(
-                    #     f",if(between(t,{curr_t},{next_t}),lerp({curr_y},{next_y},(t-{curr_t})/({next_t}-{curr_t}))"
-                    # )
+
+                    # Skip keyframes with identical timestamps (can happen if keyframes are too close)
+                    if (
+                        abs(next_t - curr_t) < 0.001
+                    ):  # If less than 1ms apart, consider them identical
+                        logger.warning(
+                            f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
+                        )
+                        continue
+
+                    logger.info(
+                        f"Interpolating y from {curr_y} to {next_y} between {curr_t:.3f}s and {next_t:.3f}s"
+                    )
                     y_expr.append(
                         f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
                     )
@@ -1112,10 +1143,20 @@ def create_clip_preview(
             last_y = last_crop[1]
             y_expr.append(f",{last_y}")
             y_expr.append(")" * len(sorted_keyframes))
-            expressions.append(f"y='{''.join(y_expr)}'")
+            y_expr_final = f"y='{''.join(y_expr)}'"
+            expressions.append(y_expr_final)
+            logger.info(f"Y expression: {y_expr_final}")
 
-            # Create the dynamic crop filter
-            vf_filters.append(f"crop={':'.join(expressions)}")
+            # Handle special case: if all keyframes have the same frame number
+            if len(set([frame for frame, _ in sorted_keyframes])) == 1:
+                logger.info("Only one unique keyframe, using static crop")
+                x, y, width, height = first_crop
+                vf_filters.append(f"crop={width}:{height}:{x}:{y}")
+            else:
+                # Create the dynamic crop filter
+                crop_filter = f"crop={':'.join(expressions)}"
+                vf_filters.append(crop_filter)
+                logger.info(f"Using dynamic crop filter: {crop_filter}")
 
         elif crop_region:
             # Static crop
@@ -1164,7 +1205,7 @@ def create_clip_preview(
         logger.info(f"Running ffmpeg command: {cmd_str}")
 
         if progress_placeholder:
-            progress_placeholder.text("Creating clip preview...")
+            progress_placeholder.text("Creating preview...")
 
         # Run ffmpeg command
         process = subprocess.Popen(
@@ -1190,7 +1231,7 @@ def create_clip_preview(
                 if time_match:
                     current_time = time_match.group(1)
                     progress_placeholder.text(
-                        f"Creating clip preview... Time: {current_time}"
+                        f"Creating preview... Time: {current_time}"
                     )
             logger.debug(f"ffmpeg output: {line.strip()}")
 
@@ -1198,20 +1239,461 @@ def create_clip_preview(
         process.wait()
 
         if process.returncode == 0:
-            logger.info(f"Successfully created clip preview: {preview_path}")
+            logger.info(f"Successfully created preview: {preview_path}")
             if progress_placeholder:
-                progress_placeholder.success("Preview created successfully!")
+                progress_placeholder.success("Preview generated successfully!")
             return str(preview_path)
         else:
             error_output = "\n".join(stderr_output)
-            error_msg = f"Error creating clip preview. ffmpeg error:\n{error_output}"
+            error_msg = f"Error creating preview. ffmpeg error:\n{error_output}"
             logger.error(error_msg)
             if progress_placeholder:
                 progress_placeholder.error(error_msg)
             return None
 
     except Exception as e:
-        logger.exception(f"Error creating clip preview: {str(e)}")
+        logger.exception(f"Error creating preview: {str(e)}")
         if progress_placeholder:
-            progress_placeholder.error(f"Error creating clip preview: {str(e)}")
+            progress_placeholder.error(f"Error creating preview: {str(e)}")
+        return None
+
+
+def export_clip(
+    source_path,
+    clip_name,
+    start_frame,
+    end_frame,
+    crop_region=None,
+    progress_placeholder=None,
+    config_manager=None,
+    crop_keyframes=None,  # Original high-resolution keyframes used for export
+    output_resolution="1080p",
+    cv_optimized=False,  # New parameter for computer vision optimized exports
+):
+    """
+    Export a clip with high quality using source video and original keyframes
+
+    Args:
+        source_path: Path to the source video
+        clip_name: Name of the clip
+        start_frame: Starting frame number
+        end_frame: Ending frame number
+        crop_region: Optional static crop region (x, y, width, height)
+        progress_placeholder: Streamlit placeholder for progress updates
+        config_manager: ConfigManager instance
+        crop_keyframes: Original high-resolution keyframes used for export
+        output_resolution: Output resolution for the exported clip
+        cv_optimized: Whether to optimize for computer vision (higher quality, different format)
+
+    Returns:
+        Path to the exported file if successful, None otherwise
+    """
+    try:
+        logger.info(f"Exporting clip for {clip_name}")
+        logger.info(f"Source: {source_path}")
+        logger.info(f"Frames: {start_frame} to {end_frame}")
+        logger.info(f"Static crop region: {crop_region}")
+        logger.info(f"Crop keyframes: {crop_keyframes}")
+        logger.info(f"Output resolution: {output_resolution}")
+        logger.info(f"CV optimized: {cv_optimized}")
+
+        # Verify source video exists
+        if not os.path.exists(source_path):
+            error_msg = f"Source video not found: {source_path}"
+            logger.error(error_msg)
+            if progress_placeholder:
+                progress_placeholder.error(error_msg)
+            return None
+
+        if not config_manager:
+            config_manager = st.session_state.config_manager
+
+        # Get export path
+        export_path = config_manager.get_output_path(Path(source_path), clip_name)
+
+        # Modify filename for CV-optimized exports
+        if cv_optimized:
+            export_path = Path(str(export_path).replace(".mp4", "_cv_optimized.mp4"))
+
+        logger.info(f"Export path: {export_path}")
+
+        # Delete existing export file if it exists
+        if export_path.exists():
+            try:
+                export_path.unlink()
+                logger.info(f"Deleted existing export file: {export_path}")
+            except Exception as e:
+                logger.error(f"Error deleting existing export file: {str(e)}")
+                # Continue anyway as ffmpeg will overwrite the file
+
+        # Ensure the parent directory exists
+        export_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created export directory: {export_path.parent}")
+
+        # Get video FPS
+        fps_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=r_frame_rate",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(source_path),
+        ]
+
+        try:
+            fps_cmd_str = " ".join(
+                f'"{arg}"' if " " in str(arg) else str(arg) for arg in fps_cmd
+            )
+            fps_result = subprocess.run(
+                fps_cmd_str,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                shell=True,
+            )
+            if fps_result.returncode == 0:
+                fps_str = fps_result.stdout.strip()
+                if "/" in fps_str:
+                    num, den = map(int, fps_str.split("/"))
+                    fps = num / den
+                else:
+                    fps = float(fps_str)
+            else:
+                logger.warning(
+                    f"Could not get FPS, using default. Error: {fps_result.stderr}"
+                )
+                fps = 30
+            logger.info(f"Video FPS: {fps}")
+        except Exception as e:
+            logger.warning(f"Could not determine video FPS: {str(e)}")
+            fps = 30
+
+        # Calculate start and end times in seconds
+        start_time = start_frame / fps
+        end_time = end_frame / fps
+        logger.info(f"Time range: {start_time} to {end_time} seconds")
+
+        # Build the video filter string
+        vf_filters = []
+
+        # Add crop filter based on keyframes or static crop region
+        if crop_keyframes:
+            # Filter out keyframes outside the clip range and sort by frame number
+            valid_keyframes = {
+                k: v
+                for k, v in crop_keyframes.items()
+                if start_frame <= int(k) <= end_frame
+            }
+
+            # If no valid keyframes in range, use all keyframes but adjust timings
+            if not valid_keyframes:
+                logger.warning(
+                    f"No keyframes in clip range {start_frame}-{end_frame}. Using all available keyframes."
+                )
+                valid_keyframes = crop_keyframes
+
+            sorted_keyframes = sorted([(int(k), v) for k, v in valid_keyframes.items()])
+
+            # Debug log the keyframes we're using
+            logger.info(f"Using {len(sorted_keyframes)} crop keyframes for export")
+            for frame_num, crop_vals in sorted_keyframes:
+                logger.info(f"Keyframe {frame_num}: {crop_vals}")
+
+            # Handle case with no keyframes
+            if not sorted_keyframes and crop_region:
+                logger.warning(
+                    "No keyframes available, falling back to static crop region"
+                )
+                x, y, width, height = crop_region
+                vf_filters.append(f"crop={width}:{height}:{x}:{y}")
+
+            elif not sorted_keyframes:
+                logger.warning(
+                    "No keyframes available and no static crop region. Skipping crop."
+                )
+
+            else:
+                # Get the constant width and height from first keyframe
+                _, first_crop = sorted_keyframes[0]
+                width = first_crop[2]  # Width is the 3rd value
+                height = first_crop[3]  # Height is the 4th value
+
+                logger.info(f"Using crop dimensions width={width}, height={height}")
+
+                # Build expressions for x and y positions
+                expressions = []
+
+                # Width and height are constant
+                expressions.append(f"w='{width}'")
+                expressions.append(f"h='{height}'")
+
+                # Build x position expression (interpolating)
+                x_expr = []
+                for i in range(len(sorted_keyframes)):
+                    curr_frame, curr_crop = sorted_keyframes[i]
+                    # Make sure we're using the frame relative to the clip start time
+                    # Negative times can cause issues in ffmpeg filtering
+                    curr_t = max(0, (curr_frame - start_frame) / fps)
+                    curr_x = curr_crop[0]  # X is the 1st value
+
+                    logger.info(
+                        f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with x={curr_x}"
+                    )
+
+                    if i == 0:
+                        # Before first keyframe
+                        x_expr.append(f"if(lt(t,{curr_t}),{curr_x}")
+                    if i < len(sorted_keyframes) - 1:
+                        # Between keyframes
+                        next_frame, next_crop = sorted_keyframes[i + 1]
+                        next_t = max(0, (next_frame - start_frame) / fps)
+                        next_x = next_crop[0]
+
+                        # Skip keyframes with identical timestamps (can happen if keyframes are too close)
+                        if (
+                            abs(next_t - curr_t) < 0.001
+                        ):  # If less than 1ms apart, consider them identical
+                            logger.warning(
+                                f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
+                            )
+                            continue
+
+                        logger.info(
+                            f"Interpolating x from {curr_x} to {next_x} between {curr_t:.3f}s and {next_t:.3f}s"
+                        )
+                        x_expr.append(
+                            f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                        )
+
+                # After last keyframe
+                last_frame, last_crop = sorted_keyframes[-1]
+                last_x = last_crop[0]
+                x_expr.append(f",{last_x}")
+                x_expr.append(")" * len(sorted_keyframes))
+                x_expr_final = f"x='{''.join(x_expr)}'"
+                expressions.append(x_expr_final)
+                logger.info(f"X expression: {x_expr_final}")
+
+                # Build y position expression (interpolating) - with same improvements as x expression
+                y_expr = []
+                for i in range(len(sorted_keyframes)):
+                    curr_frame, curr_crop = sorted_keyframes[i]
+                    # Make sure we're using the frame relative to the clip start time
+                    curr_t = max(0, (curr_frame - start_frame) / fps)
+                    curr_y = curr_crop[1]  # Y is the 2nd value
+
+                    logger.info(
+                        f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with y={curr_y}"
+                    )
+
+                    if i == 0:
+                        # Before first keyframe
+                        y_expr.append(f"if(lt(t,{curr_t}),{curr_y}")
+                    if i < len(sorted_keyframes) - 1:
+                        # Between keyframes
+                        next_frame, next_crop = sorted_keyframes[i + 1]
+                        next_t = max(0, (next_frame - start_frame) / fps)
+                        next_y = next_crop[1]
+
+                        # Skip keyframes with identical timestamps (can happen if keyframes are too close)
+                        if (
+                            abs(next_t - curr_t) < 0.001
+                        ):  # If less than 1ms apart, consider them identical
+                            logger.warning(
+                                f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
+                            )
+                            continue
+
+                        logger.info(
+                            f"Interpolating y from {curr_y} to {next_y} between {curr_t:.3f}s and {next_t:.3f}s"
+                        )
+                        y_expr.append(
+                            f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
+                        )
+
+                # After last keyframe
+                last_frame, last_crop = sorted_keyframes[-1]
+                last_y = last_crop[1]
+                y_expr.append(f",{last_y}")
+                y_expr.append(")" * len(sorted_keyframes))
+                y_expr_final = f"y='{''.join(y_expr)}'"
+                expressions.append(y_expr_final)
+                logger.info(f"Y expression: {y_expr_final}")
+
+                # Handle special case: if all keyframes have the same frame number
+                if len(set([frame for frame, _ in sorted_keyframes])) == 1:
+                    logger.info("Only one unique keyframe, using static crop")
+                    x, y, width, height = first_crop
+                    vf_filters.append(f"crop={width}:{height}:{x}:{y}")
+                else:
+                    # Create the dynamic crop filter
+                    crop_filter = f"crop={':'.join(expressions)}"
+                    vf_filters.append(crop_filter)
+                    logger.info(f"Using dynamic crop filter: {crop_filter}")
+
+        elif crop_region:
+            # Static crop
+            x, y, width, height = crop_region
+            crop_filter = f"crop={width}:{height}:{x}:{y}"
+            vf_filters.append(crop_filter)
+            logger.info(f"Using static crop filter: {crop_filter}")
+
+        # Get output dimensions based on requested resolution
+        # Import inside the function to avoid circular imports
+        from src.services import video_service
+
+        output_width, output_height = video_service.calculate_crop_dimensions(
+            output_resolution
+        )
+
+        # For CV exports, use high-quality scaler
+        if cv_optimized:
+            # Use lanczos scaling algorithm for higher quality
+            vf_filters.append(f"scale={output_width}:{output_height}:flags=lanczos")
+        else:
+            # Use default scaling
+            vf_filters.append(f"scale={output_width}:{output_height}")
+
+        # Combine filters
+        vf_string = ",".join(vf_filters)
+        logger.info(f"Video filters: {vf_string}")
+
+        # Base command list
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-ss",
+            str(start_time),
+            "-i",
+            str(source_path),
+            "-t",
+            str(end_time - start_time),
+            "-vf",
+            vf_string,
+        ]
+
+        # Add video codec settings
+        if cv_optimized:
+            # For computer vision, use near-lossless encoding
+            cmd.extend(
+                [
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    "0",  # Lossless quality (0 is lossless for H.264)
+                    "-preset",
+                    "veryslow",  # Slowest encoding for best quality
+                    "-pix_fmt",
+                    "yuv444p",  # Full chroma quality (better for CV)
+                    "-x264-params",
+                    "keyint=1",  # Every frame is a keyframe for better frame extraction
+                ]
+            )
+
+            # For CV, we typically don't need audio
+            cmd.extend(["-an"])
+        else:
+            # Standard high quality settings for normal exports
+            cmd.extend(
+                [
+                    "-c:v",
+                    "libx264",
+                    "-crf",
+                    "16",  # High quality
+                    "-preset",
+                    "slow",  # Good balance between quality and speed
+                    "-pix_fmt",
+                    "yuv420p",
+                    "-color_range",
+                    "tv",
+                    # Include audio at high quality
+                    "-c:a",
+                    "aac",
+                    "-b:a",
+                    "320k",
+                ]
+            )
+
+        # Add output path
+        cmd.append(str(export_path))
+
+        # Convert command to string with proper quoting
+        cmd_str = " ".join(
+            f'"{arg}"' if " " in str(arg) or ":" in str(arg) else str(arg)
+            for arg in cmd
+        )
+        logger.info(f"Running ffmpeg command: {cmd_str}")
+
+        if progress_placeholder:
+            if cv_optimized:
+                progress_placeholder.text(
+                    "Exporting CV-optimized clip (this may take longer)..."
+                )
+            else:
+                progress_placeholder.text("Exporting clip...")
+
+        # Run ffmpeg command
+        process = subprocess.Popen(
+            cmd_str,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            shell=True,
+            universal_newlines=True,
+        )
+
+        # Collect all stderr output
+        stderr_output = []
+
+        # Monitor progress
+        while True:
+            line = process.stderr.readline()
+            if not line:
+                break
+            stderr_output.append(line.strip())
+            if progress_placeholder and "time=" in line:
+                # Extract current time from ffmpeg output
+                time_match = re.search(r"time=(\d+:\d+:\d+.\d+)", line)
+                if time_match:
+                    current_time = time_match.group(1)
+                    progress_placeholder.text(f"Exporting clip... Time: {current_time}")
+            logger.debug(f"ffmpeg output: {line.strip()}")
+
+        # Wait for process to complete
+        process.wait()
+
+        if process.returncode == 0:
+            logger.info(f"Successfully exported clip to: {export_path}")
+            # Update clip's export path in session state
+            if "clips" in st.session_state and "current_clip_index" in st.session_state:
+                current_clip = st.session_state.clips[
+                    st.session_state.current_clip_index
+                ]
+                current_clip.export_path = str(export_path)
+                current_clip.update()  # Mark as modified
+                st.session_state.clip_modified = True
+
+            if progress_placeholder:
+                if cv_optimized:
+                    progress_placeholder.success(
+                        "CV-optimized export completed successfully!"
+                    )
+                else:
+                    progress_placeholder.success("Export completed successfully!")
+            return str(export_path)
+        else:
+            error_output = "\n".join(stderr_output)
+            error_msg = f"Error exporting clip. ffmpeg error:\n{error_output}"
+            logger.error(error_msg)
+            if progress_placeholder:
+                progress_placeholder.error(error_msg)
+            return None
+
+    except Exception as e:
+        logger.exception(f"Error exporting clip: {str(e)}")
+        if progress_placeholder:
+            progress_placeholder.error(f"Error exporting clip: {str(e)}")
         return None

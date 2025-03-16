@@ -6,6 +6,8 @@ import streamlit as st
 import logging
 import os
 from pathlib import Path
+import platform
+import subprocess
 
 # Import services
 from src.services import (
@@ -185,6 +187,108 @@ def display_main_content(video_path):
     try:
         # Title with video name
         st.title(f"Editing: {os.path.basename(video_path)}")
+
+        # Check if we have an exported clip to display first
+        if (
+            "exported_clip_path" in st.session_state
+            and st.session_state.exported_clip_path
+        ):
+            export_path = st.session_state.exported_clip_path
+            logger.info(f"Attempting to display exported clip from: {export_path}")
+
+            st.markdown("### 🎬 EXPORTED CLIP")
+
+            if os.path.exists(export_path):
+                logger.info("Export file exists, displaying...")
+
+                # Create columns for export title and close button
+                export_header_col1, export_header_col2 = st.columns([5, 1])
+
+                with export_header_col1:
+                    # Check if this is a CV-optimized export
+                    is_cv_optimized = "_cv_optimized" in os.path.basename(export_path)
+
+                    if is_cv_optimized:
+                        st.success("✅ CV-Optimized Export completed successfully!")
+                        st.caption(
+                            f"Playing: {os.path.basename(export_path)} (Optimized for Computer Vision)"
+                        )
+                    else:
+                        st.success("✅ Export completed successfully!")
+                        st.caption(f"Playing: {os.path.basename(export_path)}")
+
+                with export_header_col2:
+                    if st.button("❌", key="close_export", help="Close export"):
+                        logger.info("Closing export view...")
+                        st.session_state.exported_clip_path = None
+                        st.rerun()
+
+                # Create a container for the video
+                video_container = st.container()
+                with video_container:
+                    try:
+                        with open(export_path, "rb") as video_file:
+                            video_bytes = video_file.read()
+                            st.video(video_bytes, start_time=0)
+                            logger.info("Successfully displayed exported video")
+                    except Exception as e:
+                        logger.error(f"Error displaying exported video: {str(e)}")
+                        st.error(f"⚠️ Error playing exported clip: {str(e)}")
+
+                # Display clip information if available
+                current_clip = clip_service.get_current_clip()
+                if current_clip:
+                    with st.expander("Export Details", expanded=True):
+                        info_col1, info_col2, info_col3, info_col4, info_col5 = (
+                            st.columns(5)
+                        )
+                        with info_col1:
+                            st.metric("Start Frame", current_clip.start_frame)
+                        with info_col2:
+                            st.metric("End Frame", current_clip.end_frame)
+                        with info_col3:
+                            duration_frames = current_clip.get_duration_frames()
+                            if st.session_state.fps > 0:
+                                duration_seconds = (
+                                    duration_frames / st.session_state.fps
+                                )
+                                st.metric(
+                                    "Duration",
+                                    video_service.format_duration(duration_seconds),
+                                )
+                        with info_col4:
+                            st.metric("Resolution", current_clip.output_resolution)
+                        with info_col5:
+                            if is_cv_optimized:
+                                st.metric("Format", "CV-Optimized")
+                                # Add tooltip-like explanation of the optimizations
+                                st.caption(
+                                    "⚙️ Lossless encoding, YUV444p pixel format, Lanczos scaling"
+                                )
+                            else:
+                                st.metric("Format", "Standard")
+
+                # Add open folder button
+                if st.button("📂 Open in Folder", key="open_export_folder"):
+                    # Use platform-specific commands to open the folder
+                    folder_path = os.path.dirname(export_path)
+                    try:
+                        if platform.system() == "Windows":
+                            os.startfile(folder_path)
+                        elif platform.system() == "Darwin":  # macOS
+                            subprocess.run(["open", folder_path], check=True)
+                        else:  # Linux
+                            subprocess.run(["xdg-open", folder_path], check=True)
+                        st.success(f"Opened folder: {folder_path}")
+                    except Exception as e:
+                        logger.error(f"Error opening folder: {str(e)}")
+                        st.error(f"Error opening folder: {str(e)}")
+
+                # Add separator after export section
+                st.markdown("---")
+            else:
+                st.error(f"⚠️ Export file not found: {os.path.basename(export_path)}")
+                st.error("Please try clicking the export button again")
 
         # Check if we have a preview to display - MOVED TO TOP
         if (
