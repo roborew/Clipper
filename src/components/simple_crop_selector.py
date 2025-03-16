@@ -38,6 +38,12 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
         )
         aspect_ratio = target_width / target_height
 
+        # Get proxy settings for scaling calculation
+        proxy_settings = st.session_state.config_manager.get_proxy_settings()
+        proxy_width = proxy_settings["width"]
+        scaling_factor = proxy_width / frame_width
+        logger.info(f"Scaling factor: {scaling_factor}")
+
         # Check if we're editing an existing keyframe from the proxy crop keyframes
         existing_crop = None
         first_time_editing = False
@@ -80,9 +86,9 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
                 f"Using existing crop region: X={x}, Y={y}, Width={crop_width}, Height={crop_height}"
             )
         else:
-            # Start with a crop that's about 70% of the frame height
-            crop_height = int(frame_height * 0.7)
-            crop_width = int(crop_height * aspect_ratio)
+            # Calculate the proxy dimensions by scaling down the target dimensions
+            crop_width = int(target_width * scaling_factor)
+            crop_height = int(target_height * scaling_factor)
 
             # Make sure the crop isn't larger than the frame
             if crop_width > frame_width:
@@ -92,6 +98,10 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
             # Center the crop region
             x = max(0, (frame_width - crop_width) // 2)
             y = max(0, (frame_height - crop_height) // 2)
+
+            logger.info(
+                f"Created new crop region: X={x}, Y={y}, Width={crop_width}, Height={crop_height}"
+            )
 
         # Initialize position in session state if not already set or if first time editing a keyframe
         if "crop_x" not in st.session_state or first_time_editing:
@@ -152,7 +162,7 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
 
         # Movement amount slider
         st.session_state.move_amount = st.slider(
-            "Movement Step Size", 1, 50, st.session_state.move_amount
+            "Movement Step Size", 1, 200, st.session_state.move_amount
         )
         move_amount = st.session_state.move_amount
 

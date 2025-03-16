@@ -608,8 +608,6 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
         clip = st.session_state.clips[clip_index]
 
         # Get video info for both source and proxy
-        # If proxy_path is None, use source_path for both
-        # If source_path is None, use proxy_path for both
         video_path = clip.source_path or clip.proxy_path
         if not video_path:
             logger.error("No valid video path found")
@@ -626,29 +624,43 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
             clip.output_resolution
         )
 
-        # Calculate the relative position and size in the video for proxy
+        # Get proxy settings for scaling calculation
+        proxy_settings = st.session_state.config_manager.get_proxy_settings()
+        proxy_width = proxy_settings["width"]
+        proxy_height = int(proxy_width * (video_info["height"] / video_info["width"]))
+
+        # Calculate scaling factor between source and proxy
+        scaling_factor = proxy_width / video_info["width"]
+        logger.info(f"Scaling factor: {scaling_factor}")
+
+        # Get the crop region values from proxy resolution
         x, y, width, height = crop_region
-        rel_x = x / video_info["width"]  # Relative X position (0-1)
-        rel_y = y / video_info["height"]  # Relative Y position (0-1)
-        rel_width = width / video_info["width"]  # Relative width (0-1)
-        rel_height = height / video_info["height"]  # Relative height (0-1)
 
-        # Calculate crop region for proxy video (maintain relative position and size)
-        proxy_crop = (
-            int(rel_x * video_info["width"]),
-            int(rel_y * video_info["height"]),
-            int(rel_width * video_info["width"]),
-            int(rel_height * video_info["height"]),
-        )
+        # Calculate source dimensions by scaling up from proxy
+        source_x = int(x / scaling_factor)
+        source_y = int(y / scaling_factor)
+        source_width = target_width  # Use target width from output resolution
+        source_height = target_height  # Use target height from output resolution
 
-        # Calculate crop region for source video using target dimensions
-        # Scale the x and y positions proportionally to the target dimensions
-        source_crop = (
-            int(rel_x * target_width),  # Scale X relative to target width
-            int(rel_y * target_height),  # Scale Y relative to target height
-            target_width,  # Use target width from output resolution
-            target_height,  # Use target height from output resolution
-        )
+        # Calculate proxy dimensions by scaling down from source
+        proxy_x = x  # Keep original x from proxy resolution
+        proxy_y = y  # Keep original y from proxy resolution
+        proxy_width = int(
+            target_width * scaling_factor
+        )  # Scale target width to proxy resolution
+        proxy_height = int(
+            target_height * scaling_factor
+        )  # Scale target height to proxy resolution
+
+        logger.info(f"Proxy dimensions: {proxy_width}x{proxy_height}")
+        logger.info(f"Source dimensions: {source_width}x{source_height}")
+
+        # Create crop regions for both resolutions
+        proxy_crop = (proxy_x, proxy_y, proxy_width, proxy_height)
+        source_crop = (source_x, source_y, source_width, source_height)
+
+        logger.info(f"Proxy crop: {proxy_crop}")
+        logger.info(f"Source crop: {source_crop}")
 
         # Add the keyframes - proxy resolution in proxy_keyframes, source resolution in crop_keyframes
         clip.crop_keyframes_proxy[str(frame_number)] = proxy_crop
@@ -662,23 +674,6 @@ def add_crop_keyframe(frame_number, crop_region, clip_index=None):
 
         # Auto-save the changes
         success = save_session_clips()
-        if success:
-            logger.info(
-                f"Added and saved crop keyframe at frame {frame_number} to clip {clip.name}"
-            )
-            st.session_state.last_save_status = {
-                "success": True,
-                "message": f"Added and saved crop keyframe at frame {frame_number}",
-            }
-        else:
-            logger.warning(
-                f"Failed to save after adding crop keyframe at frame {frame_number}"
-            )
-            st.session_state.last_save_status = {
-                "success": False,
-                "message": "Failed to save after adding crop keyframe",
-            }
-
         return success
 
     except Exception as e:

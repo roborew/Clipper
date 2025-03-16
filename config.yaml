@@ -5,8 +5,8 @@ directories:
     configs: _configs
   proxy:
     base: proxy_videos
-    raw: RAW
     clipped: CLIPPED
+    raw: RAW
   source:
     base: data/source
     calibrated: 02_CALIBRATED_FOOTAGE
@@ -15,12 +15,12 @@ export:
   preserve_structure: true
 patterns:
   video_extensions:
-    - .mp4
-    - .avi
-    - .mov
-    - .mkv
+  - .mp4
+  - .avi
+  - .mov
+  - .mkv
 proxy:
   audio_bitrate: 128k
   enabled: true
   quality: 28
-  width: 960
+  width: 950

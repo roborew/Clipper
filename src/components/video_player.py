@@ -102,7 +102,7 @@ def display_video_player(
         col_video1, col_video2 = st.columns([1, 1])
 
         with col_video1:
-            st.subheader("Video Preview")
+            st.subheader("Full Video Preview")
             # Calculate current time in seconds
             current_time = current_frame / fps if fps > 0 else 0
 
