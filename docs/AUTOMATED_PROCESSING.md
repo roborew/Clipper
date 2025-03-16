@@ -34,7 +34,7 @@ The `scripts/process_clips.py` script is provided as an example of how to set up
 
 ### Running the Processing Script
 
-You can run the processing script in two modes:
+You can run the processing script in several modes:
 
 #### One-time scan:
 
@@ -51,6 +51,31 @@ python scripts/process_clips.py --daemon --interval 60
 ```
 
 This will run continuously, scanning for new clips to process every 60 seconds (or other interval you specify).
+
+#### Camera Filtering:
+
+```bash
+python scripts/process_clips.py --camera SONY
+```
+
+This will only process clips from videos captured with the specified camera type. This is useful for setting up dedicated processing machines for different camera sources.
+
+#### Parallel Processing and Batch Controls:
+
+```bash
+python scripts/process_clips.py --max-workers 4 --batch-size 10
+```
+
+- `--max-workers` controls how many clips are processed in parallel (default: 4)
+- `--batch-size` limits how many clips are processed in one batch (0 for unlimited)
+
+You can combine these options as needed:
+
+```bash
+python scripts/process_clips.py --daemon --interval 120 --camera GOPRO --max-workers 2 --batch-size 5
+```
+
+This would run as a daemon, checking every 2 minutes for GoPro clips, processing 5 clips at a time with 2 parallel workers.
 
 ### Customizing Processing Logic
 
