@@ -630,6 +630,29 @@ def display_clip_management():
                     st.text(f"Duration: {clip.get_duration_frames()} frames")
                     st.text(f"Keyframes: {len(clip.crop_keyframes)}")
 
+                    # Add status selector
+                    status_options = ["Draft", "Process", "Complete"]
+                    new_status = st.selectbox(
+                        "Status",
+                        options=status_options,
+                        index=(
+                            status_options.index(clip.status)
+                            if clip.status in status_options
+                            else 0
+                        ),
+                        key=f"status_selector_{i}",
+                    )
+
+                    # Update status if changed
+                    if new_status != clip.status:
+                        clip.status = new_status
+                        st.session_state.clip_modified = True
+                        st.session_state.clips[i] = clip
+                        # Display info message about status change
+                        st.info(
+                            f"Status changed to '{new_status}'. Click Save to apply changes."
+                        )
+
                     # Create columns for buttons
                     btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
 

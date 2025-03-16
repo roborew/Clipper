@@ -29,6 +29,7 @@ class Clip:
         crop_keyframes=None,
         crop_keyframes_proxy=None,
         output_resolution="1080p",
+        status="Draft",
     ):
         """
         Initialize a new clip
@@ -42,6 +43,7 @@ class Clip:
             crop_keyframes: Dictionary of frame numbers to crop regions (x, y, width, height)
             crop_keyframes_proxy: Dictionary of frame numbers to crop regions for proxy video
             output_resolution: Target resolution for export
+            status: Processing status of the clip (Draft, Process, or Complete)
         """
         self.id = str(uuid.uuid4())
         self.name = name or f"clip_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -80,6 +82,7 @@ class Clip:
         self.export_path = None
         self.created_at = datetime.now().isoformat()
         self.modified_at = self.created_at
+        self.status = status  # Default to "Draft" for new clips
 
     def to_dict(self):
         """Convert clip to dictionary for serialization"""
@@ -96,6 +99,7 @@ class Clip:
             "export_path": str(self.export_path) if self.export_path else None,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
+            "status": self.status,
         }
 
     @classmethod
@@ -141,6 +145,7 @@ class Clip:
         clip.export_path = data.get("export_path")
         clip.created_at = data.get("created_at", datetime.now().isoformat())
         clip.modified_at = data.get("modified_at", clip.created_at)
+        clip.status = data.get("status", "Draft")  # Default to "Draft" if not specified
         return clip
 
     def update(self):
