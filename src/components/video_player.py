@@ -347,8 +347,56 @@ def display_video_player(
                 current_frame = new_frame
                 # Remove the immediate frame change handling here since it's handled in on_change
 
-            # Timecode display
-            st.text(f"Timecode: {video_service.format_timecode(current_frame, fps)}")
+            # Timecode display and input
+            time_col1, time_col2 = st.columns([1, 1])
+            with time_col1:
+                # Show current timecode
+                st.text(
+                    f"Timecode: {video_service.format_timecode(current_frame, fps)}"
+                )
+
+            with time_col2:
+                # Add timecode input
+                def go_to_timecode():
+                    try:
+                        # Parse entered timecode
+                        entered_timecode = st.session_state.timecode_input
+                        # Convert timecode to frame number
+                        target_frame = video_service.parse_timecode_to_frame(
+                            entered_timecode, fps
+                        )
+                        # Make sure it's within valid range
+                        target_frame = max(0, min(total_frames - 1, target_frame))
+                        # Set frame to navigate
+                        st.session_state.frame_to_navigate = target_frame
+                    except Exception as e:
+                        # If invalid timecode, just log error
+                        logger.error(f"Invalid timecode: {e}")
+                        st.session_state.error_message = f"Invalid timecode format. Use HH:MM:SS:FF, HH:MM:SS, or MM:SS"
+
+                # Initialize timecode input in session state if not exists
+                if "timecode_input" not in st.session_state:
+                    st.session_state.timecode_input = video_service.format_timecode(
+                        current_frame, fps
+                    )
+
+                # Timecode input field with button
+                st.text_input(
+                    "Go to Timecode",
+                    value=video_service.format_timecode(current_frame, fps),
+                    key="timecode_input",
+                    help="Enter timecode in format HH:MM:SS:FF, HH:MM:SS, or MM:SS",
+                    on_change=go_to_timecode,
+                )
+
+                # Display error message if exists
+                if (
+                    "error_message" in st.session_state
+                    and st.session_state.error_message
+                ):
+                    st.error(st.session_state.error_message)
+                    # Clear error message after displaying it
+                    st.session_state.error_message = ""
 
         return current_frame
 
@@ -787,6 +835,57 @@ def play_clip_preview(
             if new_frame != st.session_state.preview_current_frame:
                 st.session_state.preview_current_frame = new_frame
                 # Remove the immediate frame change handling here since it's handled in on_change
+
+            # Timecode display and input
+            preview_time_col1, preview_time_col2 = st.columns([1, 1])
+            with preview_time_col1:
+                # Show current timecode
+                st.text(
+                    f"Timecode: {video_service.format_timecode(current_frame, fps)}"
+                )
+
+            with preview_time_col2:
+                # Add timecode input
+                def go_to_preview_timecode():
+                    try:
+                        # Parse entered timecode
+                        entered_timecode = st.session_state.preview_timecode_input
+                        # Convert timecode to frame number
+                        target_frame = video_service.parse_timecode_to_frame(
+                            entered_timecode, fps
+                        )
+                        # Make sure it's within valid range
+                        target_frame = max(start_frame, min(end_frame, target_frame))
+                        # Set frame to navigate
+                        st.session_state.preview_frame_to_navigate = target_frame
+                    except Exception as e:
+                        # If invalid timecode, just log error
+                        logger.error(f"Invalid timecode: {e}")
+                        st.session_state.preview_error_message = f"Invalid timecode format. Use HH:MM:SS:FF, HH:MM:SS, or MM:SS"
+
+                # Initialize timecode input in session state if not exists
+                if "preview_timecode_input" not in st.session_state:
+                    st.session_state.preview_timecode_input = (
+                        video_service.format_timecode(current_frame, fps)
+                    )
+
+                # Timecode input field with button
+                st.text_input(
+                    "Go to Timecode",
+                    value=video_service.format_timecode(current_frame, fps),
+                    key="preview_timecode_input",
+                    help="Enter timecode in format HH:MM:SS:FF, HH:MM:SS, or MM:SS",
+                    on_change=go_to_preview_timecode,
+                )
+
+                # Display error message if exists
+                if (
+                    "preview_error_message" in st.session_state
+                    and st.session_state.preview_error_message
+                ):
+                    st.error(st.session_state.preview_error_message)
+                    # Clear error message after displaying it
+                    st.session_state.preview_error_message = ""
 
     except Exception as e:
         logger.exception(f"Error playing clip preview: {str(e)}")

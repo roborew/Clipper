@@ -196,6 +196,51 @@ def timecode_to_frame(timecode, fps):
     return int(timecode * fps)
 
 
+def parse_timecode_to_frame(timecode_str, fps):
+    """
+    Parse a timecode string in the format HH:MM:SS:FF or HH:MM:SS or MM:SS
+    and convert it to a frame number.
+
+    Args:
+        timecode_str: Timecode string in format HH:MM:SS:FF, HH:MM:SS, or MM:SS
+        fps: Frames per second
+
+    Returns:
+        Frame number
+    """
+    if fps <= 0:
+        return 0
+
+    # Split the timecode string
+    parts = timecode_str.strip().split(":")
+
+    if len(parts) == 4:  # HH:MM:SS:FF
+        hours = int(parts[0])
+        minutes = int(parts[1])
+        seconds = int(parts[2])
+        frames = int(parts[3])
+    elif len(parts) == 3:  # HH:MM:SS
+        hours = int(parts[0])
+        minutes = int(parts[1])
+        seconds = int(parts[2])
+        frames = 0
+    elif len(parts) == 2:  # MM:SS
+        hours = 0
+        minutes = int(parts[0])
+        seconds = int(parts[1])
+        frames = 0
+    else:
+        raise ValueError(f"Invalid timecode format: {timecode_str}")
+
+    # Calculate total seconds
+    total_seconds = hours * 3600 + minutes * 60 + seconds + (frames / fps)
+
+    # Convert to frame number
+    frame_number = int(total_seconds * fps)
+
+    return frame_number
+
+
 def draw_crop_overlay(frame, crop_region, alpha=0.3, color=(0, 255, 0), thickness=2):
     """
     Draw a semi-transparent overlay on the frame to indicate the crop region
