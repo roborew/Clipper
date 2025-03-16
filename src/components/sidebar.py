@@ -686,7 +686,7 @@ def display_clip_management():
                                 clip.end_frame,
                                 crop_region=crop_region,
                                 crop_keyframes=clip.crop_keyframes,  # Keep original keyframes
-                                crop_keyframes_proxy=clip.crop_keyframes,  # Pass same keyframes for proxy
+                                crop_keyframes_proxy=clip.crop_keyframes_proxy,  # Use proxy-specific keyframes
                                 progress_placeholder=progress_placeholder,
                                 config_manager=config_manager,
                             )
