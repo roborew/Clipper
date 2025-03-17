@@ -91,6 +91,17 @@ ls -la data/
 
 9. Click "Export All Clips" to process and save all clips to the output directory.
 
+## Automated Processing
+
+Clipper includes a clip status system and automated processing capabilities:
+
+- **Clip Status System**: Mark clips as "Draft", "Process", or "Complete"
+- **Processing Script**: Automatically process clips marked as "Process"
+- **Camera Filtering**: Process clips only from specific camera types
+- **Batch Processing**: Control parallel processing with workers and batch sizes
+
+For detailed information about these features, see [Automated Processing Documentation](docs/AUTOMATED_PROCESSING.md).
+
 ## Workflow for Distributed Rendering
 
 1. Create clip configurations on one machine.

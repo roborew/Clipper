@@ -13,3 +13,4 @@ dependencies:
       - pillow>=9.5.0
       - ffmpeg-python>=0.2.0
       - pyyaml>=6.0.1
+      - tqdm>=4.66.0

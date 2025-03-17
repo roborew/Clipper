@@ -30,13 +30,20 @@ class ConfigManager:
             self.clips_dir / self.config["directories"]["output"]["configs"]
         )
 
-        # Initialize proxy directory
-        self.proxy_dir = Path(self.config["directories"]["proxy"]["base"])
+        # Initialize proxy directories
+        self.proxy_base = Path(self.config["directories"]["proxy"]["base"])
+        self.proxy_raw_dir = (
+            self.proxy_base / self.config["directories"]["proxy"]["raw"]
+        )
+        self.proxy_clipped_dir = (
+            self.proxy_base / self.config["directories"]["proxy"]["clipped"]
+        )
 
         # Create necessary directories
         if self.config["export"]["create_missing_dirs"]:
             self.configs_dir.mkdir(parents=True, exist_ok=True)
-            self.proxy_dir.mkdir(parents=True, exist_ok=True)
+            self.proxy_raw_dir.mkdir(parents=True, exist_ok=True)
+            self.proxy_clipped_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"ConfigManager initialized with config from {config_path}")
 
@@ -67,6 +74,8 @@ class ConfigManager:
                 },
                 "proxy": {
                     "base": "proxy_videos",
+                    "raw": "RAW",
+                    "clipped": "CLIPPED",
                 },
             },
             "patterns": {"video_extensions": [".mp4", ".avi", ".mov", ".mkv"]},
@@ -150,25 +159,92 @@ class ConfigManager:
             # Save directly in clips directory
             return self.clips_dir / f"{Path(relative_path).stem}_{clip_name}.mp4"
 
-    def get_proxy_path(self, video_path: Path) -> Path:
-        """Generate proxy video path for a source video"""
+    def get_proxy_path(self, video_path: Path, is_clip: bool = False) -> Path:
+        """Generate proxy video path for a source video or clip
+
+        Args:
+            video_path: Path to the source video
+            is_clip: Whether this is a clip preview (True) or raw video proxy (False)
+
+        Returns:
+            Path to the proxy video
+        """
         relative_path = self.get_relative_source_path(video_path)
+
+        # Determine base proxy directory based on whether this is a clip or raw video
+        proxy_base = self.proxy_clipped_dir if is_clip else self.proxy_raw_dir
 
         if relative_path is None:
             # Fall back to using just the filename
             base_name = video_path.stem
-            return self.proxy_dir / f"{base_name}_proxy.mp4"
+            proxy_path = proxy_base / f"{base_name}_proxy.mp4"
+            # Ensure the proxy directory exists
+            proxy_base.mkdir(parents=True, exist_ok=True)
+            return proxy_path
 
         # Preserve folder structure for proxies if configured
         if self.config["export"]["preserve_structure"]:
             # Create proxy directory with same structure as source
-            proxy_dir = self.proxy_dir / relative_path.parent
-            if self.config["export"]["create_missing_dirs"]:
-                proxy_dir.mkdir(parents=True, exist_ok=True)
+            proxy_dir = proxy_base / relative_path.parent
+            # Always ensure the directory exists
+            proxy_dir.mkdir(parents=True, exist_ok=True)
             return proxy_dir / f"{Path(relative_path).stem}_proxy.mp4"
         else:
             # Save directly in proxy directory (flat structure)
-            return self.proxy_dir / f"{Path(relative_path).stem}_proxy.mp4"
+            # Ensure the proxy directory exists
+            proxy_base.mkdir(parents=True, exist_ok=True)
+            return proxy_base / f"{Path(relative_path).stem}_proxy.mp4"
+
+    def get_clip_preview_path(self, video_path: Path, clip_name: str) -> Path:
+        """Generate path for a clip preview
+
+        Args:
+            video_path: Path to the source video
+            clip_name: Name of the clip
+
+        Returns:
+            Path to the clip preview video
+        """
+        # First check if the provided path is a proxy video
+        if str(video_path).startswith(str(self.proxy_raw_dir)):
+            try:
+                # Extract the relative path from the proxy path
+                relative_path = Path(
+                    str(video_path).replace(str(self.proxy_raw_dir), "").lstrip("/")
+                )
+                # Remove the _proxy.mp4 suffix if present
+                if relative_path.stem.endswith("_proxy"):
+                    relative_path = relative_path.with_stem(relative_path.stem[:-6])
+            except Exception as e:
+                logger.warning(f"Could not extract relative path from proxy path: {e}")
+                relative_path = None
+        else:
+            # Get relative path from source directory
+            relative_path = self.get_relative_source_path(video_path)
+
+        if relative_path is None:
+            # Fall back to using just the filename
+            base_name = video_path.stem
+            if base_name.endswith("_proxy"):
+                base_name = base_name[:-6]
+            preview_path = (
+                self.proxy_clipped_dir / f"{base_name}_{clip_name}_preview.mp4"
+            )
+            self.proxy_clipped_dir.mkdir(parents=True, exist_ok=True)
+            return preview_path
+
+        if self.config["export"]["preserve_structure"]:
+            # Create preview directory with same structure as source
+            preview_dir = self.proxy_clipped_dir / relative_path.parent
+            preview_dir.mkdir(parents=True, exist_ok=True)
+            return preview_dir / f"{Path(relative_path).stem}_{clip_name}_preview.mp4"
+        else:
+            # Save directly in clipped directory
+            self.proxy_clipped_dir.mkdir(parents=True, exist_ok=True)
+            return (
+                self.proxy_clipped_dir
+                / f"{Path(relative_path).stem}_{clip_name}_preview.mp4"
+            )
 
     def is_proxy_enabled(self) -> bool:
         """Check if proxy video creation is enabled"""
@@ -181,3 +257,37 @@ class ConfigManager:
     def get_video_extensions(self) -> List[str]:
         """Get list of supported video extensions"""
         return self.config["patterns"]["video_extensions"]
+
+    def get_clips_file_path(self, video_path=None) -> Path:
+        """
+        Get path to the clips file for a specific video
+
+        Args:
+            video_path: Path to the video file (optional)
+
+        Returns:
+            Path to the clips file
+        """
+        if video_path is None:
+            # If no video path is provided, return a temporary clips file
+            return self.configs_dir / "temp_clips.json"
+
+        # Get the relative path to preserve camera folder structure
+        relative_path = self.get_relative_source_path(video_path)
+
+        if relative_path is None:
+            # Fall back to using just the filename
+            base_name = Path(video_path).stem
+            return self.configs_dir / f"{base_name}_clips.json"
+
+        # Create directory structure matching the source
+        if self.config["export"]["preserve_structure"]:
+            # Preserve camera folder structure
+            config_dir = self.configs_dir / relative_path.parent
+            if self.config["export"]["create_missing_dirs"]:
+                config_dir.mkdir(parents=True, exist_ok=True)
+            return config_dir / f"{Path(relative_path).stem}_clips.json"
+        else:
+            # Save in configs directory with path-based name
+            config_name = str(relative_path).replace("/", "_").replace("\\", "_")
+            return self.configs_dir / f"{config_name}_clips.json"

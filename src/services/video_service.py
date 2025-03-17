@@ -8,6 +8,7 @@ import numpy as np
 import streamlit as st
 from pathlib import Path
 import logging
+import base64
 
 logger = logging.getLogger("clipper.video")
 
@@ -25,6 +26,13 @@ def get_frame(video_path, frame_number, config_manager=None):
         The frame as a numpy array, or None if the frame could not be retrieved
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for frame extraction: {proxy_path}")
+            video_path = proxy_path
+
         # Open the video file
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
@@ -79,7 +87,7 @@ def get_video_info(video_path):
         Dictionary with video information or None if the video could not be opened
     """
     try:
-        # Open the video file
+        # Open the video file with the exact path provided
         cap = cv2.VideoCapture(str(video_path))
         if not cap.isOpened():
             logger.error(f"Could not open video file: {video_path}")
@@ -186,6 +194,51 @@ def timecode_to_frame(timecode, fps):
     if fps <= 0:
         return 0
     return int(timecode * fps)
+
+
+def parse_timecode_to_frame(timecode_str, fps):
+    """
+    Parse a timecode string in the format HH:MM:SS:FF or HH:MM:SS or MM:SS
+    and convert it to a frame number.
+
+    Args:
+        timecode_str: Timecode string in format HH:MM:SS:FF, HH:MM:SS, or MM:SS
+        fps: Frames per second
+
+    Returns:
+        Frame number
+    """
+    if fps <= 0:
+        return 0
+
+    # Split the timecode string
+    parts = timecode_str.strip().split(":")
+
+    if len(parts) == 4:  # HH:MM:SS:FF
+        hours = int(parts[0])
+        minutes = int(parts[1])
+        seconds = int(parts[2])
+        frames = int(parts[3])
+    elif len(parts) == 3:  # HH:MM:SS
+        hours = int(parts[0])
+        minutes = int(parts[1])
+        seconds = int(parts[2])
+        frames = 0
+    elif len(parts) == 2:  # MM:SS
+        hours = 0
+        minutes = int(parts[0])
+        seconds = int(parts[1])
+        frames = 0
+    else:
+        raise ValueError(f"Invalid timecode format: {timecode_str}")
+
+    # Calculate total seconds
+    total_seconds = hours * 3600 + minutes * 60 + seconds + (frames / fps)
+
+    # Convert to frame number
+    frame_number = int(total_seconds * fps)
+
+    return frame_number
 
 
 def draw_crop_overlay(frame, crop_region, alpha=0.3, color=(0, 255, 0), thickness=2):
@@ -360,6 +413,7 @@ def export_clip(
     crop_region=None,
     output_resolution="1080p",
     config_manager=None,
+    progress_callback=None,
 ):
     """
     Export a clip from a video with optional cropping and resizing
@@ -372,11 +426,19 @@ def export_clip(
         crop_region: Optional tuple of (x, y, width, height) for cropping
         output_resolution: Target resolution for the output
         config_manager: ConfigManager instance
+        progress_callback: Optional callback function to report progress
 
     Returns:
         True if export was successful, False otherwise
     """
     try:
+        # Check if we should use proxy video
+        if "proxy_path" in st.session_state and st.session_state.proxy_path:
+            # Use proxy video if available
+            proxy_path = st.session_state.proxy_path
+            logger.debug(f"Using proxy video for clip export: {proxy_path}")
+            source_path = proxy_path
+
         logger.info(f"Exporting clip from {source_path} to {output_path}")
         logger.info(f"Frames: {start_frame} to {end_frame}")
 
@@ -461,6 +523,10 @@ def export_clip(
             out.write(frame)
             frame_count += 1
 
+            # Call progress callback if provided
+            if progress_callback:
+                progress_callback(frame_count)
+
             # Log progress periodically
             if frame_count % 100 == 0 or frame_count == total_frames_to_process:
                 progress = frame_count / total_frames_to_process * 100
@@ -484,3 +550,40 @@ def export_clip(
     except Exception as e:
         logger.exception(f"Error exporting clip: {str(e)}")
         return False
+
+
+def frame_to_base64(frame):
+    """
+    Convert a frame (numpy array) to a base64 encoded string for HTML embedding
+
+    Args:
+        frame: The frame as a numpy array
+
+    Returns:
+        Base64 encoded string representation of the frame
+    """
+    try:
+        # Ensure the frame is in BGR format (OpenCV default)
+        if frame is None:
+            logger.error("Cannot convert None frame to base64")
+            return ""
+
+        # Convert to RGB if needed (assuming BGR input)
+        if len(frame.shape) == 3 and frame.shape[2] == 3:
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        else:
+            frame_rgb = frame
+
+        # Encode the frame as JPEG
+        success, buffer = cv2.imencode(".jpg", frame_rgb)
+        if not success:
+            logger.error("Failed to encode frame as JPEG")
+            return ""
+
+        # Convert to base64
+        encoded = base64.b64encode(buffer).decode("utf-8")
+        return encoded
+
+    except Exception as e:
+        logger.exception(f"Error converting frame to base64: {str(e)}")
+        return ""
