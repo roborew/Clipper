@@ -125,6 +125,57 @@ def display_video_selection(config_manager):
             has_proxy = proxy_service.proxy_exists_for_video(video_path, config_manager)
             videos_with_proxies[str(video_path)] = has_proxy
 
+        # Check status of configuration files
+        config_statuses = {}
+        for video_path in video_files:
+            clips_file = config_manager.get_clips_file_path(video_path)
+
+            # Default status is None (no config)
+            status = None
+
+            if clips_file.exists():
+                try:
+                    # Load the clips config
+                    with open(clips_file, "r") as f:
+                        import json
+
+                        clips_data = json.load(f)
+
+                    if not clips_data:
+                        # Empty config file
+                        status = "empty"
+                    else:
+                        # Check status of all clips
+                        has_draft = False
+                        has_process = False
+                        all_complete = True
+
+                        for clip_data in clips_data:
+                            clip_status = clip_data.get(
+                                "status", "Draft"
+                            )  # Default to Draft if not specified
+
+                            if clip_status == "Draft":
+                                has_draft = True
+                                all_complete = False
+                            elif clip_status == "Process":
+                                has_process = True
+                                all_complete = False
+
+                        if has_draft:
+                            status = "draft"
+                        elif has_process:
+                            status = "process"
+                        elif all_complete:
+                            status = "complete"
+                        else:
+                            status = "empty"
+                except Exception as e:
+                    logger.exception(f"Error reading config file: {str(e)}")
+                    status = "error"
+
+            config_statuses[str(video_path)] = status
+
         # Group videos by camera type
         camera_groups = {}
         for video_path in video_files:
@@ -184,17 +235,33 @@ def display_video_selection(config_manager):
         video_options = []
         for v, session in filtered_videos:
             basename = os.path.basename(v)
-            if videos_with_proxies.get(str(v), False):
-                # Add green tick for videos with proxies
-                video_options.append(f"✅ [{session}] {basename}")
+            proxy_indicator = "✅ " if videos_with_proxies.get(str(v), False) else ""
+
+            # Add status indicator
+            status = config_statuses.get(str(v))
+            if status == "draft":
+                status_indicator = "🔴 "  # Red for draft
+            elif status == "process":
+                status_indicator = "🟠 "  # Amber/orange for process
+            elif status == "complete":
+                status_indicator = "🟢 "  # Green for complete
             else:
-                video_options.append(f"[{session}] {basename}")
+                status_indicator = "⚪ "  # Grey for no config or empty
+
+            video_options.append(
+                f"{proxy_indicator}{status_indicator}[{session}] {basename}"
+            )
 
         # Add a "None" option at the beginning
         video_options.insert(0, "Select a video...")
 
         # Display a legend for the indicators
         st.caption("✅ = Proxy available")
+        st.caption("⚪ = No config | 🔴 = Draft | 🟠 = Process | 🟢 = Complete")
+
+        # Add a refresh button to check status
+        if st.button("🔄 Refresh Status", key="refresh_status_btn"):
+            st.rerun()
 
         # Get the selected index from session state or default to 0
         # We need to handle the case where the camera type changes
