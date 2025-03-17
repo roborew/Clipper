@@ -1269,6 +1269,7 @@ def export_clip(
     crop_keyframes=None,  # Original high-resolution keyframes used for export
     output_resolution="1080p",
     cv_optimized=False,  # New parameter for computer vision optimized exports
+    progress_callback=None,  # Callback function for progress updates
 ):
     """
     Export a clip with high quality using source video and original keyframes
@@ -1284,6 +1285,7 @@ def export_clip(
         crop_keyframes: Original high-resolution keyframes used for export
         output_resolution: Output resolution for the exported clip
         cv_optimized: Whether to optimize for computer vision (higher quality, different format)
+        progress_callback: Optional callback function for progress updates
 
     Returns:
         Path to the exported file if successful, None otherwise
@@ -1654,12 +1656,37 @@ def export_clip(
             if not line:
                 break
             stderr_output.append(line.strip())
-            if progress_placeholder and "time=" in line:
+
+            # Extract progress information
+            if "time=" in line:
                 # Extract current time from ffmpeg output
                 time_match = re.search(r"time=(\d+:\d+:\d+.\d+)", line)
                 if time_match:
                     current_time = time_match.group(1)
-                    progress_placeholder.text(f"Exporting clip... Time: {current_time}")
+
+                    # Update progress placeholder if available
+                    if progress_placeholder:
+                        progress_placeholder.text(
+                            f"Exporting clip... Time: {current_time}"
+                        )
+
+                    # Calculate progress percentage for callback
+                    if progress_callback:
+                        # Parse the time string (HH:MM:SS.ms)
+                        time_parts = current_time.split(":")
+                        hours = int(time_parts[0])
+                        minutes = int(time_parts[1])
+                        seconds = float(time_parts[2])
+
+                        # Convert to seconds
+                        current_seconds = hours * 3600 + minutes * 60 + seconds
+
+                        # Calculate progress as a fraction (0-1)
+                        clip_duration = (end_frame - start_frame) / fps
+                        if clip_duration > 0:
+                            progress = min(1.0, current_seconds / clip_duration)
+                            progress_callback(progress)
+
             logger.debug(f"ffmpeg output: {line.strip()}")
 
         # Wait for process to complete

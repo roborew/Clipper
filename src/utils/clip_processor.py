@@ -57,7 +57,7 @@ def scan_for_clips_to_process(config_manager=None):
         return []
 
 
-def update_clip_status(config_file_path, clip_index, new_status):
+def update_clip_status(config_file_path, clip_index, new_status, processed_clip=None):
     """
     Update the status of a clip in a config file
 
@@ -65,6 +65,7 @@ def update_clip_status(config_file_path, clip_index, new_status):
         config_file_path: Path to the config file
         clip_index: Index of the clip in the file
         new_status: New status to set ("Draft", "Process", or "Complete")
+        processed_clip: Optional processed clip object to copy export_path from
 
     Returns:
         True if successful, False otherwise
@@ -82,6 +83,12 @@ def update_clip_status(config_file_path, clip_index, new_status):
 
         # Update the status
         clips[clip_index].status = new_status
+
+        # If we have a processed clip, update the export_path too
+        if processed_clip and hasattr(processed_clip, "export_path"):
+            clips[clip_index].export_path = processed_clip.export_path
+            logger.info(f"Updated export path to: {processed_clip.export_path}")
+
         clips[clip_index].update()  # Update the modified timestamp
 
         # Save the updated clips
@@ -139,6 +146,31 @@ def process_pending_clips(process_function, config_manager=None):
     except Exception as e:
         logger.exception(f"Error in process_pending_clips: {str(e)}")
         return 0
+
+
+def get_pending_clips(config_manager=None):
+    """
+    Get a list of all clips with status "Process"
+
+    Args:
+        config_manager: ConfigManager instance, will create one if not provided
+
+    Returns:
+        List of Clip objects that are pending processing
+    """
+    try:
+        # Get clips to process using scan_for_clips_to_process
+        clips_to_process = scan_for_clips_to_process(config_manager)
+
+        # Convert the tuples to just the clip objects
+        pending_clips = [clip for _, _, clip in clips_to_process]
+
+        logger.info(f"Found {len(pending_clips)} clips pending processing")
+        return pending_clips
+
+    except Exception as e:
+        logger.exception(f"Error getting pending clips: {str(e)}")
+        return []
 
 
 # Example usage:

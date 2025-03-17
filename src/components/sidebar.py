@@ -43,7 +43,7 @@ def display_sidebar(config_manager):
         with clips_tab:
             if clips_tab._active:
                 st.session_state.active_sidebar_tab = "Clips"
-                # Auto-initialize config when clips tab is active
+                # Check if we have a current video and config file
                 current_video = st.session_state.get("current_video", None)
                 if current_video:
                     clips_file = config_manager.get_clips_file_path(current_video)
@@ -57,10 +57,6 @@ def display_sidebar(config_manager):
                         except Exception as e:
                             logger.exception(f"Error creating config file: {str(e)}")
                             st.error("Failed to create config file")
-                    # Always try to initialize clips
-                    success = clip_service.initialize_session_clips(config_manager)
-                    if not success:
-                        st.error("Failed to initialize clips configuration")
             display_clip_management()
 
         with settings_tab:
@@ -547,47 +543,90 @@ def display_clip_management():
 
             with col1:
                 if current_video:
-                    # Show unsaved indicator if there are modifications
-                    if st.session_state.get("clip_modified", False):
-                        st.caption(
-                            f"Config*: {os.path.basename(clips_file) if clips_file else 'None'} (unsaved)"
-                        )
+                    # Check if clips are initialized
+                    clips_initialized = (
+                        "clips" in st.session_state
+                        and st.session_state.clips is not None
+                    )
+
+                    # Show config status
+                    if clips_initialized:
+                        if st.session_state.get("clip_modified", False):
+                            st.caption(
+                                f"Config*: {os.path.basename(clips_file) if clips_file else 'None'} (unsaved)"
+                            )
+                        else:
+                            st.caption(
+                                f"Config: {os.path.basename(clips_file) if clips_file else 'None'}"
+                            )
                     else:
-                        st.caption(
-                            f"Config: {os.path.basename(clips_file) if clips_file else 'None'}"
-                        )
+                        st.caption("Config not loaded")
+                        # Show load button when config exists but is not loaded
+                        if clips_file and clips_file.exists():
+                            if st.button("Load Config", key="load_config_btn"):
+                                success = clip_service.initialize_session_clips(
+                                    config_manager
+                                )
+                                if success:
+                                    st.success(
+                                        f"Loaded configuration from {clips_file}"
+                                    )
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to load configuration")
                 else:
                     st.caption("No video selected")
 
-                # Save button - only enabled if there are unsaved changes
-                save_button = st.button(
-                    "💾 Save",
-                    key="save_config_btn",
-                    help="Save current configuration",
-                    disabled=not (
-                        current_video and st.session_state.get("clip_modified", False)
-                    ),
-                )
-                if save_button and current_video:
-                    success = clip_service.save_session_clips(config_manager)
-                    if success:
-                        st.success("Configuration saved successfully")
-                    else:
-                        st.error("Failed to save configuration")
-                    st.rerun()
+                # Only show these buttons if clips are initialized
+                if (
+                    current_video
+                    and "clips" in st.session_state
+                    and st.session_state.clips is not None
+                ):
+                    # Save button - only enabled if there are unsaved changes
+                    save_button = st.button(
+                        "💾 Save",
+                        key="save_config_btn",
+                        help="Save current configuration",
+                        disabled=not (
+                            current_video
+                            and st.session_state.get("clip_modified", False)
+                        ),
+                    )
+                    if save_button and current_video:
+                        success = clip_service.save_session_clips(config_manager)
+                        if success:
+                            st.success("Configuration saved successfully")
+                        else:
+                            st.error("Failed to save configuration")
+                        st.rerun()
 
-                reload_button = st.button(
-                    "🔄 Reload",
-                    key="reload_config_btn",
-                    help="Reload configuration from file",
-                    disabled=not current_video,
-                )
-                if reload_button and current_video:
-                    if st.session_state.get("clip_modified", False):
-                        st.warning(
-                            "You have unsaved changes. Save first or they will be lost!"
-                        )
-                        if st.button("Reload anyway", key="reload_anyway"):
+                    reload_button = st.button(
+                        "🔄 Reload",
+                        key="reload_config_btn",
+                        help="Reload configuration from file",
+                        disabled=not current_video,
+                    )
+                    if reload_button and current_video:
+                        if st.session_state.get("clip_modified", False):
+                            st.warning(
+                                "You have unsaved changes. Save first or they will be lost!"
+                            )
+                            if st.button("Reload anyway", key="reload_anyway"):
+                                success = clip_service.initialize_session_clips(
+                                    config_manager
+                                )
+                                if success:
+                                    if clips_file and clips_file.exists():
+                                        st.success(
+                                            f"Reloaded configuration from {clips_file}"
+                                        )
+                                    else:
+                                        st.info("No existing configuration found")
+                                else:
+                                    st.error("Failed to reload configuration")
+                                st.rerun()
+                        else:
                             success = clip_service.initialize_session_clips(
                                 config_manager
                             )
@@ -601,16 +640,6 @@ def display_clip_management():
                             else:
                                 st.error("Failed to reload configuration")
                             st.rerun()
-                    else:
-                        success = clip_service.initialize_session_clips(config_manager)
-                        if success:
-                            if clips_file and clips_file.exists():
-                                st.success(f"Reloaded configuration from {clips_file}")
-                            else:
-                                st.info("No existing configuration found")
-                        else:
-                            st.error("Failed to reload configuration")
-                        st.rerun()
 
                 # Show Generate Config button only when we have a video but no config file
                 if current_video and (not clips_file or not clips_file.exists()):
@@ -635,39 +664,50 @@ def display_clip_management():
                             logger.exception(f"Error generating config file: {str(e)}")
                             st.error("Failed to generate config file")
 
-                # Add batch status update section
-                st.markdown("---")  # Add separator
-                st.caption("Batch Status Update")
+                # Only show batch status section if clips are initialized
+                if (
+                    current_video
+                    and "clips" in st.session_state
+                    and st.session_state.clips is not None
+                ):
+                    # Add batch status update section
+                    st.markdown("---")  # Add separator
+                    st.caption("Batch Status Update")
 
-                # Status selector for batch update
-                batch_status_options = ["Draft", "Process", "Complete"]
-                batch_status = st.selectbox(
-                    "Set All Clips To",
-                    options=batch_status_options,
-                    key="batch_status_selector",
-                )
+                    # Status selector for batch update
+                    batch_status_options = ["Draft", "Process", "Complete"]
+                    batch_status = st.selectbox(
+                        "Set All Clips To",
+                        options=batch_status_options,
+                        key="batch_status_selector",
+                    )
 
-                # Update All button
-                if st.button("Update All", key="update_all_status_btn"):
-                    if "clips" in st.session_state and st.session_state.clips:
-                        # Update all clips to the selected status
-                        for clip in st.session_state.clips:
-                            if clip.status != batch_status:
-                                clip.status = batch_status
-                                clip.update()  # Update modification timestamp
+                    # Update All button
+                    if st.button("Update All", key="update_all_status_btn"):
+                        if "clips" in st.session_state and st.session_state.clips:
+                            # Update all clips to the selected status
+                            for clip in st.session_state.clips:
+                                if clip.status != batch_status:
+                                    clip.status = batch_status
+                                    clip.update()  # Update modification timestamp
 
-                        # Mark as modified to enable saving
-                        st.session_state.clip_modified = True
-                        st.info(
-                            f"Updated all clips to '{batch_status}' status. Click Save to apply changes."
-                        )
-                        st.rerun()
-                    else:
-                        st.warning("No clips to update")
+                            # Mark as modified to enable saving
+                            st.session_state.clip_modified = True
+                            st.info(
+                                f"Updated all clips to '{batch_status}' status. Click Save to apply changes."
+                            )
+                            st.rerun()
+                        else:
+                            st.warning("No clips to update")
 
-        # Create New Clip button (only enabled if video is selected)
+        # Create New Clip button (only enabled if video is selected and clips are initialized)
+        clips_initialized = (
+            "clips" in st.session_state and st.session_state.clips is not None
+        )
         if st.button(
-            "Create New Clip", key="create_new_clip_sidebar", disabled=not current_video
+            "Create New Clip",
+            key="create_new_clip_sidebar",
+            disabled=not (current_video and clips_initialized),
         ):
             if current_video:
                 # Import here to avoid circular imports

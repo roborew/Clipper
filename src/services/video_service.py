@@ -413,6 +413,7 @@ def export_clip(
     crop_region=None,
     output_resolution="1080p",
     config_manager=None,
+    progress_callback=None,
 ):
     """
     Export a clip from a video with optional cropping and resizing
@@ -425,6 +426,7 @@ def export_clip(
         crop_region: Optional tuple of (x, y, width, height) for cropping
         output_resolution: Target resolution for the output
         config_manager: ConfigManager instance
+        progress_callback: Optional callback function to report progress
 
     Returns:
         True if export was successful, False otherwise
@@ -520,6 +522,10 @@ def export_clip(
             # Write the frame
             out.write(frame)
             frame_count += 1
+
+            # Call progress callback if provided
+            if progress_callback:
+                progress_callback(frame_count)
 
             # Log progress periodically
             if frame_count % 100 == 0 or frame_count == total_frames_to_process:

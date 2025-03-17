@@ -1,0 +1,1013 @@
+2025-03-17 11:24:57,258 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:24:57,259 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:24:57,259 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:24:57,578 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:24:57,578 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:24:57,578 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:24:57,578 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:24:57,579 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:24:57,579 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX020004_clips.json
+2025-03-17 11:24:57,580 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:24:57,580 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:24:57,581 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:24:57,582 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:24:57,582 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:24:57,583 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:24:57,583 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:24:57,583 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:24:57,583 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:24:57,583 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:24:57,583 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:24:57,584 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:24:57,585 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:24:57,586 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:24:57,586 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:24:57,586 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:24:57,586 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_1_processed.mp4
+2025-03-17 11:24:57,587 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:24:57,587 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_2_processed.mp4
+2025-03-17 11:24:57,587 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_1_processed.mp4
+2025-03-17 11:24:57,587 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_3_processed.mp4
+2025-03-17 11:24:57,587 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_2_processed.mp4
+2025-03-17 11:24:57,587 - clipper.video - INFO - Frames: 11 to 138
+2025-03-17 11:24:57,587 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/clip_3_processed.mp4
+2025-03-17 11:24:57,587 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:24:57,587 - clipper.video - INFO - Crop region: [144, 81, 475, 267]
+2025-03-17 11:24:57,587 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:24:57,587 - clipper.video - INFO - Crop region: [0, 136, 475, 267]
+2025-03-17 11:24:57,587 - clipper.video - INFO - Crop region: [0, 0, 475, 267]
+2025-03-17 11:24:57,594 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:24:57,596 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:24:57,597 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:24:59,895 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:25:00,142 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:25:00,256 - clipper.video - INFO - Export progress: 78.1% (100/128)
+2025-03-17 11:25:00,825 - clipper.video - INFO - Export progress: 100.0% (128/128)
+2025-03-17 11:25:00,978 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/clip_1_processed.mp4 (1.47 MB)
+2025-03-17 11:25:00,978 - clip_processor - INFO - Successfully processed clip: clip_1
+2025-03-17 11:25:01,176 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:25:01,194 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/clip_2_processed.mp4 (2.20 MB)
+2025-03-17 11:25:01,194 - clip_processor - INFO - Successfully processed clip: clip_2
+2025-03-17 11:25:01,397 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:25:01,431 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/clip_3_processed.mp4 (1.84 MB)
+2025-03-17 11:25:01,432 - clip_processor - INFO - Successfully processed clip: clip_3
+2025-03-17 11:25:01,432 - clip_processor - INFO - Processed 3 clips
+2025-03-17 11:32:49,016 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:32:49,016 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:32:49,016 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:32:49,016 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:32:49,016 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:32:49,016 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:32:49,016 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:32:49,016 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:32:49,016 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:32:49,017 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:32:49,017 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:32:49,017 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:32:49,017 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:32:49,017 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:32:49,017 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:32:49,017 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:32:49,017 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:32:49,017 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:32:49,018 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:32:49,019 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:32:49,019 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:32:49,020 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:32:49,020 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:32:49,020 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:32:49,021 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:32:49,021 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:32:49,021 - clipper.video - INFO - Frames: 11 to 138
+2025-03-17 11:32:49,021 - clipper.video - INFO - Crop region: [0, 136, 475, 267]
+2025-03-17 11:32:49,021 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:49,021 - clipper.video - INFO - Crop region: [144, 81, 475, 267]
+2025-03-17 11:32:49,021 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:32:49,021 - clipper.video - INFO - Crop region: [118, 128, 475, 267]
+2025-03-17 11:32:49,024 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:32:49,025 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:32:49,027 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:32:51,703 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:32:51,716 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:32:51,764 - clipper.video - INFO - Export progress: 78.1% (100/128)
+2025-03-17 11:32:52,328 - clipper.video - INFO - Export progress: 100.0% (128/128)
+2025-03-17 11:32:52,363 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (1.75 MB)
+2025-03-17 11:32:52,363 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:52,838 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:32:52,849 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (2.01 MB)
+2025-03-17 11:32:52,850 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:52,857 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:32:52,915 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (2.20 MB)
+2025-03-17 11:32:52,916 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:32:52,916 - clip_processor - INFO - Processed 3 clips
+2025-03-17 11:37:15,335 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:37:15,336 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:37:15,336 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:37:15,337 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:37:15,338 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:37:15,338 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:37:15,338 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:37:15,660 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:37:15,661 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:37:15,661 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:37:15,661 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:37:15,662 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:37:15,662 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:37:15,663 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:37:15,663 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:37:15,663 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:37:15,663 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:37:15,663 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:37:15,663 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:37:15,664 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:37:15,665 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:37:15,666 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:37:15,667 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:37:15,667 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:37:15,667 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:37:15,667 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clipper.video - INFO - Frames: 11 to 138
+2025-03-17 11:37:15,667 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:15,667 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:37:15,667 - clipper.video - INFO - Crop region: [144, 81, 475, 267]
+2025-03-17 11:37:15,667 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:37:15,668 - clipper.video - INFO - Crop region: [118, 128, 475, 267]
+2025-03-17 11:37:15,668 - clipper.video - INFO - Crop region: [0, 136, 475, 267]
+2025-03-17 11:37:15,674 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:37:15,676 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:37:15,677 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:37:18,192 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:37:18,313 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:37:18,419 - clipper.video - INFO - Export progress: 78.1% (100/128)
+2025-03-17 11:37:19,017 - clipper.video - INFO - Export progress: 100.0% (128/128)
+2025-03-17 11:37:19,054 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (1.75 MB)
+2025-03-17 11:37:19,054 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:19,507 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:37:19,520 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (2.01 MB)
+2025-03-17 11:37:19,521 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:19,605 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:37:19,637 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4 (2.20 MB)
+2025-03-17 11:37:19,638 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:37:19,638 - clip_processor - INFO - Processed 3 clips
+2025-03-17 11:42:49,679 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:42:49,680 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:42:49,680 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:42:49,682 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:42:49,682 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:42:49,682 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:42:49,682 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:42:49,682 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:42:49,998 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:42:49,998 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:42:49,999 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:42:50,000 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:42:50,000 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:42:50,001 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:42:50,001 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:42:50,001 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:42:50,001 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:42:50,001 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:42:50,002 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:42:50,003 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:42:50,003 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:42:50,003 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:42:50,004 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:42:50,004 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:42:50,005 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:50,005 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:50,005 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:42:50,005 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:51,059 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:51,060 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:42:51,060 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:51,060 - clipper.video - INFO - Crop region: [0, 136, 475, 267]
+2025-03-17 11:42:51,060 - clipper.video - INFO - Frames: 0 to 162
+2025-03-17 11:42:51,061 - clipper.video - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:51,061 - clipper.video - INFO - Crop region: [118, 128, 475, 267]
+2025-03-17 11:42:51,061 - clipper.video - INFO - Frames: 11 to 138
+2025-03-17 11:42:51,061 - clipper.video - INFO - Crop region: [144, 81, 475, 267]
+2025-03-17 11:42:51,083 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:42:51,085 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:42:51,086 - clipper.video - INFO - Output dimensions: 1920x1079
+2025-03-17 11:42:55,101 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:42:55,249 - clipper.video - INFO - Export progress: 61.3% (100/163)
+2025-03-17 11:42:55,989 - clipper.video - INFO - Export progress: 78.1% (100/128)
+2025-03-17 11:42:57,061 - clipper.video - INFO - Export progress: 100.0% (128/128)
+2025-03-17 11:42:57,320 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4 (2.00 MB)
+2025-03-17 11:42:57,320 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:57,364 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:42:57,379 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4 (2.01 MB)
+2025-03-17 11:42:57,379 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:57,455 - clipper.video - INFO - Export progress: 100.0% (163/163)
+2025-03-17 11:42:57,485 - clipper.video - INFO - Export completed: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4 (2.20 MB)
+2025-03-17 11:42:57,486 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip2.mp4
+2025-03-17 11:42:57,486 - clip_processor - INFO - Processed 3 clips
+2025-03-17 11:54:48,756 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:54:48,757 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:54:48,757 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:54:48,879 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:54:48,879 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:54:48,879 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:54:48,879 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:54:48,896 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:54:48,912 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:54:48,919 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:54:48,930 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:54:48,939 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:54:48,954 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:54:48,959 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:54:48,959 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:54:48,959 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:54:48,959 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:54:48,959 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:54:48,959 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:54:48,960 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:54:48,961 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:54:48,962 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:54:48,962 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:54:48,962 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:54:48,963 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:54:48,963 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:54:48,963 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:54:48,963 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Static crop region: [0, 549, 1920, 1080]
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 549, 1920, 1080], '162': [1960, 549, 1920, 1080], '91': [978, 0, 1920, 1080]}
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Static crop region: [476, 517, 1920, 1080]
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Frames: 11 to 138
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Crop keyframes: {'0': [476, 517, 1920, 1080]}
+2025-03-17 11:54:48,984 - clipper.proxy - INFO - Static crop region: [582, 327, 1920, 1080]
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Crop keyframes: {'11': [582, 327, 1920, 1080], '91': [1164, 327, 1920, 1080], '138': [1164, 1103, 1920, 1080]}
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:54:48,985 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:54:48,987 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:54:48,987 - clipper.proxy - INFO - Deleted existing export file: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:54:48,989 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Time range: 0.3670333333333333 to 4.6046000000000005 seconds
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 0: [476, 517, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 11: [582, 327, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 0: [0, 549, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 91: [1164, 327, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 91: [978, 0, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=476
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 138: [1164, 1103, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Keyframe 162: [1960, 549, 1920, 1080]
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - X expression: x='if(lt(t,0),476,476)'
+2025-03-17 11:54:49,410 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=517
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with x=582
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),517,517)'
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Interpolating x from 582 to 1164 between 0.000s and 2.669s
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Interpolating x from 0 to 978 between 0.000s and 3.036s
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with x=1164
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with x=978
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Video filters: crop=1920:1080:476:517,scale=1920:1080
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Interpolating x from 1164 to 1164 between 2.669s and 4.238s
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Interpolating x from 978 to 1960 between 3.036s and 5.405s
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:476:517,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with x=1164
+2025-03-17 11:54:49,411 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with x=1960
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - X expression: x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))'
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))'
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with y=327
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=549
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Interpolating y from 327 to 327 between 0.000s and 2.669s
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Interpolating y from 549 to 0 between 0.000s and 3.036s
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with y=327
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with y=0
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Interpolating y from 327 to 1103 between 2.669s and 4.238s
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Interpolating y from 0 to 549 between 3.036s and 5.405s
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with y=1103
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with y=549
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 11:54:49,413 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 11:54:49,414 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 11:54:49,414 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080
+2025-03-17 11:54:49,414 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080
+2025-03-17 11:54:49,414 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.3670333333333333 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 4.237566666666667 -vf "crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:54:49,414 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:55:02,661 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:55:02,661 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:55:02,744 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:55:02,745 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:55:02,799 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:55:02,799 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:55:02,800 - clip_processor - INFO - Processed 3 clips
+2025-03-17 11:56:34,981 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:56:34,981 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:56:34,981 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 11:56:34,981 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:56:34,981 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:56:34,981 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:56:34,981 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 11:56:34,981 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 11:56:34,981 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 11:56:34,982 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 11:56:34,982 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 11:56:34,982 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 11:56:34,982 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 11:56:34,982 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 11:56:34,982 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 11:56:34,982 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 11:56:34,982 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 11:56:34,983 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 11:56:34,983 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 11:56:34,984 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:56:34,984 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:56:34,985 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 11:56:34,985 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:56:34,985 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:56:34,985 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 11:56:34,986 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:56:34,986 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:56:34,986 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 11:56:35,227 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Frames: 11 to 138
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Static crop region: [582, 327, 1920, 1080]
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Static crop region: [476, 517, 1920, 1080]
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Crop keyframes: {'11': [582, 327, 1920, 1080], '91': [1164, 327, 1920, 1080], '138': [1164, 1103, 1920, 1080]}
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Crop keyframes: {'0': [476, 517, 1920, 1080]}
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Static crop region: [0, 549, 1920, 1080]
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:56:35,228 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 549, 1920, 1080], '162': [1960, 549, 1920, 1080], '91': [978, 0, 1920, 1080]}
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 11:56:35,229 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:56:35,230 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:56:35,235 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 11:56:35,299 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:56:35,299 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:56:35,299 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Time range: 0.3670333333333333 to 4.6046000000000005 seconds
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 0: [476, 517, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 0: [0, 549, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 91: [978, 0, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 162: [1960, 549, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 11: [582, 327, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 91: [1164, 327, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Interpolating x from 0 to 978 between 0.000s and 3.036s
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 138: [1164, 1103, 1920, 1080]
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with x=978
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Interpolating x from 978 to 1960 between 3.036s and 5.405s
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with x=582
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with x=1960
+2025-03-17 11:56:35,300 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=476
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Interpolating x from 582 to 1164 between 0.000s and 2.669s
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - X expression: x='if(lt(t,0),476,476)'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with x=1164
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=549
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=517
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Interpolating x from 1164 to 1164 between 2.669s and 4.238s
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Interpolating y from 549 to 0 between 0.000s and 3.036s
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),517,517)'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with x=1164
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with y=0
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Interpolating y from 0 to 549 between 3.036s and 5.405s
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with y=549
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - X expression: x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Video filters: crop=1920:1080:476:517,scale=1920:1080
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:476:517,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080
+2025-03-17 11:56:35,301 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with y=327
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Interpolating y from 327 to 327 between 0.000s and 2.669s
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with y=327
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Interpolating y from 327 to 1103 between 2.669s and 4.238s
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with y=1103
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 11:56:35,304 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 11:56:35,306 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080
+2025-03-17 11:56:35,306 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.3670333333333333 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 4.237566666666667 -vf "crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:56:48,191 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:56:48,192 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 11:56:48,415 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:56:48,416 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 11:56:48,619 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:56:48,620 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 11:56:48,620 - clip_processor - INFO - Processed 3 clips
+2025-03-17 12:04:27,828 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:04:27,828 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:04:27,829 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:04:27,928 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:04:27,928 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:04:27,928 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:04:27,928 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:04:27,937 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:04:27,953 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:04:27,960 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:04:27,971 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:04:27,980 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:04:28,138 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:04:28,154 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:04:28,154 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 12:04:28,154 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 12:04:28,154 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 12:04:28,154 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 12:04:28,155 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 12:04:28,156 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:04:28,157 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:04:28,158 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:04:28,158 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:04:28,158 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:04:28,158 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:04:28,158 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:04:28,158 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:04:28,158 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:04:28,184 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 12:04:28,184 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:04:28,184 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-17 12:04:28,184 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:04:28,184 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Static crop region: [476, 517, 1920, 1080]
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Frames: 11 to 138
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Crop keyframes: {'0': [476, 517, 1920, 1080]}
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Static crop region: [582, 327, 1920, 1080]
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Crop keyframes: {'11': [582, 327, 1920, 1080], '91': [1164, 327, 1920, 1080], '138': [1164, 1103, 1920, 1080]}
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Static crop region: [0, 549, 1920, 1080]
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 549, 1920, 1080], '162': [1960, 549, 1920, 1080], '91': [978, 0, 1920, 1080]}
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:04:28,185 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:04:28,186 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:04:28,187 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:04:28,189 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Time range: 0.3670333333333333 to 4.6046000000000005 seconds
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 0: [476, 517, 1920, 1080]
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 0: [0, 549, 1920, 1080]
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 11: [582, 327, 1920, 1080]
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 91: [978, 0, 1920, 1080]
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=476
+2025-03-17 12:04:28,593 - clipper.proxy - INFO - Keyframe 91: [1164, 327, 1920, 1080]
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 162: [1960, 549, 1920, 1080]
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - X expression: x='if(lt(t,0),476,476)'
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 138: [1164, 1103, 1920, 1080]
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=517
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),517,517)'
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with x=582
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Interpolating x from 0 to 978 between 0.000s and 3.036s
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Interpolating x from 582 to 1164 between 0.000s and 2.669s
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with x=978
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Video filters: crop=1920:1080:476:517,scale=1920:1080
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with x=1164
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Interpolating x from 978 to 1960 between 3.036s and 5.405s
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:476:517,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Interpolating x from 1164 to 1164 between 2.669s and 4.238s
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with x=1960
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with x=1164
+2025-03-17 12:04:28,594 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))'
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - X expression: x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))'
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=549
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with y=327
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Interpolating y from 549 to 0 between 0.000s and 3.036s
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Interpolating y from 327 to 327 between 0.000s and 2.669s
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with y=0
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with y=327
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Interpolating y from 0 to 549 between 3.036s and 5.405s
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Interpolating y from 327 to 1103 between 2.669s and 4.238s
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with y=549
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with y=1103
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:04:28,596 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:04:28,597 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080
+2025-03-17 12:04:28,597 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080
+2025-03-17 12:04:28,597 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:04:28,597 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.3670333333333333 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 4.237566666666667 -vf "crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:04:41,619 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:04:41,620 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:04:41,679 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:04:41,680 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:04:41,789 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:04:41,790 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:04:41,790 - clip_processor - INFO - Processed 3 clips
+2025-03-17 12:07:34,796 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:07:34,796 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:07:34,796 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:07:34,797 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:07:34,797 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:07:34,797 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:07:34,797 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:07:34,798 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:07:34,798 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:07:34,798 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 12:07:34,798 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 12:07:34,798 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 12:07:34,798 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 12:07:34,799 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:07:34,800 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:07:34,800 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 12:07:34,801 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:07:34,801 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:07:34,801 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:07:34,801 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:07:34,801 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:07:34,802 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:07:34,802 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:07:34,810 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Static crop region: [476, 517, 1920, 1080]
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Crop keyframes: {'0': [476, 517, 1920, 1080]}
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:07:34,811 - clipper.proxy - INFO - Frames: 11 to 138
+2025-03-17 12:07:34,812 - clipper.proxy - INFO - Static crop region: [0, 549, 1920, 1080]
+2025-03-17 12:07:34,812 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:07:34,812 - clipper.proxy - INFO - Static crop region: [582, 327, 1920, 1080]
+2025-03-17 12:07:34,812 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 549, 1920, 1080], '162': [1960, 549, 1920, 1080], '91': [978, 0, 1920, 1080]}
+2025-03-17 12:07:34,814 - clipper.proxy - INFO - Crop keyframes: {'11': [582, 327, 1920, 1080], '91': [1164, 327, 1920, 1080], '138': [1164, 1103, 1920, 1080]}
+2025-03-17 12:07:34,814 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:07:34,814 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:07:34,814 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:07:34,815 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:07:34,815 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:07:34,815 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:07:34,815 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:07:34,815 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Time range: 0.3670333333333333 to 4.6046000000000005 seconds
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Keyframe 0: [0, 549, 1920, 1080]
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Keyframe 11: [582, 327, 1920, 1080]
+2025-03-17 12:07:34,870 - clipper.proxy - INFO - Keyframe 0: [476, 517, 1920, 1080]
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 91: [978, 0, 1920, 1080]
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 91: [1164, 327, 1920, 1080]
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 162: [1960, 549, 1920, 1080]
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 138: [1164, 1103, 1920, 1080]
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=476
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - X expression: x='if(lt(t,0),476,476)'
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with x=582
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=517
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Interpolating x from 0 to 978 between 0.000s and 3.036s
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),517,517)'
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with x=978
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Interpolating x from 582 to 1164 between 0.000s and 2.669s
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Interpolating x from 978 to 1960 between 3.036s and 5.405s
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with x=1164
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Interpolating x from 1164 to 1164 between 2.669s and 4.238s
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with x=1960
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with x=1164
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))'
+2025-03-17 12:07:34,871 - clipper.proxy - INFO - Video filters: crop=1920:1080:476:517,scale=1920:1080
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - X expression: x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))'
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=549
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:476:517,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with y=327
+2025-03-17 12:07:34,872 - clipper.proxy - INFO - Interpolating y from 549 to 0 between 0.000s and 3.036s
+2025-03-17 12:07:34,873 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with y=0
+2025-03-17 12:07:34,873 - clipper.proxy - INFO - Interpolating y from 327 to 327 between 0.000s and 2.669s
+2025-03-17 12:07:34,873 - clipper.proxy - INFO - Interpolating y from 0 to 549 between 3.036s and 5.405s
+2025-03-17 12:07:34,873 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with y=327
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Interpolating y from 327 to 1103 between 2.669s and 4.238s
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with y=549
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with y=1103
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:07:34,874 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.3670333333333333 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 4.237566666666667 -vf "crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:07:47,933 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:07:47,934 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:07:48,063 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:07:48,063 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:07:48,179 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:07:48,179 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:07:48,179 - clip_processor - INFO - Processed 3 clips
+2025-03-17 12:23:45,051 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:23:45,051 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:23:45,051 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:23:45,053 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,053 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,053 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,053 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,053 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:23:45,372 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:23:45,373 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:23:45,373 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:23:45,374 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:23:45,375 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:23:45,375 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:23:45,375 - clipper.processor - INFO - Found 3 clips pending processing
+2025-03-17 12:23:45,375 - clip_processor - INFO - Processing batch of 3 clips with 4 workers
+2025-03-17 12:23:45,376 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:23:45,376 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,377 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,377 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,377 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:23:45,377 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:23:45,378 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:23:45,378 - clip_processor - INFO - Processing clip: clip_1
+2025-03-17 12:23:45,378 - clip_processor - INFO - Processing clip: clip_2
+2025-03-17 12:23:45,378 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 12:23:45,379 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:23:45,380 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:23:45,381 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:23:45,381 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:23:45,381 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:23:45,381 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:23:45,381 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:23:45,381 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:23:45,381 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:23:45,409 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Static crop region: [0, 549, 1920, 1080]
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Frames: 11 to 138
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 549, 1920, 1080], '162': [1960, 549, 1920, 1080], '91': [978, 0, 1920, 1080]}
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Static crop region: [582, 327, 1920, 1080]
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Crop keyframes: {'11': [582, 327, 1920, 1080], '91': [1164, 327, 1920, 1080], '138': [1164, 1103, 1920, 1080]}
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Static crop region: [476, 517, 1920, 1080]
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - Crop keyframes: {'0': [476, 517, 1920, 1080]}
+2025-03-17 12:23:45,410 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:23:45,411 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:23:45,413 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Time range: 0.3670333333333333 to 4.6046000000000005 seconds
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Using 3 crop keyframes for export
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 0: [476, 517, 1920, 1080]
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 0: [0, 549, 1920, 1080]
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 11: [582, 327, 1920, 1080]
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 91: [978, 0, 1920, 1080]
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 91: [1164, 327, 1920, 1080]
+2025-03-17 12:23:45,798 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=476
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 162: [1960, 549, 1920, 1080]
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 138: [1164, 1103, 1920, 1080]
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - X expression: x='if(lt(t,0),476,476)'
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=517
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with x=582
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),517,517)'
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Interpolating x from 0 to 978 between 0.000s and 3.036s
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Interpolating x from 582 to 1164 between 0.000s and 2.669s
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with x=978
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with x=1164
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Video filters: crop=1920:1080:476:517,scale=1920:1080
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Interpolating x from 978 to 1960 between 3.036s and 5.405s
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Interpolating x from 1164 to 1164 between 2.669s and 4.238s
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:476:517,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with x=1960
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with x=1164
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))'
+2025-03-17 12:23:45,799 - clipper.proxy - INFO - X expression: x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))'
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=549
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 11 maps to time 0.000s with y=327
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Interpolating y from 549 to 0 between 0.000s and 3.036s
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 91 maps to time 3.036s with y=0
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Interpolating y from 327 to 327 between 0.000s and 2.669s
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Interpolating y from 0 to 549 between 3.036s and 5.405s
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 91 maps to time 2.669s with y=327
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Interpolating y from 327 to 1103 between 2.669s and 4.238s
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 162 maps to time 5.405s with y=549
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Keyframe 138 maps to time 4.238s with y=1103
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))'
+2025-03-17 12:23:45,801 - clipper.proxy - INFO - Using dynamic crop filter: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))'
+2025-03-17 12:23:45,802 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080
+2025-03-17 12:23:45,802 - clipper.proxy - INFO - Video filters: crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080
+2025-03-17 12:23:45,802 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=w='1920':h='1080':x='if(lt(t,0),0,if(between(t,0,3.036366666666667),0+(978-0)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),978+(1960-978)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),1960)))':y='if(lt(t,0),549,if(between(t,0,3.036366666666667),549+(0-549)*(0.5-0.5*cos(PI*(t-0)/(3.036366666666667-0))),if(between(t,3.036366666666667,5.4054),0+(549-0)*(0.5-0.5*cos(PI*(t-3.036366666666667)/(5.4054-3.036366666666667))),549)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:23:45,802 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.3670333333333333 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 4.237566666666667 -vf "crop=w='1920':h='1080':x='if(lt(t,0),582,if(between(t,0,2.6693333333333333),582+(1164-582)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),1164+(1164-1164)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1164)))':y='if(lt(t,0),327,if(between(t,0,2.6693333333333333),327+(327-327)*(0.5-0.5*cos(PI*(t-0)/(2.6693333333333333-0))),if(between(t,2.6693333333333333,4.237566666666667),327+(1103-327)*(0.5-0.5*cos(PI*(t-2.6693333333333333)/(4.237566666666667-2.6693333333333333))),1103)))',scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:23:59,539 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:23:59,540 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_1.mp4
+2025-03-17 12:23:59,541 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:59,541 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:59,541 - clipper.processor - INFO - Updated clip status to Complete: clip_1
+2025-03-17 12:23:59,541 - clip_processor - INFO - Updated clip status in config file: clip_1
+2025-03-17 12:23:59,882 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:23:59,883 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_2.mp4
+2025-03-17 12:23:59,883 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:59,883 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:23:59,883 - clipper.processor - INFO - Updated clip status to Complete: clip_2
+2025-03-17 12:23:59,883 - clip_processor - INFO - Updated clip status in config file: clip_2
+2025-03-17 12:24:00,073 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:24:00,074 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:24:00,074 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:24:00,074 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:24:00,074 - clipper.processor - INFO - Updated clip status to Complete: clip_3
+2025-03-17 12:24:00,074 - clip_processor - INFO - Updated clip status in config file: clip_3
+2025-03-17 12:24:00,075 - clip_processor - ERROR - Error in direct clip save fallback: 'str' object has no attribute 'relative_to'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 368, in process_batch
+    clips_file = config_manager.get_clips_file_path(source)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/src/services/config_manager.py", line 276, in get_clips_file_path
+    relative_path = self.get_relative_source_path(video_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/src/services/config_manager.py", line 124, in get_relative_source_path
+    return file_path.relative_to(search_dir)
+           ^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'str' object has no attribute 'relative_to'
+2025-03-17 12:24:00,075 - clip_processor - INFO - Processed 3 clips
+2025-03-17 12:27:27,923 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:27:27,923 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:27:27,923 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:27:27,924 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:27:28,020 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:27:28,021 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:27:28,021 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:27:28,021 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:27:28,022 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:27:28,022 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:27:28,023 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:27:28,023 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-17 12:27:28,023 - clip_processor - INFO - No pending clips found
+2025-03-17 12:33:32,492 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:33:32,492 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:33:32,492 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:33:32,494 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:33:32,495 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:33:32,495 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:33:32,495 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:33:32,496 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:33:32,496 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:33:32,497 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:33:32,497 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:33:32,497 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-17 12:33:32,497 - clip_processor - INFO - No pending clips found
+2025-03-17 12:34:27,266 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:34:27,266 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:34:27,267 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:34:27,269 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:27,270 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:27,270 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:34:27,271 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:34:27,271 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:34:27,271 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:34:27,271 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:34:27,272 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:34:27,272 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:34:27,272 - clipper.processor - INFO - Found 1 clips pending processing
+2025-03-17 12:34:27,272 - clip_processor - INFO - Processing batch of 1 clips with 4 workers
+2025-03-17 12:34:27,278 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:34:27,278 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:34:27,278 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:27,278 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:27,278 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:34:27,279 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:34:27,279 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:34:27,279 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:34:27,281 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:34:27,282 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:34:27,282 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:34:27,283 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 12:34:27,284 - clip_processor - INFO - DEBUG: Clip details - start_frame: 0, end_frame: 162
+2025-03-17 12:34:27,286 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:34:27,287 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:34:27,287 - clip_processor - INFO - Resolved source path: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:34:27,287 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-17 12:34:27,287 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:34:27,307 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-17 12:34:27,308 - clip_processor - INFO - DEBUG: Crop keyframes: {'0': [0, 0, 1920, 1080]}
+2025-03-17 12:34:27,308 - clip_processor - INFO - DEBUG: Static crop region: [0, 0, 1920, 1080]
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Static crop region: [0, 0, 1920, 1080]
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 0, 1920, 1080]}
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:34:27,308 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:34:27,358 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:34:27,358 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Keyframe 0: [0, 0, 1920, 1080]
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,0)'
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=0
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),0,0)'
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Video filters: crop=1920:1080:0:0,scale=1920:1080
+2025-03-17 12:34:27,359 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:0:0,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:34:32,049 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:34:32,049 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:34:32,049 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:34:32,050 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:32,050 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:32,050 - clipper.processor - INFO - Updated clip status to Complete: clip_3
+2025-03-17 12:34:32,050 - clip_processor - INFO - Updated clip status in config file: clip_3
+2025-03-17 12:34:32,050 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:32,050 - clip_processor - INFO - Updated clip status in direct save: clip_3
+2025-03-17 12:34:32,055 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:32,055 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:34:32,055 - clip_processor - INFO - Processed 1 clips
+2025-03-17 12:37:42,113 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:37:42,113 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:37:42,113 - clip_processor - INFO - Running one-time clip processing scan
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:42,114 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:37:42,114 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:37:42,115 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:37:42,117 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:37:42,117 - clipper.processor - INFO - Found 1 clips pending processing
+2025-03-17 12:37:42,117 - clip_processor - INFO - Processing batch of 1 clips with 4 workers
+2025-03-17 12:37:42,118 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:37:42,119 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:37:42,119 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:42,119 - clipper.processor - INFO - Found clip to process: clip_3 in data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:42,120 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-17 12:37:42,120 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-17 12:37:42,121 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-17 12:37:42,121 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-17 12:37:42,122 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-17 12:37:42,122 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-17 12:37:42,124 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-17 12:37:42,124 - clip_processor - INFO - DEBUG: Clip to process - ID: 785e5f13-0c06-44f9-98e4-2d04f1ef2a74, Name: clip_3, Status: Process, Export path: None
+2025-03-17 12:37:42,125 - clip_processor - INFO - Processing clip: clip_3
+2025-03-17 12:37:42,125 - clip_processor - INFO - DEBUG: Clip details - start_frame: 0, end_frame: 162
+2025-03-17 12:37:42,126 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-17 12:37:42,127 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-17 12:37:42,127 - clip_processor - INFO - Resolved source path: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:37:42,127 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-17 12:37:42,127 - clip_processor - INFO - Exporting clip from data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 to data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip1.mp4
+2025-03-17 12:37:42,139 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-17 12:37:42,139 - clip_processor - INFO - DEBUG: Crop keyframes: {'0': [0, 0, 1920, 1080]}
+2025-03-17 12:37:42,139 - clip_processor - INFO - DEBUG: Static crop region: [0, 0, 1920, 1080]
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Exporting clip for clip_3
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Source: data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Frames: 0 to 162
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Static crop region: [0, 0, 1920, 1080]
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Crop keyframes: {'0': [0, 0, 1920, 1080]}
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-17 12:37:42,139 - clipper.proxy - INFO - CV optimized: False
+2025-03-17 12:37:42,140 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:42,140 - clipper.proxy - INFO - Deleted existing export file: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:42,140 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/GP1/SESSION_020325
+2025-03-17 12:37:42,191 - clipper.proxy - INFO - Video FPS: 29.97002997002997
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Time range: 0.0 to 5.4054 seconds
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Using 1 crop keyframes for export
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Keyframe 0: [0, 0, 1920, 1080]
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Using crop dimensions width=1920, height=1080
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with x=0
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - X expression: x='if(lt(t,0),0,0)'
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Keyframe 0 maps to time 0.000s with y=0
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Y expression: y='if(lt(t,0),0,0)'
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Only one unique keyframe, using static crop
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Video filters: crop=1920:1080:0:0,scale=1920:1080
+2025-03-17 12:37:42,192 - clipper.proxy - INFO - Running ffmpeg command: ffmpeg -y -ss 0.0 -i data/source/02_CALIBRATED_FOOTAGE/GP1/SESSION_020325/GX010001_copy.MP4 -t 5.4054 -vf "crop=1920:1080:0:0,scale=1920:1080" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,694 - clipper.proxy - INFO - Successfully exported clip to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,694 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,694 - clip_processor - INFO - Successfully processed clip: clip_3 -> data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,694 - clip_processor - INFO - DEBUG: After processing - Clip ID: 785e5f13-0c06-44f9-98e4-2d04f1ef2a74, Name: clip_3, Status: Complete, Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,694 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json, Index: 2
+2025-03-17 12:37:46,695 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,695 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-17 12:37:46,695 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,695 - clipper.processor - INFO - Updated export path to: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,695 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,695 - clipper.processor - INFO - Updated clip status to Complete: clip_3
+2025-03-17 12:37:46,695 - clip_processor - INFO - Updated clip status in config file: clip_3
+2025-03-17 12:37:46,696 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,696 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,696 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,696 - clip_processor - INFO - Updated clip status in direct save: clip_3
+2025-03-17 12:37:46,696 - clip_processor - INFO - DEBUG: Updated export path in direct save: data/prept/03_CLIPPED/GP1/SESSION_020325/GX010001_copy_clip_3.mp4
+2025-03-17 12:37:46,701 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,701 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-17 12:37:46,701 - clip_processor - INFO - Processed 1 clips
