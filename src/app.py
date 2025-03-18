@@ -189,6 +189,8 @@ def initialize_session_state():
             st.session_state.output_resolution = "1080p"
         if "crop_selection_active" not in st.session_state:
             st.session_state.crop_selection_active = False
+        if "show_coordinate_grid" not in st.session_state:
+            st.session_state.show_coordinate_grid = False
         if "trigger_rerun" not in st.session_state:
             st.session_state.trigger_rerun = False
 

@@ -241,44 +241,113 @@ def parse_timecode_to_frame(timecode_str, fps):
     return frame_number
 
 
-def draw_crop_overlay(frame, crop_region, alpha=0.3, color=(0, 255, 0), thickness=2):
+def draw_coordinate_grid(frame, grid_size=100, font_scale=0.4, thickness=1):
     """
-    Draw a semi-transparent overlay on the frame to indicate the crop region
+    Draw a coordinate grid on the frame with labels at intersections.
 
     Args:
-        frame: The frame to draw on (numpy array)
-        crop_region: Tuple of (x, y, width, height) defining the crop region
-        alpha: Transparency level (0-1)
-        color: RGB color tuple for the overlay
-        thickness: Line thickness for the border
+        frame: OpenCV image/frame
+        grid_size: Spacing between grid lines in pixels
+        font_scale: Scale of the font for coordinate labels
+        thickness: Line thickness
 
     Returns:
-        Frame with overlay
+        Frame with grid overlay
+    """
+    # Make a copy of the frame to avoid modifying the original
+    overlay = frame.copy()
+    height, width = overlay.shape[:2]
+
+    # Calculate how many lines we need
+    num_horizontal_lines = height // grid_size
+    num_vertical_lines = width // grid_size
+
+    # Draw horizontal lines
+    for i in range(1, num_horizontal_lines + 1):
+        y = i * grid_size
+        cv2.line(overlay, (0, y), (width, y), (0, 255, 0), thickness)
+
+    # Draw vertical lines
+    for i in range(1, num_vertical_lines + 1):
+        x = i * grid_size
+        cv2.line(overlay, (x, 0), (x, height), (0, 255, 0), thickness)
+
+    # Add coordinate labels at intersections
+    for y in range(grid_size, height, grid_size):
+        for x in range(grid_size, width, grid_size):
+            # Format the coordinates as (x,y)
+            label = f"({x},{y})"
+            # Get the size of the text for proper background
+            (text_width, text_height), _ = cv2.getTextSize(
+                label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
+            )
+
+            # Draw a semi-transparent background for the text
+            sub_overlay = overlay.copy()
+            cv2.rectangle(
+                sub_overlay,
+                (x - text_width // 2 - 2, y - text_height // 2 - 2),
+                (x + text_width // 2 + 2, y + text_height // 2 + 2),
+                (0, 0, 0),
+                -1,
+            )
+            # Apply the rectangle with transparency
+            alpha = 0.5
+            overlay = cv2.addWeighted(overlay, 1 - alpha, sub_overlay, alpha, 0)
+
+            # Draw the coordinate text
+            cv2.putText(
+                overlay,
+                label,
+                (x - text_width // 2, y + text_height // 2),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                font_scale,
+                (255, 255, 255),
+                thickness,
+            )
+
+    # Blend the grid with the original frame for semi-transparency
+    alpha = 0.7  # 70% original, 30% grid
+    result = cv2.addWeighted(frame, alpha, overlay, 1 - alpha, 0)
+
+    return result
+
+
+def draw_crop_overlay(
+    frame, crop_region, color=(0, 255, 0), thickness=2, with_grid=False
+):
+    """
+    Draw a rectangle overlay for the crop region on a frame.
+
+    Args:
+        frame: OpenCV image/frame
+        crop_region: Tuple containing (x, y, width, height)
+        color: Rectangle color in BGR format
+        thickness: Line thickness
+        with_grid: Whether to add a coordinate grid to the frame
+
+    Returns:
+        Frame with crop overlay
     """
     if frame is None or crop_region is None:
         return frame
 
-    # Make a copy of the frame to avoid modifying the original
-    overlay = frame.copy()
+    # Make a copy to avoid modifying the original
+    result = frame.copy()
+
+    # Add coordinate grid if requested
+    if with_grid:
+        result = draw_coordinate_grid(result)
 
     # Extract crop region coordinates
     x, y, width, height = crop_region
 
-    # Ensure coordinates are within frame boundaries
-    h, w = frame.shape[:2]
-    x = max(0, min(x, w - 1))
-    y = max(0, min(y, h - 1))
-    width = max(1, min(width, w - x))
-    height = max(1, min(height, h - y))
-
-    # Draw filled rectangle with transparency
-    cv2.rectangle(overlay, (x, y), (x + width, y + height), color, -1)
-
-    # Blend the overlay with the original frame
-    result = cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0)
-
-    # Draw border around crop region
+    # Draw rectangle
     cv2.rectangle(result, (x, y), (x + width, y + height), color, thickness)
+
+    # Add crop region info
+    label = f"Crop: {x},{y} {width}x{height}"
+    cv2.putText(result, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
     return result
 

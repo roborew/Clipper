@@ -101,6 +101,10 @@ def display_video_player(
         if "show_previews" not in st.session_state:
             st.session_state.show_previews = True
 
+        # Initialize grid toggle if not exists
+        if "show_coordinate_grid" not in st.session_state:
+            st.session_state.show_coordinate_grid = False
+
         # Initialize frame navigation state
         if "frame_to_navigate" not in st.session_state:
             st.session_state.frame_to_navigate = None
@@ -125,11 +129,20 @@ def display_video_player(
         st.session_state.animation_start_frame = original_frame
 
         # Add a toggle to show/hide previews
-        st.session_state.show_previews = st.checkbox(
-            "Show Video Previews",
-            value=st.session_state.show_previews,
-            help="Toggle to show or hide the video preview panels",
-        )
+        preview_col, grid_col = st.columns([1, 1])
+        with preview_col:
+            st.session_state.show_previews = st.checkbox(
+                "Show Video Previews",
+                value=st.session_state.show_previews,
+                help="Toggle to show or hide the video preview panels",
+            )
+
+        with grid_col:
+            st.session_state.show_coordinate_grid = st.checkbox(
+                "Show Coordinate Grid",
+                value=st.session_state.show_coordinate_grid,
+                help="Toggle to show a coordinate grid overlay for crop positioning",
+            )
 
         # Only display video previews if the toggle is on
         if st.session_state.show_previews:
@@ -376,12 +389,26 @@ def display_video_player(
             frame = video_service.get_frame(video_path, current_frame)
 
             if frame is not None:
-                # Get crop region for current frame
-                frame_crop = crop_region  # Use crop region directly
+                # Apply coordinate grid if enabled
+                if st.session_state.show_coordinate_grid:
+                    # Get crop region for current frame
+                    frame_crop = crop_region  # Use crop region directly
 
-                # Apply crop overlay if specified
-                if frame_crop:
-                    frame = video_service.draw_crop_overlay(frame, frame_crop)
+                    # Apply crop overlay with grid if specified
+                    if frame_crop:
+                        frame = video_service.draw_crop_overlay(
+                            frame, frame_crop, with_grid=True
+                        )
+                    else:
+                        # Just show the grid without crop overlay
+                        frame = video_service.draw_coordinate_grid(frame)
+                else:
+                    # Get crop region for current frame
+                    frame_crop = crop_region  # Use crop region directly
+
+                    # Apply crop overlay if specified
+                    if frame_crop:
+                        frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
                 st.image(frame, use_container_width=True)
