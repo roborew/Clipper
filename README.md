@@ -50,7 +50,7 @@ To create symbolic links to external storage:
 1.  For the source data directory (if stored externally):
 
 ```bash
-ln -s "/Volumes/ExternalDrive/02_CALIBRATED_FOOTAGE" data/source
+ln -s "/Volumes/ExternalDrive/00_SURF_FOOTAGE_SOURCE" data/source
 ```
 
 2.  For the processed data directory:

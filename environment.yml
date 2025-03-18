@@ -5,6 +5,7 @@ channels:
 dependencies:
   - python=3.11
   - pip
+  - ffmpeg
   - pip:
       - streamlit>=1.22.0
       - opencv-python>=4.7.0
