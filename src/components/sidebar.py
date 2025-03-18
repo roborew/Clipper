@@ -586,13 +586,59 @@ def display_clip_management():
                         st.success("Configuration reloaded")
                         st.rerun()
 
-        # Create New Clip button
-        if st.button("Create New Clip", key="create_new_clip_sidebar"):
-            # Import here to avoid circular imports
-            from src.app import handle_new_clip
+            # Add CSV upload section with expander
+            with st.expander("Import Clips from CSV"):
+                st.caption(
+                    "Upload a CSV with clip definitions to create multiple clips at once."
+                )
+                st.caption(
+                    "CSV Format: Start Time, End Time, Start X, Start Y, End X, End Y"
+                )
 
-            handle_new_clip()
-            st.rerun()
+                # Show example format
+                st.caption("Example:")
+                st.code(
+                    """Start Time,End Time,Start X,Start Y,End X,End Y
+00:01,1:10,170,170,354,170
+3:20,3:38,0,0,175,175""",
+                    language="csv",
+                )
+
+                # Toggle for overwriting existing clips
+                overwrite_clips = st.checkbox(
+                    "Overwrite existing clips",
+                    value=False,
+                    help="If checked, this will replace all existing clips. If unchecked, new clips will be added to existing ones.",
+                )
+
+                # CSV file uploader
+                uploaded_file = st.file_uploader(
+                    "Choose a CSV file", type="csv", key="csv_clip_uploader"
+                )
+
+                if uploaded_file is not None:
+                    if st.button("Process CSV", key="process_csv_btn"):
+                        success = process_csv_clips(
+                            uploaded_file, current_video, clips_file, overwrite_clips
+                        )
+                        if success:
+                            st.success("Clips created successfully from CSV!")
+                            st.session_state.clip_modified = (
+                                False  # Reset modified flag
+                            )
+                            st.rerun()
+                        else:
+                            st.error(
+                                "Failed to create clips from CSV. Check logs for details."
+                            )
+
+            # Create New Clip button - moved below the CSV import section
+            if st.button("Create New Clip", key="create_new_clip_sidebar"):
+                # Import here to avoid circular imports
+                from src.app import handle_new_clip
+
+                handle_new_clip()
+                st.rerun()
 
         # Load clips directly from file for display
         clips = clip_service.load_clips_from_file(clips_file)
@@ -721,6 +767,266 @@ def display_clip_management():
     except Exception as e:
         logger.exception(f"Error displaying clip management: {str(e)}")
         st.error(f"Error displaying clip management: {str(e)}")
+
+
+def process_csv_clips(csv_file, video_path, clips_file, overwrite=False):
+    """
+    Process a CSV file to create multiple clips
+
+    Args:
+        csv_file: Uploaded CSV file object
+        video_path: Path to the current video
+        clips_file: Path to the clips config file
+        overwrite: Whether to overwrite existing clips
+
+    Returns:
+        True if successful, False otherwise
+    """
+    try:
+        import pandas as pd
+        import csv
+        import io
+        from datetime import datetime
+        import uuid
+        from src.services import video_service, clip_service
+        from src.services.clip_service import Clip
+
+        # Read CSV file
+        content = csv_file.getvalue().decode("utf-8")
+        logger.info(f"CSV content: {content}")
+        df = pd.read_csv(io.StringIO(content), header=0)
+        logger.info(f"CSV data loaded: {len(df)} rows")
+
+        # Validate CSV format
+        required_columns = [
+            "Start Time",
+            "End Time",
+            "Start X",
+            "Start Y",
+            "End X",
+            "End Y",
+        ]
+        for col in required_columns:
+            if col not in df.columns:
+                logger.error(f"CSV is missing required column: {col}")
+                return False
+
+        # Get video info to convert timecodes to frames
+        fps = st.session_state.get("fps", 30.0)  # Default to 30 fps if not available
+        total_frames = st.session_state.get("total_frames", 0)
+        logger.info(f"Video info - FPS: {fps}, Total frames: {total_frames}")
+
+        # Get proxy dimensions for scaling
+        proxy_width = 475  # Default proxy width
+        proxy_height = 267  # Default proxy height
+        full_width = 1920  # Default full width
+        full_height = 1080  # Default full height
+
+        # Load existing clips if not overwriting
+        if not overwrite and os.path.exists(clips_file):
+            existing_clips = clip_service.load_clips(clips_file)
+        else:
+            existing_clips = []
+
+        # Start with clip_1 or next number in sequence
+        clip_counter = len(existing_clips) + 1 if not overwrite else 1
+        logger.info(f"Starting clip counter at {clip_counter}")
+
+        # Create new clips from CSV
+        new_clips = []
+
+        for index, row in df.iterrows():
+            # Convert timecodes to frames
+            try:
+                start_timecode = str(row["Start Time"])
+                end_timecode = str(row["End Time"])
+                logger.info(
+                    f"Processing row {index} - Start: {start_timecode}, End: {end_timecode}"
+                )
+
+                # Handle different time formats
+                try:
+                    # First try parse_timecode_to_frame which handles HH:MM:SS:FF, HH:MM:SS, MM:SS
+                    start_frame = video_service.parse_timecode_to_frame(
+                        start_timecode, fps
+                    )
+                except Exception as e:
+                    # If that fails, try a simple conversion (assuming time in seconds or MM:SS)
+                    logger.warning(
+                        f"Failed to parse start timecode using standard parser: {e}"
+                    )
+                    if ":" in start_timecode:
+                        parts = start_timecode.split(":")
+                        if len(parts) == 2:
+                            # MM:SS format
+                            minutes = float(parts[0])
+                            seconds = float(parts[1])
+                            total_seconds = minutes * 60 + seconds
+                        else:
+                            # Just convert to seconds
+                            total_seconds = sum(
+                                float(x) * 60**i for i, x in enumerate(reversed(parts))
+                            )
+                    else:
+                        # Just seconds
+                        total_seconds = float(start_timecode)
+                    start_frame = int(total_seconds * fps)
+
+                try:
+                    # First try parse_timecode_to_frame which handles HH:MM:SS:FF, HH:MM:SS, MM:SS
+                    end_frame = video_service.parse_timecode_to_frame(end_timecode, fps)
+                except Exception as e:
+                    # If that fails, try a simple conversion (assuming time in seconds or MM:SS)
+                    logger.warning(
+                        f"Failed to parse end timecode using standard parser: {e}"
+                    )
+                    if ":" in end_timecode:
+                        parts = end_timecode.split(":")
+                        if len(parts) == 2:
+                            # MM:SS format
+                            minutes = float(parts[0])
+                            seconds = float(parts[1])
+                            total_seconds = minutes * 60 + seconds
+                        else:
+                            # Just convert to seconds
+                            total_seconds = sum(
+                                float(x) * 60**i for i, x in enumerate(reversed(parts))
+                            )
+                    else:
+                        # Just seconds
+                        total_seconds = float(end_timecode)
+                    end_frame = int(total_seconds * fps)
+
+                logger.info(
+                    f"Converted timecodes to frames - Start: {start_frame}, End: {end_frame}"
+                )
+
+                # Ensure frames are within valid range
+                start_frame = max(0, min(total_frames - 1, start_frame))
+                end_frame = max(start_frame, min(total_frames - 1, end_frame))
+                logger.info(
+                    f"Adjusted frames within valid range - Start: {start_frame}, End: {end_frame}"
+                )
+
+                # Get crop coordinates
+                start_x = int(row["Start X"])
+                start_y = int(row["Start Y"])
+                end_x = int(row["End X"])
+                end_y = int(row["End Y"])
+                logger.info(
+                    f"Crop coordinates - Start: ({start_x}, {start_y}), End: ({end_x}, {end_y})"
+                )
+
+                # Create a new clip
+                new_clip = Clip()
+                new_clip.id = str(uuid.uuid4())
+                new_clip.name = f"clip_{clip_counter}"
+                new_clip.source_path = str(video_path)  # Convert PosixPath to string
+
+                # Set proxy path (matching structure from Clip class)
+                video_path_str = str(video_path)  # Convert to string before checking
+                if "proxy_videos" in video_path_str:
+                    new_clip.proxy_path = video_path_str
+                else:
+                    # Check if there's a proxy video path in session state
+                    proxy_path = st.session_state.get("proxy_path")
+                    if proxy_path:
+                        new_clip.proxy_path = proxy_path
+                    else:
+                        # Create a default proxy path
+                        base_name = Path(video_path).stem
+                        # Safely handle path conversion
+                        try:
+                            if "data/source" in video_path_str:
+                                relative_path = Path(video_path).relative_to(
+                                    Path("data/source")
+                                )
+                                new_clip.proxy_path = f"proxy_videos/RAW/{relative_path.parent}/{base_name}_proxy.mp4"
+                            else:
+                                new_clip.proxy_path = (
+                                    f"proxy_videos/RAW/{base_name}_proxy.mp4"
+                                )
+                        except ValueError:
+                            # If relative_to fails, just use the filename
+                            new_clip.proxy_path = (
+                                f"proxy_videos/RAW/{base_name}_proxy.mp4"
+                            )
+
+                new_clip.start_frame = start_frame
+                new_clip.end_frame = end_frame
+
+                # Set up keyframes at start and end frames
+                # First for proxy resolution
+                new_clip.crop_keyframes_proxy = {
+                    str(start_frame): [start_x, start_y, proxy_width, proxy_height],
+                    str(end_frame): [end_x, end_y, proxy_width, proxy_height],
+                }
+
+                # Calculate full-res coordinates from proxy coordinates
+                full_start_x = int(start_x * (full_width / proxy_width))
+                full_start_y = int(start_y * (full_height / proxy_height))
+                full_end_x = int(end_x * (full_width / proxy_width))
+                full_end_y = int(end_y * (full_height / proxy_height))
+
+                # Set up keyframes for full resolution
+                new_clip.crop_keyframes = {
+                    str(start_frame): [
+                        full_start_x,
+                        full_start_y,
+                        full_width,
+                        full_height,
+                    ],
+                    str(end_frame): [full_end_x, full_end_y, full_width, full_height],
+                }
+
+                new_clip.output_resolution = st.session_state.get(
+                    "output_resolution", "1080p"
+                )
+                new_clip.export_path = None
+                new_clip.created_at = datetime.now().isoformat()
+                new_clip.modified_at = new_clip.created_at
+                new_clip.status = "Draft"
+
+                new_clips.append(new_clip)
+                clip_counter += 1
+                logger.info(
+                    f"Created clip from CSV: {new_clip.name} (frames {start_frame} to {end_frame})"
+                )
+
+            except Exception as e:
+                logger.exception(f"Error processing row {index} of CSV: {str(e)}")
+                continue
+
+        # Combine with existing clips if not overwriting
+        if not overwrite:
+            final_clips = existing_clips + new_clips
+        else:
+            final_clips = new_clips
+
+        # Save clips to file
+        success = clip_service.save_clips(final_clips, clips_file)
+
+        if success:
+            logger.info(f"Created {len(new_clips)} clips from CSV file")
+
+            # Update session state with the new clips
+            st.session_state.clips = final_clips
+
+            # Set current_clip_index to the first new clip if possible
+            if len(final_clips) > 0:
+                if overwrite or len(existing_clips) == 0:
+                    st.session_state.current_clip_index = 0
+                else:
+                    st.session_state.current_clip_index = len(existing_clips)
+
+            return True
+        else:
+            logger.error("Failed to save clips generated from CSV")
+            return False
+
+    except Exception as e:
+        logger.exception(f"Error processing CSV file: {str(e)}")
+        return False
 
 
 def display_settings(config_manager):
