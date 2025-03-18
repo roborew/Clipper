@@ -530,222 +530,76 @@ def display_clip_management():
         current_video = st.session_state.get("current_video", None)
         config_manager = st.session_state.get("config_manager", None)
 
-        # Always show the configuration status and reload button
-        if config_manager:
-            clips_file = (
-                config_manager.get_clips_file_path(current_video)
-                if current_video
-                else None
-            )
-
-            # Create columns for the config info and buttons
-            col1 = st.columns([1])[0]
-
-            with col1:
-                if current_video:
-                    # Check if clips are initialized
-                    clips_initialized = (
-                        "clips" in st.session_state
-                        and st.session_state.clips is not None
-                    )
-
-                    # Show config status
-                    if clips_initialized:
-                        if st.session_state.get("clip_modified", False):
-                            st.caption(
-                                f"Config*: {os.path.basename(clips_file) if clips_file else 'None'} (unsaved)"
-                            )
-                        else:
-                            st.caption(
-                                f"Config: {os.path.basename(clips_file) if clips_file else 'None'}"
-                            )
-                    else:
-                        st.caption("Config not loaded")
-                        # Show load button when config exists but is not loaded
-                        if clips_file and clips_file.exists():
-                            if st.button("Load Config", key="load_config_btn"):
-                                success = clip_service.initialize_session_clips(
-                                    config_manager
-                                )
-                                if success:
-                                    st.success(
-                                        f"Loaded configuration from {clips_file}"
-                                    )
-                                    st.rerun()
-                                else:
-                                    st.error("Failed to load configuration")
-                else:
-                    st.caption("No video selected")
-
-                # Only show these buttons if clips are initialized
-                if (
-                    current_video
-                    and "clips" in st.session_state
-                    and st.session_state.clips is not None
-                ):
-                    # Save button - only enabled if there are unsaved changes
-                    save_button = st.button(
-                        "💾 Save",
-                        key="save_config_btn",
-                        help="Save current configuration",
-                        disabled=not (
-                            current_video
-                            and st.session_state.get("clip_modified", False)
-                        ),
-                    )
-                    if save_button and current_video:
-                        success = clip_service.save_session_clips(config_manager)
-                        if success:
-                            st.success("Configuration saved successfully")
-                        else:
-                            st.error("Failed to save configuration")
-                        st.rerun()
-
-                    reload_button = st.button(
-                        "🔄 Reload",
-                        key="reload_config_btn",
-                        help="Reload configuration from file",
-                        disabled=not current_video,
-                    )
-                    if reload_button and current_video:
-                        if st.session_state.get("clip_modified", False):
-                            st.warning(
-                                "You have unsaved changes. Save first or they will be lost!"
-                            )
-                            if st.button("Reload anyway", key="reload_anyway"):
-                                success = clip_service.initialize_session_clips(
-                                    config_manager
-                                )
-                                if success:
-                                    if clips_file and clips_file.exists():
-                                        st.success(
-                                            f"Reloaded configuration from {clips_file}"
-                                        )
-                                    else:
-                                        st.info("No existing configuration found")
-                                else:
-                                    st.error("Failed to reload configuration")
-                                st.rerun()
-                        else:
-                            success = clip_service.initialize_session_clips(
-                                config_manager
-                            )
-                            if success:
-                                if clips_file and clips_file.exists():
-                                    st.success(
-                                        f"Reloaded configuration from {clips_file}"
-                                    )
-                                else:
-                                    st.info("No existing configuration found")
-                            else:
-                                st.error("Failed to reload configuration")
-                            st.rerun()
-
-                # Show Generate Config button only when we have a video but no config file
-                if current_video and (not clips_file or not clips_file.exists()):
-                    if st.button(
-                        "➕ Generate",
-                        key="generate_config_btn",
-                        help="Generate new configuration file",
-                    ):
-                        try:
-                            # Create empty config file
-                            if clips_file:
-                                # Ensure directory exists
-                                os.makedirs(os.path.dirname(clips_file), exist_ok=True)
-                                # Create empty clips list
-                                with open(clips_file, "w") as f:
-                                    f.write("[]")
-                                st.success(f"Generated new config file: {clips_file}")
-                                # Initialize clips
-                                clip_service.initialize_session_clips(config_manager)
-                                st.rerun()
-                        except Exception as e:
-                            logger.exception(f"Error generating config file: {str(e)}")
-                            st.error("Failed to generate config file")
-
-                # Only show batch status section if clips are initialized
-                if (
-                    current_video
-                    and "clips" in st.session_state
-                    and st.session_state.clips is not None
-                ):
-                    # Add batch status update section
-                    st.markdown("---")  # Add separator
-                    st.caption("Batch Status Update")
-
-                    # Status selector for batch update
-                    batch_status_options = ["Draft", "Process", "Complete"]
-                    batch_status = st.selectbox(
-                        "Set All Clips To",
-                        options=batch_status_options,
-                        key="batch_status_selector",
-                    )
-
-                    # Update All button
-                    if st.button("Update All", key="update_all_status_btn"):
-                        if "clips" in st.session_state and st.session_state.clips:
-                            # Update all clips to the selected status
-                            for clip in st.session_state.clips:
-                                if clip.status != batch_status:
-                                    clip.status = batch_status
-                                    clip.update()  # Update modification timestamp
-
-                            # Mark as modified to enable saving
-                            st.session_state.clip_modified = True
-                            st.info(
-                                f"Updated all clips to '{batch_status}' status. Click Save to apply changes."
-                            )
-                            st.rerun()
-                        else:
-                            st.warning("No clips to update")
-
-        # Create New Clip button (only enabled if video is selected and clips are initialized)
-        clips_initialized = (
-            "clips" in st.session_state and st.session_state.clips is not None
-        )
-        if st.button(
-            "Create New Clip",
-            key="create_new_clip_sidebar",
-            disabled=not (current_video and clips_initialized),
-        ):
-            if current_video:
-                # Import here to avoid circular imports
-                from src.app import handle_new_clip
-
-                # Create a new clip using the current video
-                handle_new_clip()
-                st.rerun()
-
-        # Display clips section
-        if not current_video:
+        if not current_video or not config_manager:
             st.info("Select a video to manage clips")
             return
 
-        # Check if clips are initialized
-        if "clips" not in st.session_state:
-            st.info("No clips loaded")
-            return
+        # Get clips file path
+        clips_file = config_manager.get_clips_file_path(current_video)
 
-        # Get clips from session state
-        clips = st.session_state.clips
+        # Show config file status
+        st.caption(f"Config: {os.path.basename(clips_file) if clips_file else 'None'}")
+
+        # Create columns for buttons
+        col1 = st.columns([1])[0]
+
+        with col1:
+            # Save button - only enabled if there are unsaved changes
+            save_button = st.button(
+                "💾 Save",
+                key="save_config_btn",
+                help="Save current configuration",
+                disabled=not (
+                    current_video and st.session_state.get("clip_modified", False)
+                ),
+            )
+            if save_button and current_video:
+                success = clip_service.save_session_clips(config_manager)
+                if success:
+                    st.success("Configuration saved successfully")
+                    st.rerun()  # Reload to show updated file contents
+                else:
+                    st.error("Failed to save configuration")
+
+            # Reload button
+            if st.button(
+                "🔄 Reload",
+                key="reload_config_btn",
+                help="Reload configuration from file",
+            ):
+                if st.session_state.get("clip_modified", False):
+                    st.warning(
+                        "You have unsaved changes. Save first or they will be lost!"
+                    )
+                    if st.button("Reload anyway", key="reload_anyway"):
+                        success = clip_service.initialize_session_clips(
+                            config_manager, force_reload=True
+                        )
+                        if success:
+                            st.success("Configuration reloaded")
+                            st.rerun()
+                else:
+                    success = clip_service.initialize_session_clips(
+                        config_manager, force_reload=True
+                    )
+                    if success:
+                        st.success("Configuration reloaded")
+                        st.rerun()
+
+        # Create New Clip button
+        if st.button("Create New Clip", key="create_new_clip_sidebar"):
+            # Import here to avoid circular imports
+            from src.app import handle_new_clip
+
+            handle_new_clip()
+            st.rerun()
+
+        # Load clips directly from file for display
+        clips = clip_service.load_clips_from_file(clips_file)
 
         if not clips:
             st.info("No clips created yet")
             return
-
-        # Show last save status if available
-        if (
-            "last_save_status" in st.session_state
-            and st.session_state.last_save_status is not None
-        ):
-            status = st.session_state.last_save_status
-            if isinstance(status, dict) and status.get("success"):
-                st.success(status.get("message", "Changes saved"))
-            elif isinstance(status, dict):
-                st.error(status.get("message", "Failed to save changes"))
-            # Clear the status after displaying
-            st.session_state.last_save_status = None
 
         # Display list of clips
         for i, clip in enumerate(clips):
@@ -754,7 +608,7 @@ def display_clip_management():
                 # Use expander to save space
                 with st.expander(
                     f"{i+1}. {clip.name}",
-                    expanded=(i == st.session_state.current_clip_index),
+                    expanded=(i == st.session_state.get("current_clip_index", -1)),
                 ):
                     # Display clip information
                     st.text(
@@ -770,45 +624,40 @@ def display_clip_management():
                     with col1:
                         # Select button
                         if st.button("Select", key=f"select_clip_{i}"):
+                            # Set current clip index
                             st.session_state.current_clip_index = i
 
-                            # If clip contains current frame, keep it; otherwise go to clip start
-                            current_frame = st.session_state.get("current_frame", 0)
-                            if clip.start_frame <= current_frame <= clip.end_frame:
-                                # Current frame is within clip bounds, update clip_frame_slider to match
-                                st.session_state.clip_frame_slider = current_frame
+                            # Load clip data into state
+                            success = clip_service.load_clip_into_state(clip)
+                            if success:
+                                st.success(f"Selected clip: {clip.name}")
                             else:
-                                # Current frame is outside clip bounds, go to clip start
-                                st.session_state.current_frame = clip.start_frame
-                                st.session_state.clip_frame_slider = clip.start_frame
+                                st.error("Failed to load clip data")
 
                             st.rerun()
 
-                        # Delete button (in red)
+                        # Delete button
                         if st.button(
                             "Delete",
                             key=f"delete_clip_{i}",
                             type="primary",
                             use_container_width=True,
                         ):
-                            # Delete the clip
+                            # Delete the clip from session state
                             clip_service.delete_clip(i)
                             # Auto-save after deletion
                             success = clip_service.save_session_clips()
                             if success:
-                                st.session_state.last_save_status = {
-                                    "success": True,
-                                    "message": f"Deleted and saved clip: {clip.name}",
-                                }
+                                st.success(f"Deleted clip: {clip.name}")
                             else:
-                                st.session_state.last_save_status = {
-                                    "success": False,
-                                    "message": f"Failed to save after deleting clip: {clip.name}",
-                                }
+                                st.error(
+                                    f"Failed to save after deleting clip: {clip.name}"
+                                )
                             st.rerun()
 
                         # Preview button
                         if st.button("Preview", key=f"preview_clip_{i}"):
+                            st.session_state.current_clip_index = i  # Set current clip
                             # Create progress placeholder
                             progress_placeholder = st.empty()
                             progress_placeholder.info("Generating clip preview...")
@@ -816,168 +665,35 @@ def display_clip_management():
                             # Get crop region for current frame
                             crop_region = clip.get_crop_region_at_frame(
                                 clip.start_frame,
-                                use_proxy=True,  # Use proxy resolution for UI display
+                                use_proxy=True,
                             )
 
-                            logger.info(f"Preview button clicked for clip {clip.name}")
-                            logger.info(f"Source path: {clip.source_path}")
-                            logger.info(f"Start frame: {clip.start_frame}")
-                            logger.info(f"End frame: {clip.end_frame}")
-                            logger.info(f"Current proxy path: {clip.proxy_path}")
-
-                            # Always generate a new preview for the clip
+                            # Generate preview
                             from src.services import proxy_service
 
-                            # Get the proxy path from config manager
-                            proxy_path = str(
-                                config_manager.get_proxy_path(
-                                    Path(clip.source_path), is_clip=False
-                                )
-                            )
-                            source_video = clip.source_path
-
-                            # Use proxy if it exists
-                            if os.path.exists(proxy_path):
-                                source_video = proxy_path
-                                logger.info(
-                                    f"Using proxy video for preview: {source_video}"
-                                )
-                            else:
-                                logger.info(
-                                    f"Using source video for preview: {source_video}"
-                                )
-
                             preview_path = proxy_service.create_clip_preview(
-                                source_video,  # Use proxy video as source
+                                clip.source_path,
                                 clip.name,
                                 clip.start_frame,
                                 clip.end_frame,
                                 crop_region=crop_region,
-                                crop_keyframes=clip.crop_keyframes,  # Keep original keyframes
-                                crop_keyframes_proxy=clip.crop_keyframes_proxy,  # Use proxy-specific keyframes
+                                crop_keyframes=clip.crop_keyframes,
+                                crop_keyframes_proxy=clip.crop_keyframes_proxy,
                                 progress_placeholder=progress_placeholder,
                                 config_manager=config_manager,
                             )
 
                             if preview_path:
-                                logger.info(f"Preview generated at: {preview_path}")
-                                # Update clip's proxy path
-                                clip.proxy_path = preview_path
-                                clip.update()  # Mark as modified
-                                st.session_state.clip_modified = True
-
-                                # Store the preview path in session state for the main page
-                                logger.info(
-                                    f"Setting preview path in session state: {preview_path}"
-                                )
                                 st.session_state.preview_clip_path = preview_path
-                                st.session_state.current_clip_index = i
-                                st.session_state.trigger_rerun = True
                                 progress_placeholder.success(
                                     "Preview ready! Switching to main view..."
                                 )
+                                st.rerun()
                             else:
-                                logger.error("Failed to generate preview")
                                 progress_placeholder.error("Failed to generate preview")
 
-                        # Add a checkbox for CV optimization
-                        cv_optimized = st.checkbox(
-                            "Optimize for CV",
-                            key=f"cv_optimized_{i}",
-                            help="Export with maximum quality for computer vision learning",
-                        )
-
-                        # Export button
-                        if st.button("Export", key=f"export_clip_{i}"):
-                            # Create progress placeholder
-                            progress_placeholder = st.empty()
-                            if cv_optimized:
-                                progress_placeholder.info(
-                                    "Exporting clip with CV optimization..."
-                                )
-                            else:
-                                progress_placeholder.info("Exporting clip...")
-
-                            logger.info(f"Export button clicked for clip {clip.name}")
-                            logger.info(f"Source path: {clip.source_path}")
-                            logger.info(f"Start frame: {clip.start_frame}")
-                            logger.info(f"End frame: {clip.end_frame}")
-                            logger.info(f"CV optimization: {cv_optimized}")
-
-                            # Always use the original high-quality source video for export
-                            source_video = clip.source_path
-
-                            # Get crop region for current frame
-                            crop_region = clip.get_crop_region_at_frame(
-                                clip.start_frame,
-                                use_proxy=False,  # Use source resolution for export
-                            )
-
-                            # Export the clip using the original source video and full-resolution keyframes
-                            from src.services import proxy_service
-
-                            # Debug log to verify the crop keyframes being used
-                            logger.info(
-                                f"Full-resolution crop keyframes before export: {clip.crop_keyframes}"
-                            )
-                            if len(clip.crop_keyframes) == 0:
-                                logger.warning(
-                                    "No crop keyframes available for high-resolution export"
-                                )
-
-                            # Also log the proxy crop keyframes for comparison
-                            logger.info(
-                                f"Proxy crop keyframes for reference: {clip.crop_keyframes_proxy}"
-                            )
-
-                            # Verify that there are keyframes within the clip range
-                            in_range_keyframes = [
-                                k
-                                for k in clip.crop_keyframes.keys()
-                                if clip.start_frame <= int(k) <= clip.end_frame
-                            ]
-                            if not in_range_keyframes:
-                                logger.warning(
-                                    f"No crop keyframes in range {clip.start_frame}-{clip.end_frame}. "
-                                    f"Available keyframes: {list(clip.crop_keyframes.keys())}"
-                                )
-
-                            export_path = proxy_service.export_clip(
-                                source_video,
-                                clip.name,
-                                clip.start_frame,
-                                clip.end_frame,
-                                crop_region=crop_region,
-                                crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
-                                output_resolution=clip.output_resolution,
-                                progress_placeholder=progress_placeholder,
-                                config_manager=config_manager,
-                                cv_optimized=cv_optimized,  # Pass the CV optimization flag
-                            )
-
-                            if export_path:
-                                logger.info(f"Clip exported to: {export_path}")
-                                # Update clip's export path
-                                clip.export_path = export_path
-                                clip.update()  # Mark as modified
-                                st.session_state.clip_modified = True
-
-                                # Store the export path in session state for the main page
-                                logger.info(
-                                    f"Setting export path in session state: {export_path}"
-                                )
-                                st.session_state.exported_clip_path = export_path
-                                st.session_state.current_clip_index = i
-                                st.session_state.trigger_rerun = True
-                                progress_placeholder.success(
-                                    "Export completed! Switching to main view..."
-                                )
-                            else:
-                                logger.error("Failed to export clip")
-                                progress_placeholder.error("Failed to export clip")
-
-                        # Status selector at the bottom
-                        st.markdown("---")  # Add a separator
+                        # Status selector
+                        st.markdown("---")
                         status_options = ["Draft", "Process", "Complete"]
                         new_status = st.selectbox(
                             "Status",
@@ -992,13 +708,15 @@ def display_clip_management():
 
                         # Update status if changed
                         if new_status != clip.status:
-                            clip.status = new_status
-                            st.session_state.clip_modified = True
-                            st.session_state.clips[i] = clip
-                            # Display info message about status change
-                            st.info(
-                                f"Status changed to '{new_status}'. Click Save to apply changes."
-                            )
+                            # Update in session state
+                            if "clips" in st.session_state and i < len(
+                                st.session_state.clips
+                            ):
+                                st.session_state.clips[i].status = new_status
+                                st.session_state.clip_modified = True
+                                st.info(
+                                    f"Status changed to '{new_status}'. Click Save to apply changes."
+                                )
 
     except Exception as e:
         logger.exception(f"Error displaying clip management: {str(e)}")

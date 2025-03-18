@@ -34,9 +34,21 @@ logger = logging_utils.setup_logger()
 def main():
     """Main application entry point"""
     # Set page config
+    title = "Clipper"
+
+    # Get current clip name and modified status
+    current_clip = clip_service.get_current_clip()
+    if current_clip:
+        # Get clip index and total clips
+        clip_index = st.session_state.get("current_clip_index", -1)
+        total_clips = len(st.session_state.get("clips", []))
+        title = f"Clipper - {current_clip.name} ({clip_index + 1}/{total_clips})"
+        if st.session_state.get("clip_modified", False):
+            title += " *"
+
     st.set_page_config(
-        page_title="Clipper",
-        page_icon="🎬",
+        page_title=title,
+        page_icon="✂️",
         layout="wide",
         initial_sidebar_state="expanded",
     )
@@ -66,6 +78,16 @@ def main():
             # Set the start frame directly
             current_clip.start_frame = target_frame
             clip_service.update_current_clip()
+            # Mark as modified
+            st.session_state.clip_modified = True
+            # Auto-save the changes
+            success = clip_service.save_session_clips()
+            if success:
+                logger.info(f"Auto-saved after setting start frame to {target_frame}")
+                # Clear modified flag after successful save
+                st.session_state.clip_modified = False
+            else:
+                logger.error("Failed to auto-save after setting start frame")
             # Also update the current frame to match
             st.session_state.current_frame = target_frame
             if "clip_frame_slider" in st.session_state:
@@ -90,6 +112,16 @@ def main():
             # Set the end frame directly
             current_clip.end_frame = target_frame
             clip_service.update_current_clip()
+            # Mark as modified
+            st.session_state.clip_modified = True
+            # Auto-save the changes
+            success = clip_service.save_session_clips()
+            if success:
+                logger.info(f"Auto-saved after setting end frame to {target_frame}")
+                # Clear modified flag after successful save
+                st.session_state.clip_modified = False
+            else:
+                logger.error("Failed to auto-save after setting end frame")
             # Also update the current frame to match
             st.session_state.current_frame = target_frame
             if "clip_frame_slider" in st.session_state:
@@ -293,8 +325,13 @@ def display_welcome():
 def display_main_content(video_path):
     """Display the main content area with video player and controls"""
     try:
-        # Title with video name
-        st.title(f"Editing: {os.path.basename(video_path)}")
+        # Get current clip info for title
+        current_clip = clip_service.get_current_clip()
+        if current_clip:
+            st.title(f"Editing: {os.path.basename(video_path)} - {current_clip.name}")
+
+        else:
+            st.title(f"Editing: {os.path.basename(video_path)}")
 
         # Check if we have an exported clip to display first
         if (
@@ -589,6 +626,20 @@ def handle_set_start():
         current_clip.start_frame = st.session_state.current_frame
         clip_service.update_current_clip()
 
+        # Mark as modified
+        st.session_state.clip_modified = True
+
+        # Auto-save the changes
+        success = clip_service.save_session_clips()
+        if success:
+            logger.info(
+                f"Auto-saved after setting start frame to {current_clip.start_frame}"
+            )
+            # Clear modified flag after successful save
+            st.session_state.clip_modified = False
+        else:
+            logger.error("Failed to auto-save after setting start frame")
+
         # Update clip_frame_slider if it's now out of bounds
         if st.session_state.get("clip_frame_slider", 0) < current_clip.start_frame:
             st.session_state.clip_frame_slider = current_clip.start_frame
@@ -613,6 +664,20 @@ def handle_set_end():
         # Update end frame
         current_clip.end_frame = st.session_state.current_frame
         clip_service.update_current_clip()
+
+        # Mark as modified
+        st.session_state.clip_modified = True
+
+        # Auto-save the changes
+        success = clip_service.save_session_clips()
+        if success:
+            logger.info(
+                f"Auto-saved after setting end frame to {current_clip.end_frame}"
+            )
+            # Clear modified flag after successful save
+            st.session_state.clip_modified = False
+        else:
+            logger.error("Failed to auto-save after setting end frame")
 
         # Update clip_frame_slider if it's now out of bounds
         if st.session_state.get("clip_frame_slider", 0) > current_clip.end_frame:
@@ -831,6 +896,9 @@ def handle_clear_crop():
         # Update the clip
         clip_service.update_current_clip()
 
+        # Mark as modified
+        st.session_state.clip_modified = True
+
         # Auto-save the changes
         success = clip_service.save_session_clips()
         if success:
@@ -838,6 +906,8 @@ def handle_clear_crop():
                 "success": True,
                 "message": f"Cleared and saved crop region at frame {current_frame}",
             }
+            # Clear modified flag after successful save
+            st.session_state.clip_modified = False
         else:
             st.session_state.last_save_status = {
                 "success": False,
@@ -868,14 +938,31 @@ def handle_crop_update(crop_region):
         success = clip_service.add_crop_keyframe(current_frame, crop_region)
 
         if success:
-            st.session_state.last_save_status = {
-                "success": True,
-                "message": f"Set and saved crop region at frame {current_frame}",
-            }
+            # Mark as modified
+            st.session_state.clip_modified = True
+
+            # Auto-save the changes
+            save_success = clip_service.save_session_clips()
+            if save_success:
+                logger.info(
+                    f"Auto-saved after setting crop region at frame {current_frame}"
+                )
+                st.session_state.last_save_status = {
+                    "success": True,
+                    "message": f"Set and saved crop region at frame {current_frame}",
+                }
+                # Clear modified flag after successful save
+                st.session_state.clip_modified = False
+            else:
+                logger.error("Failed to auto-save after setting crop region")
+                st.session_state.last_save_status = {
+                    "success": False,
+                    "message": "Failed to save crop region changes",
+                }
         else:
             st.session_state.last_save_status = {
                 "success": False,
-                "message": "Failed to save crop region changes",
+                "message": "Failed to set crop region",
             }
 
         logger.info(f"Updated crop region at frame {current_frame}")

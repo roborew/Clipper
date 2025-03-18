@@ -774,3 +774,66 @@ def get_current_clip():
     except Exception as e:
         logger.exception(f"Error getting current clip: {str(e)}")
         return None
+
+
+def load_clips_from_file(clips_file):
+    """
+    Load clips directly from a JSON file without using session state.
+    Used for displaying clips in the sidebar.
+
+    Args:
+        clips_file: Path to the clips JSON file
+
+    Returns:
+        List of Clip objects or empty list if file doesn't exist or is invalid
+    """
+    try:
+        if not os.path.exists(clips_file):
+            logger.info(f"Clips file not found: {clips_file}")
+            return []
+
+        # Read from file
+        with open(clips_file, "r") as f:
+            clips_data = json.load(f)
+
+        # Convert dictionaries to Clip objects
+        clips = [Clip.from_dict(data) for data in clips_data]
+
+        logger.info(f"Loaded {len(clips)} clips directly from {clips_file}")
+        return clips
+
+    except Exception as e:
+        logger.exception(f"Error loading clips from {clips_file}: {str(e)}")
+        return []
+
+
+def load_clip_into_state(clip):
+    """
+    Load clip data into session state when a clip is selected.
+    This ensures all UI components reflect the selected clip's data.
+
+    Args:
+        clip: The Clip object to load into state
+    """
+    try:
+        # Set current frame and slider to clip's start frame if not within clip bounds
+        current_frame = st.session_state.get("current_frame", 0)
+        if not (clip.start_frame <= current_frame <= clip.end_frame):
+            st.session_state.current_frame = clip.start_frame
+            st.session_state.clip_frame_slider = clip.start_frame
+
+        # Load other clip properties into state
+        st.session_state.clip_name = clip.name
+        st.session_state.output_resolution = clip.output_resolution
+
+        # Reset modification flag since we're loading fresh data
+        st.session_state.clip_modified = False
+
+        logger.info(
+            f"Loaded clip data into state: {clip.name} (frames {clip.start_frame} to {clip.end_frame})"
+        )
+        return True
+
+    except Exception as e:
+        logger.exception(f"Error loading clip into state: {str(e)}")
+        return False
