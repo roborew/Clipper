@@ -70,6 +70,15 @@ def display_video_player(
         The updated current frame number
     """
     try:
+        # Ensure both timecode inputs are always showing the correct frame
+        # This ensures they stay synchronized with frame changes from any source
+        if fps > 0:
+            current_timecode = video_service.format_timecode(current_frame, fps)
+            if "video_timecode_input" in st.session_state:
+                st.session_state.video_timecode_input = current_timecode
+            if "timecode_input" in st.session_state:
+                st.session_state.timecode_input = current_timecode
+
         # Check if we should use proxy video
         if "proxy_path" in st.session_state and st.session_state.proxy_path:
             # Use proxy video if available
@@ -136,6 +145,123 @@ def display_video_player(
                 video_file = open(video_path, "rb")
                 video_bytes = video_file.read()
                 st.video(video_bytes, start_time=current_time)
+
+                # Add a capture timecode section
+                st.markdown("---")
+                st.subheader("Capture from Video")
+                st.caption(
+                    "When video is paused, enter the timecode and set your clip points"
+                )
+
+                # Add a new timecode input specifically for capturing from the video player
+                if "video_timecode_input" not in st.session_state:
+                    st.session_state.video_timecode_input = (
+                        video_service.format_timecode(current_frame, fps)
+                    )
+
+                # Timecode input field (now takes full width without the Set Frame button)
+                video_tc = st.text_input(
+                    "Paused Video Timecode",
+                    value=video_service.format_timecode(current_frame, fps),
+                    key="video_timecode_input",
+                    help="Enter the timecode shown in the paused video player",
+                )
+
+                # Create two columns for the Set Start/End buttons
+                clip_btn_col1, clip_btn_col2 = st.columns(2)
+
+                with clip_btn_col1:
+                    # Function to set start frame from timecode
+                    def set_start_from_timecode():
+                        try:
+                            # Parse entered timecode directly
+                            entered_timecode = st.session_state.video_timecode_input
+                            # Convert timecode to frame number
+                            target_frame = video_service.parse_timecode_to_frame(
+                                entered_timecode, fps
+                            )
+                            # Make sure it's within valid range
+                            target_frame = max(0, min(total_frames - 1, target_frame))
+
+                            # Store the target frame in a special variable for the handler
+                            st.session_state.direct_start_frame = target_frame
+
+                            # Set the flag to trigger the handler
+                            st.session_state.set_direct_start = True
+
+                            # Log the action
+                            logger.info(
+                                f"Setting start frame directly to {target_frame} from video timecode {entered_timecode}"
+                            )
+
+                            # Force a rerun to apply the change immediately
+                            st.session_state.trigger_rerun = True
+
+                        except Exception as e:
+                            logger.error(
+                                f"Error setting start frame from timecode: {e}"
+                            )
+                            st.session_state.error_message = f"Invalid timecode format. Use HH:MM:SS:FF, HH:MM:SS, or MM:SS"
+
+                    # Button to set start frame directly
+                    disabled = clip is None
+                    st.button(
+                        "Set as Start Frame",
+                        key="set_start_from_video",
+                        on_click=set_start_from_timecode,
+                        disabled=disabled,
+                        help="Set the clip start frame to this timecode position",
+                    )
+
+                with clip_btn_col2:
+                    # Function to set end frame from timecode
+                    def set_end_from_timecode():
+                        try:
+                            # Parse entered timecode directly
+                            entered_timecode = st.session_state.video_timecode_input
+                            # Convert timecode to frame number
+                            target_frame = video_service.parse_timecode_to_frame(
+                                entered_timecode, fps
+                            )
+                            # Make sure it's within valid range
+                            target_frame = max(0, min(total_frames - 1, target_frame))
+
+                            # Store the target frame in a special variable for the handler
+                            st.session_state.direct_end_frame = target_frame
+
+                            # Set the flag to trigger the handler
+                            st.session_state.set_direct_end = True
+
+                            # Log the action
+                            logger.info(
+                                f"Setting end frame directly to {target_frame} from video timecode {entered_timecode}"
+                            )
+
+                            # Force a rerun to apply the change immediately
+                            st.session_state.trigger_rerun = True
+
+                        except Exception as e:
+                            logger.error(f"Error setting end frame from timecode: {e}")
+                            st.session_state.error_message = f"Invalid timecode format. Use HH:MM:SS:FF, HH:MM:SS, or MM:SS"
+
+                    # Button to set end frame directly
+                    disabled = clip is None
+                    st.button(
+                        "Set as End Frame",
+                        key="set_end_from_video",
+                        on_click=set_end_from_timecode,
+                        disabled=disabled,
+                        help="Set the clip end frame to this timecode position",
+                    )
+
+                # Display error message if exists
+                if (
+                    "error_message" in st.session_state
+                    and st.session_state.error_message
+                ):
+                    st.error(st.session_state.error_message)
+                    # Clear error message after displaying it
+                    st.session_state.error_message = ""
 
             with col_video2:
                 # Preview Animation Section

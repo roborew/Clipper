@@ -54,6 +54,74 @@ def main():
         # Rerun the app
         st.rerun()
 
+    # Handle direct frame settings from timecode (new approach)
+    if st.session_state.get("set_direct_start", False):
+        # Reset the flag
+        st.session_state.set_direct_start = False
+        # Get the target frame
+        target_frame = st.session_state.get("direct_start_frame", 0)
+        # Get current clip
+        current_clip = clip_service.get_current_clip()
+        if current_clip:
+            # Set the start frame directly
+            current_clip.start_frame = target_frame
+            clip_service.update_current_clip()
+            # Also update the current frame to match
+            st.session_state.current_frame = target_frame
+            if "clip_frame_slider" in st.session_state:
+                st.session_state.clip_frame_slider = target_frame
+            # Preserve the timecode input after the rerun
+            if "fps" in st.session_state and st.session_state.fps > 0:
+                formatted_tc = video_service.format_timecode(
+                    target_frame, st.session_state.fps
+                )
+                st.session_state.video_timecode_input = formatted_tc
+            logger.info(f"Directly set start frame to {target_frame}")
+            st.success(f"Start frame set to {target_frame}")
+
+    if st.session_state.get("set_direct_end", False):
+        # Reset the flag
+        st.session_state.set_direct_end = False
+        # Get the target frame
+        target_frame = st.session_state.get("direct_end_frame", 0)
+        # Get current clip
+        current_clip = clip_service.get_current_clip()
+        if current_clip:
+            # Set the end frame directly
+            current_clip.end_frame = target_frame
+            clip_service.update_current_clip()
+            # Also update the current frame to match
+            st.session_state.current_frame = target_frame
+            if "clip_frame_slider" in st.session_state:
+                st.session_state.clip_frame_slider = target_frame
+            # Preserve the timecode input after the rerun
+            if "fps" in st.session_state and st.session_state.fps > 0:
+                formatted_tc = video_service.format_timecode(
+                    target_frame, st.session_state.fps
+                )
+                st.session_state.video_timecode_input = formatted_tc
+            logger.info(f"Directly set end frame to {target_frame}")
+            st.success(f"End frame set to {target_frame}")
+
+    # Check if we need to set start/end frames after a refresh from video timecode
+    if st.session_state.get("set_start_after_refresh", False):
+        # Reset the flag
+        st.session_state.set_start_after_refresh = False
+        # Call the handler to set start frame
+        handle_set_start()
+        logger.info(
+            f"Set start frame to {st.session_state.current_frame} after video timecode navigation"
+        )
+
+    if st.session_state.get("set_end_after_refresh", False):
+        # Reset the flag
+        st.session_state.set_end_after_refresh = False
+        # Call the handler to set end frame
+        handle_set_end()
+        logger.info(
+            f"Set end frame to {st.session_state.current_frame} after video timecode navigation"
+        )
+
     # Display the sidebar
     selected_video = sidebar.display_sidebar(st.session_state.config_manager)
 
@@ -124,9 +192,27 @@ def initialize_session_state():
         if "trigger_rerun" not in st.session_state:
             st.session_state.trigger_rerun = False
 
-        # Initialize clip_frame_slider if not exists
+        # Initialize clip frame slider if not exists
         if "clip_frame_slider" not in st.session_state:
             st.session_state.clip_frame_slider = 0
+
+        # Initialize video timecode variables
+        if "video_timecode_input" not in st.session_state:
+            st.session_state.video_timecode_input = "00:00:00:00"
+        if "set_start_after_refresh" not in st.session_state:
+            st.session_state.set_start_after_refresh = False
+        if "set_end_after_refresh" not in st.session_state:
+            st.session_state.set_end_after_refresh = False
+
+        # Initialize direct frame setting variables
+        if "set_direct_start" not in st.session_state:
+            st.session_state.set_direct_start = False
+        if "set_direct_end" not in st.session_state:
+            st.session_state.set_direct_end = False
+        if "direct_start_frame" not in st.session_state:
+            st.session_state.direct_start_frame = 0
+        if "direct_end_frame" not in st.session_state:
+            st.session_state.direct_end_frame = 0
 
         # Initialize clips
         clip_service.initialize_session_clips(st.session_state.config_manager)
@@ -476,6 +562,14 @@ def handle_frame_change(frame_number):
         and current_clip.start_frame <= frame_number <= current_clip.end_frame
     ):
         st.session_state.clip_frame_slider = frame_number
+
+    # Update both timecode input fields to show the current frame timecode
+    if "fps" in st.session_state and st.session_state.fps > 0:
+        formatted_tc = video_service.format_timecode(frame_number, st.session_state.fps)
+        # Update main timecode input
+        st.session_state.timecode_input = formatted_tc
+        # Update video capture timecode input
+        st.session_state.video_timecode_input = formatted_tc
 
     logger.debug(f"Frame changed to {frame_number}")
 
