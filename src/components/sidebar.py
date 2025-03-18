@@ -717,26 +717,159 @@ def display_clip_management():
                             # Generate preview
                             from src.services import proxy_service
 
+                            logger.info(f"Preview button clicked for clip {clip.name}")
+                            logger.info(f"Source path: {clip.source_path}")
+                            logger.info(f"Start frame: {clip.start_frame}")
+                            logger.info(f"End frame: {clip.end_frame}")
+                            logger.info(f"Current proxy path: {clip.proxy_path}")
+
+                            # Get the proxy path from config manager
+                            proxy_path = str(
+                                config_manager.get_proxy_path(
+                                    Path(clip.source_path), is_clip=False
+                                )
+                            )
+                            source_video = clip.source_path
+
+                            # Use proxy if it exists
+                            if os.path.exists(proxy_path):
+                                source_video = proxy_path
+                                logger.info(
+                                    f"Using proxy video for preview: {source_video}"
+                                )
+                            else:
+                                logger.info(
+                                    f"Using source video for preview: {source_video}"
+                                )
+
                             preview_path = proxy_service.create_clip_preview(
-                                clip.source_path,
+                                source_video,  # Use proxy video as source
                                 clip.name,
                                 clip.start_frame,
                                 clip.end_frame,
                                 crop_region=crop_region,
-                                crop_keyframes=clip.crop_keyframes,
-                                crop_keyframes_proxy=clip.crop_keyframes_proxy,
+                                crop_keyframes=clip.crop_keyframes,  # Keep original keyframes
+                                crop_keyframes_proxy=clip.crop_keyframes_proxy,  # Use proxy-specific keyframes
                                 progress_placeholder=progress_placeholder,
                                 config_manager=config_manager,
                             )
 
                             if preview_path:
+                                logger.info(f"Preview generated at: {preview_path}")
+                                # Update clip's proxy path
+                                clip.proxy_path = preview_path
+                                clip.update()  # Mark as modified
+                                st.session_state.clip_modified = True
+
+                                # Store the preview path in session state for the main page
+                                logger.info(
+                                    f"Setting preview path in session state: {preview_path}"
+                                )
                                 st.session_state.preview_clip_path = preview_path
+                                st.session_state.current_clip_index = i
+                                st.session_state.trigger_rerun = True
                                 progress_placeholder.success(
                                     "Preview ready! Switching to main view..."
                                 )
-                                st.rerun()
                             else:
+                                logger.error("Failed to generate preview")
                                 progress_placeholder.error("Failed to generate preview")
+
+                        # Add a checkbox for CV optimization
+                        cv_optimized = st.checkbox(
+                            "Optimize for CV",
+                            key=f"cv_optimized_{i}",
+                            help="Export with maximum quality for computer vision learning",
+                        )
+
+                        # Export button
+                        if st.button("Export", key=f"export_clip_{i}"):
+                            # Create progress placeholder
+                            progress_placeholder = st.empty()
+                            if cv_optimized:
+                                progress_placeholder.info(
+                                    "Exporting clip with CV optimization..."
+                                )
+                            else:
+                                progress_placeholder.info("Exporting clip...")
+
+                            logger.info(f"Export button clicked for clip {clip.name}")
+                            logger.info(f"Source path: {clip.source_path}")
+                            logger.info(f"Start frame: {clip.start_frame}")
+                            logger.info(f"End frame: {clip.end_frame}")
+                            logger.info(f"CV optimization: {cv_optimized}")
+
+                            # Always use the original high-quality source video for export
+                            source_video = clip.source_path
+
+                            # Get crop region for current frame
+                            crop_region = clip.get_crop_region_at_frame(
+                                clip.start_frame,
+                                use_proxy=False,  # Use source resolution for export
+                            )
+
+                            # Export the clip using the original source video and full-resolution keyframes
+                            from src.services import proxy_service
+
+                            # Debug log to verify the crop keyframes being used
+                            logger.info(
+                                f"Full-resolution crop keyframes before export: {clip.crop_keyframes}"
+                            )
+                            if len(clip.crop_keyframes) == 0:
+                                logger.warning(
+                                    "No crop keyframes available for high-resolution export"
+                                )
+
+                            # Also log the proxy crop keyframes for comparison
+                            logger.info(
+                                f"Proxy crop keyframes for reference: {clip.crop_keyframes_proxy}"
+                            )
+
+                            # Verify that there are keyframes within the clip range
+                            in_range_keyframes = [
+                                k
+                                for k in clip.crop_keyframes.keys()
+                                if clip.start_frame <= int(k) <= clip.end_frame
+                            ]
+                            if not in_range_keyframes:
+                                logger.warning(
+                                    f"No crop keyframes in range {clip.start_frame}-{clip.end_frame}. "
+                                    f"Available keyframes: {list(clip.crop_keyframes.keys())}"
+                                )
+
+                            export_path = proxy_service.export_clip(
+                                source_video,
+                                clip.name,
+                                clip.start_frame,
+                                clip.end_frame,
+                                crop_region=crop_region,
+                                crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
+                                output_resolution=clip.output_resolution,
+                                progress_placeholder=progress_placeholder,
+                                config_manager=config_manager,
+                                cv_optimized=cv_optimized,  # Pass the CV optimization flag
+                            )
+
+                            if export_path:
+                                logger.info(f"Clip exported to: {export_path}")
+                                # Update clip's export path
+                                clip.export_path = export_path
+                                clip.update()  # Mark as modified
+                                st.session_state.clip_modified = True
+
+                                # Store the export path in session state for the main page
+                                logger.info(
+                                    f"Setting export path in session state: {export_path}"
+                                )
+                                st.session_state.exported_clip_path = export_path
+                                st.session_state.current_clip_index = i
+                                st.session_state.trigger_rerun = True
+                                progress_placeholder.success(
+                                    "Export completed! Switching to main view..."
+                                )
+                            else:
+                                logger.error("Failed to export clip")
+                                progress_placeholder.error("Failed to export clip")
 
                         # Status selector
                         st.markdown("---")
