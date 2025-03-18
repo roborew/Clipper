@@ -41,9 +41,27 @@ class ConfigManager:
 
         # Create necessary directories
         if self.config["export"]["create_missing_dirs"]:
-            self.configs_dir.mkdir(parents=True, exist_ok=True)
-            self.proxy_raw_dir.mkdir(parents=True, exist_ok=True)
-            self.proxy_clipped_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                # Check if output_base exists and is a directory
+                if self.output_base.exists() and not self.output_base.is_dir():
+                    logger.error(
+                        f"Path exists but is not a directory: {self.output_base}"
+                    )
+                    logger.error("Please check your config and fix this path issue")
+                else:
+                    # Try to create each directory with better error handling
+                    self._create_directory_safely(self.configs_dir, "config directory")
+                    self._create_directory_safely(
+                        self.proxy_raw_dir, "proxy raw directory"
+                    )
+                    self._create_directory_safely(
+                        self.proxy_clipped_dir, "proxy clipped directory"
+                    )
+            except Exception as e:
+                logger.error(f"Error creating application directories: {str(e)}")
+                logger.error(
+                    "Application will continue but some features may not work correctly"
+                )
 
         logger.info(f"ConfigManager initialized with config from {config_path}")
 
@@ -291,3 +309,17 @@ class ConfigManager:
             # Save in configs directory with path-based name
             config_name = str(relative_path).replace("/", "_").replace("\\", "_")
             return self.configs_dir / f"{config_name}_clips.json"
+
+    def _create_directory_safely(self, directory_path, directory_name):
+        """Create a directory with proper error handling"""
+        try:
+            directory_path.mkdir(parents=True, exist_ok=True)
+            logger.debug(
+                f"Successfully created or verified {directory_name}: {directory_path}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to create {directory_name} at {directory_path}: {str(e)}"
+            )
+            logger.error(f"Please check permissions or create this directory manually")
+            # Continue without raising, but log the issue

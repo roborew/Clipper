@@ -98,12 +98,35 @@ def initialize_session_state():
 
         # Initialize config manager
         if "config_manager" not in st.session_state:
-            st.session_state.config_manager = ConfigManager()
-            logger.info("Initialized config manager")
+            config_path = "config.yaml"
+            st.session_state.config_manager = ConfigManager(config_path)
+            logger.info(f"Initialized ConfigManager with config from {config_path}")
 
-        # Initialize current_video if not set
+        # Initialize video-related state
         if "current_video" not in st.session_state:
             st.session_state.current_video = None
+        if "current_frame" not in st.session_state:
+            st.session_state.current_frame = 0
+        if "total_frames" not in st.session_state:
+            st.session_state.total_frames = 0
+        if "fps" not in st.session_state:
+            st.session_state.fps = 30.0
+        if "proxy_path" not in st.session_state:
+            st.session_state.proxy_path = None
+
+        # Initialize clip state
+        if "clip_name" not in st.session_state:
+            st.session_state.clip_name = ""
+        if "output_resolution" not in st.session_state:
+            st.session_state.output_resolution = "1080p"
+        if "crop_selection_active" not in st.session_state:
+            st.session_state.crop_selection_active = False
+        if "trigger_rerun" not in st.session_state:
+            st.session_state.trigger_rerun = False
+
+        # Initialize clip_frame_slider if not exists
+        if "clip_frame_slider" not in st.session_state:
+            st.session_state.clip_frame_slider = 0
 
         # Initialize clips
         clip_service.initialize_session_clips(st.session_state.config_manager)
@@ -136,9 +159,6 @@ def initialize_session_state():
 
         if "proxy_failed_videos" not in st.session_state:
             st.session_state.proxy_failed_videos = []
-
-        if "crop_selection_active" not in st.session_state:
-            st.session_state.crop_selection_active = False
 
         logger.debug("Session state initialized")
 
@@ -448,6 +468,15 @@ def display_main_content(video_path):
 def handle_frame_change(frame_number):
     """Handle frame change event"""
     st.session_state.current_frame = frame_number
+
+    # Also update clip frame slider if current clip exists and frame is within clip bounds
+    current_clip = clip_service.get_current_clip()
+    if (
+        current_clip
+        and current_clip.start_frame <= frame_number <= current_clip.end_frame
+    ):
+        st.session_state.clip_frame_slider = frame_number
+
     logger.debug(f"Frame changed to {frame_number}")
 
 
@@ -463,6 +492,10 @@ def handle_set_start():
         # Update start frame
         current_clip.start_frame = st.session_state.current_frame
         clip_service.update_current_clip()
+
+        # Update clip_frame_slider if it's now out of bounds
+        if st.session_state.get("clip_frame_slider", 0) < current_clip.start_frame:
+            st.session_state.clip_frame_slider = current_clip.start_frame
 
         # Show success message
         st.success(f"Start frame set to {current_clip.start_frame}")
@@ -484,6 +517,10 @@ def handle_set_end():
         # Update end frame
         current_clip.end_frame = st.session_state.current_frame
         clip_service.update_current_clip()
+
+        # Update clip_frame_slider if it's now out of bounds
+        if st.session_state.get("clip_frame_slider", 0) > current_clip.end_frame:
+            st.session_state.clip_frame_slider = current_clip.end_frame
 
         # Show success message
         st.success(f"End frame set to {current_clip.end_frame}")
@@ -554,6 +591,9 @@ def handle_new_clip(video_path=None):
 
         # Clear keyframes and reset current clip index
         st.session_state.current_frame = 0
+
+        # Reset clip frame slider to match new clip start frame
+        st.session_state.clip_frame_slider = 0
 
         # Generate clip name
         st.session_state.clip_name = f"clip_{len(st.session_state.clips) + 1}"

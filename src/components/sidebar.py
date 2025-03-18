@@ -771,6 +771,17 @@ def display_clip_management():
                         # Select button
                         if st.button("Select", key=f"select_clip_{i}"):
                             st.session_state.current_clip_index = i
+
+                            # If clip contains current frame, keep it; otherwise go to clip start
+                            current_frame = st.session_state.get("current_frame", 0)
+                            if clip.start_frame <= current_frame <= clip.end_frame:
+                                # Current frame is within clip bounds, update clip_frame_slider to match
+                                st.session_state.clip_frame_slider = current_frame
+                            else:
+                                # Current frame is outside clip bounds, go to clip start
+                                st.session_state.current_frame = clip.start_frame
+                                st.session_state.clip_frame_slider = clip.start_frame
+
                             st.rerun()
 
                         # Delete button (in red)

@@ -398,6 +398,41 @@ def display_video_player(
                     # Clear error message after displaying it
                     st.session_state.error_message = ""
 
+            # Add clip-specific frame navigator if we have a clip
+            if clip:
+
+                # Initialize clip_frame_slider key if not exists
+                if "clip_frame_slider" not in st.session_state:
+                    # Start with the current frame if it's in range, otherwise use clip start
+                    if clip.start_frame <= current_frame <= clip.end_frame:
+                        st.session_state.clip_frame_slider = current_frame
+                    else:
+                        st.session_state.clip_frame_slider = clip.start_frame
+
+                # Function to handle slider change
+                def handle_clip_slider_change():
+                    # Update the current frame to match the clip slider
+                    st.session_state.current_frame = st.session_state.clip_frame_slider
+
+                # Create the slider with the clip's frame range
+                new_frame = st.slider(
+                    "Navigate within clip frames",
+                    min_value=clip.start_frame,
+                    max_value=clip.end_frame,
+                    value=st.session_state.clip_frame_slider,
+                    step=1,
+                    key="clip_frame_slider",
+                    on_change=handle_clip_slider_change,
+                    help="Navigate only within the current clip's frame range",
+                )
+
+                # Display the relative frame position within the clip
+                duration_frames = clip.get_duration_frames()
+                relative_frame = new_frame - clip.start_frame
+                st.caption(
+                    f"Clip position: Frame {relative_frame} of {duration_frames-1} (Absolute: {new_frame})"
+                )
+
         return current_frame
 
     except Exception as e:
