@@ -1592,7 +1592,7 @@ def export_clip(
                     "-g",
                     "1",  # Every frame is a keyframe (GOP=1)
                     "-threads",
-                    str(os.cpu_count()),  # Use all available CPU cores
+                    str(min(16,os.cpu_count())),  # Use all available CPU cores
                     "-slices",
                     "24",  # Divide each frame into slices for parallel encoding
                     "-slicecrc",
