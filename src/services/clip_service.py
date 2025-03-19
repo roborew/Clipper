@@ -288,12 +288,13 @@ def load_clips(load_path):
         return []
 
 
-def initialize_session_clips(config_manager=None):
+def initialize_session_clips(config_manager=None, force_reload=False):
     """
     Initialize clips in the session state
 
     Args:
         config_manager: ConfigManager instance
+        force_reload: Whether to force reload clips even if already loaded
 
     Returns:
         True if successful, False otherwise
@@ -310,11 +311,11 @@ def initialize_session_clips(config_manager=None):
         clips_file = config_manager.get_clips_file_path(current_video)
 
         # Initialize session state variables if they don't exist
-        if "clips" not in st.session_state:
+        if "clips" not in st.session_state or force_reload:
             # Load clips from file
             clips = load_clips(clips_file)
             st.session_state.clips = clips
-            st.session_state.current_clip_index = -1
+            st.session_state.current_clip_index = 0 if clips else -1
             st.session_state.clip_name = ""
             st.session_state.clip_modified = False
             # Store the clips file path for this session
@@ -330,7 +331,7 @@ def initialize_session_clips(config_manager=None):
             # If video changed, load clips for the new video
             clips = load_clips(clips_file)
             st.session_state.clips = clips
-            st.session_state.current_clip_index = -1
+            st.session_state.current_clip_index = 0 if clips else -1
             st.session_state.clip_name = ""
             st.session_state.clip_modified = False
             # Update the clips file path for this session

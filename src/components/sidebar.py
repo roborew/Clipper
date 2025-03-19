@@ -325,7 +325,9 @@ def display_video_selection(config_manager):
             clips_file = config_manager.get_clips_file_path(selected_video)
 
             # Always try to initialize clips when a video is selected
-            success = clip_service.initialize_session_clips(config_manager)
+            success = clip_service.initialize_session_clips(
+                config_manager=config_manager
+            )
             if success:
                 if clips_file.exists():
                     st.success(f"Loaded existing configuration from {clips_file}")
@@ -573,14 +575,14 @@ def display_clip_management():
                     )
                     if st.button("Reload anyway", key="reload_anyway"):
                         success = clip_service.initialize_session_clips(
-                            config_manager, force_reload=True
+                            config_manager=config_manager, force_reload=True
                         )
                         if success:
                             st.success("Configuration reloaded")
                             st.rerun()
                 else:
                     success = clip_service.initialize_session_clips(
-                        config_manager, force_reload=True
+                        config_manager=config_manager, force_reload=True
                     )
                     if success:
                         st.success("Configuration reloaded")

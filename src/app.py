@@ -163,7 +163,9 @@ def main():
         if st.session_state.get("current_video") != selected_video:
             st.session_state.current_video = selected_video
             # Initialize clips for the new video
-            clip_service.initialize_session_clips(st.session_state.config_manager)
+            clip_service.initialize_session_clips(
+                config_manager=st.session_state.config_manager
+            )
     else:
         # Clear current video if none is selected
         st.session_state.current_video = None
@@ -249,7 +251,9 @@ def initialize_session_state():
             st.session_state.direct_end_frame = 0
 
         # Initialize clips
-        clip_service.initialize_session_clips(st.session_state.config_manager)
+        clip_service.initialize_session_clips(
+            config_manager=st.session_state.config_manager
+        )
 
         # Initialize other session state variables
         if "current_frame" not in st.session_state:
