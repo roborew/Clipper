@@ -158,24 +158,60 @@ class ConfigManager:
 
         return self.configs_dir / f"{base_name}.json"
 
-    def get_output_path(self, video_path: Path, clip_name: str) -> Path:
-        """Generate output path for a clip"""
+    def get_output_path(
+        self, video_path: Path, clip_name: str, codec_type=None, *args, **kwargs
+    ) -> Path:
+        """Generate output path for a clip
+
+        Args:
+            video_path: Path to the source video
+            clip_name: Name of the clip
+            codec_type: Type of codec (h264 or ffv1), defaults to h264 if not specified
+            *args: Additional positional arguments (for backward compatibility)
+            **kwargs: Additional keyword arguments (for backward compatibility)
+
+        Returns:
+            Path object representing the output path
+        """
+        # Handle legacy calls that might pass more arguments
+        if args or kwargs:
+            logger.warning(
+                "get_output_path() called with extra arguments that will be ignored"
+            )
+
+        # Set default codec type if none provided
+        if codec_type is None:
+            codec_type = "h264"
+
         relative_path = self.get_relative_source_path(video_path)
+
+        # Determine file extension based on codec type
+        extension = ".mkv" if codec_type.lower() == "ffv1" else ".mp4"
+
+        # Create codec subdirectory path
+        clips_with_codec = self.clips_dir / codec_type.lower()
 
         if relative_path is None:
             # Fall back to using just the filename
             base_name = video_path.stem
-            return self.clips_dir / f"{base_name}_{clip_name}.mp4"
+            output_path = clips_with_codec / f"{base_name}_{clip_name}{extension}"
+            # Ensure the directory exists
+            clips_with_codec.mkdir(parents=True, exist_ok=True)
+            return output_path
 
         if self.config["export"]["preserve_structure"]:
             # Preserve folder structure
-            output_dir = self.clips_dir / relative_path.parent
+            output_dir = clips_with_codec / relative_path.parent
             if self.config["export"]["create_missing_dirs"]:
                 output_dir.mkdir(parents=True, exist_ok=True)
-            return output_dir / f"{Path(relative_path).stem}_{clip_name}.mp4"
+            return output_dir / f"{Path(relative_path).stem}_{clip_name}{extension}"
         else:
             # Save directly in clips directory
-            return self.clips_dir / f"{Path(relative_path).stem}_{clip_name}.mp4"
+            # Ensure the directory exists
+            clips_with_codec.mkdir(parents=True, exist_ok=True)
+            return (
+                clips_with_codec / f"{Path(relative_path).stem}_{clip_name}{extension}"
+            )
 
     def get_proxy_path(self, video_path: Path, is_clip: bool = False) -> Path:
         """Generate proxy video path for a source video or clip

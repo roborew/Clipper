@@ -1310,14 +1310,13 @@ def export_clip(
         if not config_manager:
             config_manager = st.session_state.config_manager
 
-        # Get export path
-        export_path = config_manager.get_output_path(Path(source_path), clip_name)
+        # Get export path with codec type
+        codec_type = "ffv1" if cv_optimized else "h264"
+        export_path = config_manager.get_output_path(
+            Path(source_path), clip_name, codec_type
+        )
 
-        # Modify filename for CV-optimized exports
-        if cv_optimized:
-            # Change extension to .mkv for FFV1 codec which isn't supported in MP4
-            export_path = Path(str(export_path).replace(".mp4", "_cv_optimized.mkv"))
-
+        # The get_output_path method now handles the extension, no need to modify it here
         logger.info(f"Export path: {export_path}")
 
         # Delete existing export file if it exists

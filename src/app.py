@@ -333,7 +333,6 @@ def display_main_content(video_path):
         current_clip = clip_service.get_current_clip()
         if current_clip:
             st.title(f"Editing: {os.path.basename(video_path)} - {current_clip.name}")
-
         else:
             st.title(f"Editing: {os.path.basename(video_path)}")
 
@@ -355,12 +354,14 @@ def display_main_content(video_path):
 
                 with export_header_col1:
                     # Check if this is a CV-optimized export
-                    is_cv_optimized = "_cv_optimized" in os.path.basename(export_path)
+                    is_cv_optimized = "_cv_optimized" in os.path.basename(
+                        export_path
+                    ) or export_path.endswith(".mkv")
 
                     if is_cv_optimized:
                         st.success("✅ CV-Optimized Export completed successfully!")
                         st.caption(
-                            f"Playing: {os.path.basename(export_path)} (Optimized for Computer Vision)"
+                            f"Export saved as: {os.path.basename(export_path)} (Optimized for Computer Vision)"
                         )
                     else:
                         st.success("✅ Export completed successfully!")
@@ -372,17 +373,38 @@ def display_main_content(video_path):
                         st.session_state.exported_clip_path = None
                         st.rerun()
 
-                # Create a container for the video
+                # Create a container for the video or download link
                 video_container = st.container()
                 with video_container:
                     try:
-                        with open(export_path, "rb") as video_file:
-                            video_bytes = video_file.read()
-                            st.video(video_bytes, start_time=0)
-                            logger.info("Successfully displayed exported video")
+                        if is_cv_optimized:
+                            # For FFV1/MKV files, provide a download link
+                            with open(export_path, "rb") as file:
+                                file_bytes = file.read()
+                                file_name = os.path.basename(export_path)
+                                st.download_button(
+                                    label="⬇️ Download CV-Optimized Export",
+                                    data=file_bytes,
+                                    file_name=file_name,
+                                    mime=(
+                                        "video/x-matroska"
+                                        if file_name.endswith(".mkv")
+                                        else "video/mp4"
+                                    ),
+                                    help="Download the CV-optimized video file (FFV1 codec in MKV container)",
+                                )
+                                st.info(
+                                    "📝 Note: This file is optimized for computer vision processing and may not play in standard video players. Use VLC or similar players that support the FFV1 codec."
+                                )
+                        else:
+                            # For standard exports, show the video player
+                            with open(export_path, "rb") as video_file:
+                                video_bytes = video_file.read()
+                                st.video(video_bytes, start_time=0)
+                                logger.info("Successfully displayed exported video")
                     except Exception as e:
-                        logger.error(f"Error displaying exported video: {str(e)}")
-                        st.error(f"⚠️ Error playing exported clip: {str(e)}")
+                        logger.error(f"Error handling exported video: {str(e)}")
+                        st.error(f"⚠️ Error with exported clip: {str(e)}")
 
                 # Display clip information if available
                 current_clip = clip_service.get_current_clip()
