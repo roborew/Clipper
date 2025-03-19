@@ -779,9 +779,9 @@ def display_clip_management():
 
                         # Add a checkbox for CV optimization
                         cv_optimized = st.checkbox(
-                            "Optimize for CV",
+                            "Optimize for CV (FFV1/MKV)",
                             key=f"cv_optimized_{i}",
-                            help="Export with maximum quality for computer vision learning",
+                            help="Export with FFV1 codec in MKV container for maximum quality (optimized for computer vision)",
                         )
 
                         # Export button

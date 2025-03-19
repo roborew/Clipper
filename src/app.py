@@ -412,7 +412,7 @@ def display_main_content(video_path):
                                 st.metric("Format", "CV-Optimized")
                                 # Add tooltip-like explanation of the optimizations
                                 st.caption(
-                                    "⚙️ Lossless encoding, YUV444p pixel format, Lanczos scaling"
+                                    "⚙️ FFV1 lossless codec, YUV444p pixel format, Lanczos scaling in MKV container"
                                 )
                             else:
                                 st.metric("Format", "Standard")

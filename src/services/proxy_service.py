@@ -1315,7 +1315,8 @@ def export_clip(
 
         # Modify filename for CV-optimized exports
         if cv_optimized:
-            export_path = Path(str(export_path).replace(".mp4", "_cv_optimized.mp4"))
+            # Change extension to .mkv for FFV1 codec which isn't supported in MP4
+            export_path = Path(str(export_path).replace(".mp4", "_cv_optimized.mkv"))
 
         logger.info(f"Export path: {export_path}")
 
@@ -1584,15 +1585,22 @@ def export_clip(
             cmd.extend(
                 [
                     "-c:v",
-                    "libx264",
-                    "-crf",
-                    "0",  # Lossless quality (0 is lossless for H.264)
-                    "-preset",
-                    "veryslow",  # Slowest encoding for best quality
+                    "ffv1",
+                    "-level",
+                    "3",  # Level 3 for multithreaded encoding
                     "-pix_fmt",
                     "yuv444p",  # Full chroma quality (better for CV)
-                    "-x264-params",
-                    "keyint=1",  # Every frame is a keyframe for better frame extraction
+                    "-g",
+                    "1",  # Every frame is a keyframe (GOP=1)
+                    "-threads",
+                    str(os.cpu_count()),  # Use all available CPU cores
+                    "-slices",
+                    "24",  # Divide each frame into slices for parallel encoding
+                    "-slicecrc",
+                    "1",  # Add CRC for each slice for integrity checking
+                    "-context",
+                    "1",  # Use larger context for better compression
+                    "-an",  # No audio
                 ]
             )
 
