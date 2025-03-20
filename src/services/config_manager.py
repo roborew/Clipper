@@ -222,8 +222,18 @@ class ConfigManager:
             return output_path
 
         if self.config["export"]["preserve_structure"]:
-            # Preserve folder structure
-            output_dir = clips_with_codec / relative_path.parent
+            # Extract camera type and session from the path
+            path_parts = relative_path.parts
+            if len(path_parts) >= 2:
+                camera_folder = path_parts[0]  # First folder is camera type
+                session_folder = path_parts[1]  # Second folder is session
+                # Create output directory preserving camera and session structure
+                output_dir = clips_with_codec / camera_folder / session_folder
+            else:
+                # If path doesn't have enough parts, use just the parent folder
+                output_dir = clips_with_codec / relative_path.parent
+
+            # Create the directory if needed
             if self.config["export"]["create_missing_dirs"]:
                 output_dir.mkdir(parents=True, exist_ok=True)
             return output_dir / f"{Path(relative_path).stem}_{clip_name}{extension}"
@@ -260,8 +270,17 @@ class ConfigManager:
 
         # Preserve folder structure for proxies if configured
         if self.config["export"]["preserve_structure"]:
-            # Create proxy directory with same structure as source
-            proxy_dir = proxy_base / relative_path.parent
+            # Extract camera type and session from the path
+            path_parts = relative_path.parts
+            if len(path_parts) >= 2:
+                camera_folder = path_parts[0]  # First folder is camera type
+                session_folder = path_parts[1]  # Second folder is session
+                # Create proxy directory preserving camera and session structure
+                proxy_dir = proxy_base / camera_folder / session_folder
+            else:
+                # If path doesn't have enough parts, use just the parent folder
+                proxy_dir = proxy_base / relative_path.parent
+
             # Always ensure the directory exists
             proxy_dir.mkdir(parents=True, exist_ok=True)
             return proxy_dir / f"{Path(relative_path).stem}_proxy.mp4"
