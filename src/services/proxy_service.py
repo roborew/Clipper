@@ -1056,8 +1056,6 @@ def create_clip_preview(
 
                 # Build expressions for x and y positions
                 expressions = []
-
-                # Width and height are constant
                 expressions.append(f"w='{width}'")
                 expressions.append(f"h='{height}'")
 
@@ -1065,7 +1063,6 @@ def create_clip_preview(
                 x_expr = []
                 for i in range(len(sorted_keyframes)):
                     curr_frame, curr_crop = sorted_keyframes[i]
-                    # Make sure we're using the frame relative to the clip start time
                     curr_t = max(0, (curr_frame - start_frame) / fps)
                     curr_x = curr_crop[0]  # X is the 1st value
 
@@ -1149,7 +1146,7 @@ def create_clip_preview(
                 logger.info(f"Y expression: {y_expr_final}")
 
                 # Handle special case: if all keyframes have the same frame number
-                if len(set([frame for frame, _ in sorted_keyframes])) == 1:
+                if len({frame for frame, _ in sorted_keyframes}) == 1:
                     logger.info("Only one unique keyframe, using static crop")
                     x, y, width, height = first_crop
                     vf_filters.append(f"crop={width}:{height}:{x}:{y}")
@@ -1216,7 +1213,6 @@ def create_clip_preview(
         # Monitor progress and handle process completion
         progress_monitoring_failed = False
         try:
-            # Monitor progress in a separate thread
             if duration > 0:
                 monitor_thread = threading.Thread(
                     target=monitor_progress,
@@ -1224,50 +1220,44 @@ def create_clip_preview(
                 )
                 monitor_thread.daemon = True
                 monitor_thread.start()
+                try:
+                    # Monitor progress and update placeholder
+                    while process.poll() is None:
+                        try:
+                            progress_info = progress_queue.get_nowait()
+                            if progress_placeholder:
+                                scaled_progress = progress_info["progress"]
+                                progress_placeholder.progress(scaled_progress)
+                                remaining = progress_info.get("time_remaining", 0)
+                                minutes_remaining = int(remaining / 60)
+                                seconds_remaining = int(remaining % 60)
+                                percent_complete = int(progress_info["progress"] * 100)
+                                encoding_speed = progress_info.get("encoding_speed", 0)
+                                speed_text = (
+                                    f" at {encoding_speed:.2f}x speed"
+                                    if encoding_speed > 0
+                                    else ""
+                                )
+                                message = f"Creating preview: {percent_complete}% complete{speed_text}"
+                                message += f" (approx. {minutes_remaining}m {seconds_remaining}s remaining)"
+                                progress_placeholder.text(message)
 
-                # Monitor progress and update placeholder
-                while process.poll() is None:
-                    try:
-                        progress_info = progress_queue.get_nowait()
-                        if progress_placeholder:
-                            scaled_progress = progress_info["progress"]
-                            progress_placeholder.progress(scaled_progress)
+                            if progress_callback:
+                                progress_callback(progress_info["progress"])
 
-                            # Calculate time remaining
-                            remaining = progress_info.get("time_remaining", 0)
-                            minutes_remaining = int(remaining / 60)
-                            seconds_remaining = int(remaining % 60)
-                            percent_complete = int(progress_info["progress"] * 100)
+                            progress_queue.task_done()
+                        except Exception:
+                            # No progress update available, sleep briefly
+                            time.sleep(0.1)
+                except Exception as e:
+                    logger.warning(f"Error monitoring progress: {str(e)}")
+                    progress_monitoring_failed = True
+                finally:
+                    # Stop progress monitoring
+                    stop_event.set()
+                    if monitor_thread and monitor_thread.is_alive():
+                        monitor_thread.join(timeout=1.0)
 
-                            # Format message with encoding speed if available
-                            encoding_speed = progress_info.get("encoding_speed", 0)
-                            speed_text = (
-                                f" at {encoding_speed:.2f}x speed"
-                                if encoding_speed > 0
-                                else ""
-                            )
-
-                            message = f"Creating preview: {percent_complete}% complete{speed_text}"
-                            message += f" (approx. {minutes_remaining}m {seconds_remaining}s remaining)"
-                            progress_placeholder.text(message)
-
-                        if progress_callback:
-                            progress_callback(progress_info["progress"])
-
-                        progress_queue.task_done()
-                    except Exception:
-                        # No progress update available, sleep briefly
-                        time.sleep(0.1)
-            except Exception as e:
-                logger.warning(f"Error monitoring progress: {str(e)}")
-                progress_monitoring_failed = True
-            finally:
-                # Stop progress monitoring
-                stop_event.set()
-                if monitor_thread and monitor_thread.is_alive():
-                    monitor_thread.join(timeout=1.0)
-
-            # Wait for process to complete regardless of progress monitoring status
             logger.info("Waiting for ffmpeg process to complete...")
             return_code = process.wait()
             logger.info(f"ffmpeg process completed with return code {return_code}")
@@ -1292,7 +1282,6 @@ def create_clip_preview(
                 if progress_placeholder:
                     progress_placeholder.error("Failed to create preview")
                 return None
-
         except Exception as e:
             logger.error(f"Error in preview creation: {str(e)}")
             if progress_placeholder:
@@ -1438,8 +1427,6 @@ def export_clip(
         export_path = config_manager.get_output_path(
             Path(source_path), clip_name, codec_type
         )
-
-        # The get_output_path method now handles the extension, no need to modify it here
         logger.info(f"Export path: {export_path}")
 
         # Delete existing export file if it exists
@@ -1468,18 +1455,16 @@ def export_clip(
             "default=noprint_wrappers=1:nokey=1",
             str(source_path),
         ]
-
         try:
             fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
             if fps_output:
-                # Parse fraction format (e.g., "30000/1001")
                 if "/" in fps_output:
                     num, den = fps_output.split("/")
                     fps = float(num) / float(den)
                 else:
                     fps = float(fps_output)
             else:
-                fps = 30.0  # Default fallback
+                fps = 30.0
         except Exception as e:
             logger.warning(f"Could not determine video FPS: {str(e)}")
             fps = 30.0
@@ -1493,17 +1478,14 @@ def export_clip(
         # Check if we're using pre-calibrated footage
         if calibration_service.should_skip_calibration(config_manager):
             logger.info("Using pre-calibrated footage - skipping calibration step")
-            # Use standard FFmpeg approach for export
             camera_matrix = None
             dist_coeffs = None
         else:
-            # Try to detect camera type and load calibration
             camera_type = calibration_service.get_camera_type_from_path(
                 source_path, config_manager
             )
             camera_matrix = None
             dist_coeffs = None
-
             if camera_type:
                 try:
                     logger.info(
@@ -1528,7 +1510,6 @@ def export_clip(
                     logger.error(f"Error loading calibration parameters: {e}")
 
         # Get output dimensions based on requested resolution
-        # Import inside the function to avoid circular imports
         from src.services import video_service
 
         output_width, output_height = video_service.calculate_crop_dimensions(
@@ -1538,9 +1519,7 @@ def export_clip(
         # Process clip with OpenCV and calibration if possible
         if camera_matrix is not None and dist_coeffs is not None:
             logger.info("Using OpenCV with calibration for export")
-
             try:
-                # Open the input video
                 cap = cv2.VideoCapture(str(source_path))
                 if not cap.isOpened():
                     logger.error(f"Could not open video: {source_path}")
@@ -1550,17 +1529,13 @@ def export_clip(
                         )
                     return None
 
-                # Get video properties
                 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
                 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
                 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-
-                # Validate frame range
                 valid_start = max(0, min(start_frame, total_frames - 1))
                 valid_end = max(valid_start, min(end_frame, total_frames - 1))
 
                 # Prepare undistortion maps
-                # Get calibration alpha from settings
                 calib_settings = (
                     config_manager.get_calibration_settings()
                     if config_manager
@@ -1579,7 +1554,6 @@ def export_clip(
                     cv2.CV_32FC1,
                 )
 
-                # Handle animated crop keyframes if provided
                 has_animated_crop = crop_keyframes and len(crop_keyframes) > 1
                 has_static_crop = crop_region is not None
 
@@ -1588,11 +1562,8 @@ def export_clip(
                 fifo_path = os.path.join(
                     tmp_dir, f"ffmpeg_pipe_{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 )
-
-                # Create the named pipe
                 os.mkfifo(fifo_path)
 
-                # Determine output codec settings based on cv_optimized flag
                 if cv_optimized:
                     codec_args = [
                         "-c:v",
@@ -1633,7 +1604,6 @@ def export_clip(
                     ]
                     final_export_path = str(export_path)
 
-                # Set up FFmpeg command
                 cmd = [
                     "ffmpeg",
                     "-y",
@@ -1650,8 +1620,6 @@ def export_clip(
                     "-i",
                     fifo_path,
                 ]
-
-                # Add audio input if not CV optimized
                 if not cv_optimized:
                     cmd.extend(
                         [
@@ -1667,14 +1635,8 @@ def export_clip(
                             "1:a",
                         ]
                     )
-
-                # Add codec settings
                 cmd.extend(codec_args)
-
-                # Add output path
                 cmd.append(final_export_path)
-
-                # Convert command to string
                 cmd_str = " ".join(
                     (
                         f'"{arg}"'
@@ -1683,10 +1645,8 @@ def export_clip(
                     )
                     for arg in cmd
                 )
-
                 logger.info(f"Starting FFmpeg with calibrated frames: {cmd_str}")
 
-                # Start FFmpeg process
                 ffmpeg_process = subprocess.Popen(
                     cmd_str,
                     stdout=subprocess.PIPE,
@@ -1695,17 +1655,11 @@ def export_clip(
                     universal_newlines=True,
                 )
 
-                # Open the named pipe for writing
                 pipe_out = open(fifo_path, "wb")
-
-                # Set frame position to start frame
                 cap.set(cv2.CAP_PROP_POS_FRAMES, valid_start)
 
-                # Create a queue for progress information
                 progress_queue = Queue()
                 stop_event = threading.Event()
-
-                # Create monitor thread for stderr output
                 monitor_thread = threading.Thread(
                     target=monitor_ffmpeg_stderr,
                     args=(ffmpeg_process.stderr, duration, progress_queue, stop_event),
@@ -1714,22 +1668,17 @@ def export_clip(
                 monitor_thread.start()
 
                 try:
-                    # Process frames
                     frames_to_process = valid_end - valid_start + 1
                     for frame_idx in range(frames_to_process):
-                        # Read the frame
                         ret, frame = cap.read()
                         if not ret:
                             break
 
-                        # Apply calibration
                         undistorted = cv2.remap(frame, map1, map2, cv2.INTER_LANCZOS4)
 
                         # Apply crop if needed
                         if has_animated_crop:
-                            # Get current absolute frame number
                             current_frame = valid_start + frame_idx
-                            # Interpolate crop region for current frame
                             current_crop = interpolate_crop_keyframes(
                                 current_frame, crop_keyframes
                             )
@@ -1739,13 +1688,12 @@ def export_clip(
                             else:
                                 cropped = undistorted
                         elif has_static_crop:
-                            # Static crop
                             x, y, w, h = crop_region
                             cropped = undistorted[y : y + h, x : x + w]
                         else:
                             cropped = undistorted
 
-                        # Resize to target resolution with high quality interpolation
+                        # Resize to target resolution
                         if has_animated_crop or has_static_crop:
                             resized = cv2.resize(
                                 cropped,
@@ -1759,15 +1707,10 @@ def export_clip(
                                 interpolation=cv2.INTER_LANCZOS4,
                             )
 
-                        # Write frame to pipe
                         pipe_out.write(resized.tobytes())
 
-                        # Update progress
                         if frame_idx % 10 == 0:
-                            # Calculate progress percentage
                             progress = frame_idx / frames_to_process
-
-                            # Update UI with progress information from queue
                             try:
                                 while not progress_queue.empty():
                                     progress_info = progress_queue.get(block=False)
@@ -1775,35 +1718,25 @@ def export_clip(
                                         progress_placeholder.progress(
                                             progress_info["progress"]
                                         )
-
-                                        # Format progress message
                                         percent_complete = int(
                                             progress_info["progress"] * 100
                                         )
                                         remaining = progress_info.get("remaining", 0)
                                         minutes_remaining = int(remaining / 60)
                                         seconds_remaining = int(remaining % 60)
-
                                         if cv_optimized:
                                             message = f"Exporting CV-optimized clip with calibration: {percent_complete}% "
                                         else:
                                             message = f"Exporting clip with calibration: {percent_complete}% "
-
                                         message += f"(approx. {minutes_remaining}m {seconds_remaining}s remaining)"
                                         progress_placeholder.text(message)
-
-                                    # Call progress callback if provided
                                     if progress_callback:
                                         progress_callback(progress_info["progress"])
                             except Exception as e:
                                 logger.warning(f"Error updating progress: {e}")
 
-                    # Close pipe
                     pipe_out.close()
-
-                    # Wait for FFmpeg to finish
                     return_code = ffmpeg_process.wait()
-
                     if return_code != 0:
                         error_output = (
                             ffmpeg_process.stderr.read()
@@ -1820,8 +1753,6 @@ def export_clip(
                     logger.info(
                         f"Successfully exported calibrated clip: {final_export_path}"
                     )
-
-                    # Update clip's export path in session state
                     if (
                         "clips" in st.session_state
                         and "current_clip_index" in st.session_state
@@ -1842,11 +1773,9 @@ def export_clip(
                             progress_placeholder.success(
                                 "Export completed successfully!"
                             )
-
                     return final_export_path
 
                 finally:
-                    # Clean up resources
                     stop_event.set()
                     if cap.isOpened():
                         cap.release()
@@ -1864,115 +1793,64 @@ def export_clip(
                     progress_placeholder.error(f"Error in OpenCV processing: {str(e)}")
                 return None
 
-            finally:
-                # Clean up resources
-                stop_event.set()
-                if cap.isOpened():
-                    cap.release()
-                try:
-                    if os.path.exists(fifo_path):
-                        os.unlink(fifo_path)
-                    if os.path.exists(tmp_dir):
-                        shutil.rmtree(tmp_dir)
-                except Exception as e:
-                    logger.error(f"Error cleaning up resources: {e}")
-
-        # If we get here, either calibration parameters weren't available or there was an error
-        # Proceed with standard FFmpeg approach
-
-        # Build the video filter string
+        # Standard FFmpeg export approach if calibration wasn't applied
         vf_filters = []
-
-        # Add crop filter based on keyframes or static crop region
         if crop_keyframes:
-            # Filter out keyframes outside the clip range and sort by frame number
             valid_keyframes = {
                 k: v
                 for k, v in crop_keyframes.items()
                 if start_frame <= int(k) <= end_frame
             }
-
-            # If no valid keyframes in range, use all keyframes but adjust timings
             if not valid_keyframes:
                 logger.warning(
                     f"No keyframes in clip range {start_frame}-{end_frame}. Using all available keyframes."
                 )
                 valid_keyframes = crop_keyframes
-
             sorted_keyframes = sorted([(int(k), v) for k, v in valid_keyframes.items()])
-
-            # Debug log the keyframes we're using
             logger.info(f"Using {len(sorted_keyframes)} crop keyframes for export")
             for frame_num, crop_vals in sorted_keyframes:
                 logger.info(f"Keyframe {frame_num}: {crop_vals}")
-
-            # Handle case with no keyframes
             if not sorted_keyframes and crop_region:
                 logger.warning(
                     "No keyframes available, falling back to static crop region"
                 )
                 x, y, width, height = crop_region
                 vf_filters.append(f"crop={width}:{height}:{x}:{y}")
-
             elif not sorted_keyframes:
                 logger.warning(
                     "No keyframes available and no static crop region. Skipping crop."
                 )
-
             else:
-                # Get the constant width and height from first keyframe
                 _, first_crop = sorted_keyframes[0]
-                width = first_crop[2]  # Width is the 3rd value
-                height = first_crop[3]  # Height is the 4th value
-
+                width = first_crop[2]
+                height = first_crop[3]
                 logger.info(f"Using crop dimensions width={width}, height={height}")
-
-                # Build expressions for x and y positions
-                expressions = []
-
-                # Width and height are constant
-                expressions.append(f"w='{width}'")
-                expressions.append(f"h='{height}'")
-
-                # Build x position expression (interpolating)
+                expressions = [f"w='{width}'", f"h='{height}'"]
                 x_expr = []
                 for i in range(len(sorted_keyframes)):
                     curr_frame, curr_crop = sorted_keyframes[i]
-                    # Make sure we're using the frame relative to the clip start time
-                    # Negative times can cause issues in ffmpeg filtering
                     curr_t = max(0, (curr_frame - start_frame) / fps)
-                    curr_x = curr_crop[0]  # X is the 1st value
-
+                    curr_x = curr_crop[0]
                     logger.info(
                         f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with x={curr_x}"
                     )
-
                     if i == 0:
-                        # Before first keyframe
                         x_expr.append(f"if(lt(t,{curr_t}),{curr_x}")
                     if i < len(sorted_keyframes) - 1:
-                        # Between keyframes
                         next_frame, next_crop = sorted_keyframes[i + 1]
                         next_t = max(0, (next_frame - start_frame) / fps)
                         next_x = next_crop[0]
-
-                        # Skip keyframes with identical timestamps (can happen if keyframes are too close)
-                        if (
-                            abs(next_t - curr_t) < 0.001
-                        ):  # If less than 1ms apart, consider them identical
+                        if abs(next_t - curr_t) < 0.001:
                             logger.warning(
                                 f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
                             )
                             continue
-
                         logger.info(
                             f"Interpolating x from {curr_x} to {next_x} between {curr_t:.3f}s and {next_t:.3f}s"
                         )
                         x_expr.append(
                             f",if(between(t,{curr_t},{next_t}),{curr_x}+({next_x}-{curr_x})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
                         )
-
-                # After last keyframe
                 last_frame, last_crop = sorted_keyframes[-1]
                 last_x = last_crop[0]
                 x_expr.append(f",{last_x}")
@@ -1981,44 +1859,31 @@ def export_clip(
                 expressions.append(x_expr_final)
                 logger.info(f"X expression: {x_expr_final}")
 
-                # Build y position expression (interpolating) - with same improvements as x expression
                 y_expr = []
                 for i in range(len(sorted_keyframes)):
                     curr_frame, curr_crop = sorted_keyframes[i]
-                    # Make sure we're using the frame relative to the clip start time
                     curr_t = max(0, (curr_frame - start_frame) / fps)
-                    curr_y = curr_crop[1]  # Y is the 2nd value
-
+                    curr_y = curr_crop[1]
                     logger.info(
                         f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with y={curr_y}"
                     )
-
                     if i == 0:
-                        # Before first keyframe
                         y_expr.append(f"if(lt(t,{curr_t}),{curr_y}")
                     if i < len(sorted_keyframes) - 1:
-                        # Between keyframes
                         next_frame, next_crop = sorted_keyframes[i + 1]
                         next_t = max(0, (next_frame - start_frame) / fps)
                         next_y = next_crop[1]
-
-                        # Skip keyframes with identical timestamps (can happen if keyframes are too close)
-                        if (
-                            abs(next_t - curr_t) < 0.001
-                        ):  # If less than 1ms apart, consider them identical
+                        if abs(next_t - curr_t) < 0.001:
                             logger.warning(
                                 f"Skipping keyframe at {next_frame} because timestamp {next_t:.3f}s is too close to previous {curr_t:.3f}s"
                             )
                             continue
-
                         logger.info(
                             f"Interpolating y from {curr_y} to {next_y} between {curr_t:.3f}s and {next_t:.3f}s"
                         )
                         y_expr.append(
                             f",if(between(t,{curr_t},{next_t}),{curr_y}+({next_y}-{curr_y})*(0.5-0.5*cos(PI*(t-{curr_t})/({next_t}-{curr_t})))"
                         )
-
-                # After last keyframe
                 last_frame, last_crop = sorted_keyframes[-1]
                 last_y = last_crop[1]
                 y_expr.append(f",{last_y}")
@@ -2027,37 +1892,28 @@ def export_clip(
                 expressions.append(y_expr_final)
                 logger.info(f"Y expression: {y_expr_final}")
 
-                # Handle special case: if all keyframes have the same frame number
-                if len(set([frame for frame, _ in sorted_keyframes])) == 1:
+                if len({frame for frame, _ in sorted_keyframes}) == 1:
                     logger.info("Only one unique keyframe, using static crop")
                     x, y, width, height = first_crop
                     vf_filters.append(f"crop={width}:{height}:{x}:{y}")
                 else:
-                    # Create the dynamic crop filter
                     crop_filter = f"crop={':'.join(expressions)}"
                     vf_filters.append(crop_filter)
                     logger.info(f"Using dynamic crop filter: {crop_filter}")
-
         elif crop_region:
-            # Static crop
             x, y, width, height = crop_region
             crop_filter = f"crop={width}:{height}:{x}:{y}"
             vf_filters.append(crop_filter)
             logger.info(f"Using static crop filter: {crop_filter}")
 
-        # For CV exports, use high-quality scaler
         if cv_optimized:
-            # Use lanczos scaling algorithm for higher quality
             vf_filters.append(f"scale={output_width}:{output_height}:flags=lanczos")
         else:
-            # Use default scaling
             vf_filters.append(f"scale={output_width}:{output_height}")
 
-        # Combine filters
         vf_string = ",".join(vf_filters)
         logger.info(f"Video filters: {vf_string}")
 
-        # Base command list
         cmd = [
             "ffmpeg",
             "-y",
@@ -2071,48 +1927,42 @@ def export_clip(
             vf_string,
         ]
 
-        # Add video codec settings
         if cv_optimized:
-            # For computer vision, use near-lossless encoding
             cmd.extend(
                 [
                     "-c:v",
                     "ffv1",
                     "-level",
-                    "3",  # Level 3 for multithreaded encoding
+                    "3",
                     "-pix_fmt",
-                    "yuv444p",  # Full chroma quality (better for CV)
+                    "yuv444p",
                     "-g",
-                    "1",  # Every frame is a keyframe (GOP=1)
+                    "1",
                     "-threads",
-                    str(min(16, os.cpu_count())),  # Use all available CPU cores
+                    str(min(16, os.cpu_count())),
                     "-slices",
-                    "24",  # Divide each frame into slices for parallel encoding
+                    "24",
                     "-slicecrc",
-                    "1",  # Add CRC for each slice for integrity checking
+                    "1",
                     "-context",
-                    "1",  # Use larger context for better compression
-                    "-an",  # No audio
+                    "1",
+                    "-an",
                 ]
             )
-
-            # For CV, we typically don't need audio
             cmd.extend(["-an"])
         else:
-            # Standard high quality settings for normal exports
             cmd.extend(
                 [
                     "-c:v",
                     "libx264",
                     "-crf",
-                    "16",  # High quality
+                    "16",
                     "-preset",
-                    "slow",  # Good balance between quality and speed
+                    "slow",
                     "-pix_fmt",
                     "yuv420p",
                     "-color_range",
                     "tv",
-                    # Include audio at high quality
                     "-c:a",
                     "aac",
                     "-b:a",
@@ -2120,10 +1970,7 @@ def export_clip(
                 ]
             )
 
-        # Add output path
         cmd.append(str(export_path))
-
-        # Convert command to string with proper quoting
         cmd_str = " ".join(
             f'"{arg}"' if " " in str(arg) or ":" in str(arg) else str(arg)
             for arg in cmd
@@ -2138,7 +1985,6 @@ def export_clip(
             else:
                 progress_placeholder.text("Exporting clip...")
 
-        # Run ffmpeg command
         process = subprocess.Popen(
             cmd_str,
             stdout=subprocess.PIPE,
@@ -2147,54 +1993,35 @@ def export_clip(
             universal_newlines=True,
         )
 
-        # Collect all stderr output
         stderr_output = []
-
-        # Monitor progress
         while True:
             line = process.stderr.readline()
             if not line:
                 break
             stderr_output.append(line.strip())
-
-            # Extract progress information
             if "time=" in line:
-                # Extract current time from ffmpeg output
                 time_match = re.search(r"time=(\d+:\d+:\d+.\d+)", line)
                 if time_match:
                     current_time = time_match.group(1)
-
-                    # Update progress placeholder if available
                     if progress_placeholder:
                         progress_placeholder.text(
                             f"Exporting clip... Time: {current_time}"
                         )
-
-                    # Calculate progress percentage for callback
                     if progress_callback:
-                        # Parse the time string (HH:MM:SS.ms)
                         time_parts = current_time.split(":")
                         hours = int(time_parts[0])
                         minutes = int(time_parts[1])
                         seconds = float(time_parts[2])
-
-                        # Convert to seconds
                         current_seconds = hours * 3600 + minutes * 60 + seconds
-
-                        # Calculate progress as a fraction (0-1)
                         clip_duration = (end_frame - start_frame) / fps
                         if clip_duration > 0:
                             progress = min(1.0, current_seconds / clip_duration)
                             progress_callback(progress)
-
             logger.debug(f"ffmpeg output: {line.strip()}")
 
-        # Wait for process to complete
         process.wait()
-
         if process.returncode == 0:
             logger.info(f"Successfully exported clip to: {export_path}")
-            # Update clip's export path in session state
             if "clips" in st.session_state and "current_clip_index" in st.session_state:
                 current_clip = st.session_state.clips[
                     st.session_state.current_clip_index
@@ -2202,7 +2029,6 @@ def export_clip(
                 current_clip.export_path = str(export_path)
                 current_clip.update()  # Mark as modified
                 st.session_state.clip_modified = True
-
             if progress_placeholder:
                 if cv_optimized:
                     progress_placeholder.success(
@@ -2519,30 +2345,26 @@ def _create_proxy_with_calibration_two_stage(
                     except Exception:
                         # No progress update available, sleep briefly
                         time.sleep(0.1)
-
+            except Exception as e:
+                logger.warning(f"Error monitoring progress: {str(e)}")
+                progress_monitoring_failed = True
+            finally:
                 # Stop progress monitoring
                 stop_event.set()
-                if "monitor_thread" in locals() and monitor_thread.is_alive():
-                    monitor_thread.join()
+                if monitor_thread and monitor_thread.is_alive():
+                    monitor_thread.join(timeout=1.0)
 
-                # Wait for process to complete
-                logger.info("Waiting for ffmpeg process to complete...")
-                return_code = process.wait()
-                logger.info(f"ffmpeg process completed with return code {return_code}")
+            # Wait for process to complete
+            logger.info("Waiting for ffmpeg process to complete...")
+            return_code = process.wait()
+            logger.info(f"ffmpeg process completed with return code {return_code}")
 
-                if return_code != 0:
-                    logger.error(
-                        f"ffmpeg process failed with return code {return_code}"
-                    )
-                    if progress_placeholder:
-                        progress_placeholder.error(
-                            f"Failed to create proxy video (error code {return_code})"
-                        )
-                    return None
-            except Exception as e:
-                logger.error(f"Error monitoring progress: {str(e)}")
+            if return_code != 0:
+                logger.error(f"ffmpeg process failed with return code {return_code}")
                 if progress_placeholder:
-                    progress_placeholder.error(f"Error monitoring progress: {str(e)}")
+                    progress_placeholder.error(
+                        f"Failed to create proxy video (error code {return_code})"
+                    )
                 return None
 
         # Verify the proxy file exists and is valid
