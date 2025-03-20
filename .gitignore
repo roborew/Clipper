@@ -41,3 +41,4 @@ env/
 Thumbs.db
 *.csv
 *.log
+scripts/clip_processor.log
