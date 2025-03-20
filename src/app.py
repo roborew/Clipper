@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import platform
 import subprocess
+import yaml
 
 # Import services
 from src.services import (

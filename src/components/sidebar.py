@@ -6,6 +6,7 @@ import streamlit as st
 import logging
 import os
 from pathlib import Path
+import re
 
 from src.services import proxy_service, clip_service
 
@@ -172,27 +173,23 @@ def display_video_selection(config_manager):
 
             config_statuses[str(video_path)] = status
 
+        # Import calibration service for camera type detection
+        from src.services import calibration_service
+
         # Group videos by camera type
         camera_groups = {}
         for video_path in video_files:
-            # Extract camera type from path
-            # Assuming path structure like: data/source/CAMERA_TYPE/SESSION/filename.mp4
-            parts = Path(video_path).parts
+            # Use the calibration service to determine camera type
+            camera_type = calibration_service.get_camera_type_from_path(
+                video_path, config_manager
+            )
 
-            # Try to find a camera type in the path
-            camera_type = "Other"
-            session_folder = "Unknown"
-            for i, part in enumerate(parts):
-                # Look for common camera type patterns in the path
-                if any(
-                    cam in part.upper()
-                    for cam in ["SONY", "GP", "GOPRO", "CANON", "NIKON", "CAM"]
-                ):
-                    camera_type = part
-                    # Try to get the session folder (next folder after camera type)
-                    if i + 1 < len(parts):
-                        session_folder = parts[i + 1]
-                    break
+            # If camera type couldn't be detected, use "Other"
+            if not camera_type:
+                camera_type = "Other"
+
+            # Get session folder
+            session_folder = get_session_folder(video_path)
 
             # Add to camera groups
             if camera_type not in camera_groups:
@@ -348,15 +345,40 @@ def display_video_selection(config_manager):
 
 def get_session_folder(video_path):
     """Helper function to extract session folder from video path"""
+    from src.services import calibration_service
+
+    # First determine the camera type
+    camera_types = calibration_service.get_camera_types()
+
+    # If no camera types are available, try a more generic approach
+    if not camera_types:
+        # Use some common camera identifiers to try to find the camera part
+        common_identifiers = ["GP", "GOPRO", "SONY", "CAM", "CANON", "NIKON"]
+
+        parts = Path(video_path).parts
+        for i, part in enumerate(parts):
+            part_upper = part.upper()
+            if any(ident in part_upper for ident in common_identifiers):
+                # If it's a camera type, the next folder should be the session
+                if i + 1 < len(parts):
+                    return parts[i + 1]
+        return None
+
     parts = Path(video_path).parts
     for i, part in enumerate(parts):
-        if any(
-            cam in part.upper()
-            for cam in ["SONY", "GP", "GOPRO", "CANON", "NIKON", "CAM"]
-        ):
-            if i + 1 < len(parts):
-                return parts[i + 1]
-    return "Unknown"
+        # Check if this part matches any camera type
+        for camera_type in camera_types:
+            if camera_type.upper() in part.upper():
+                # If it's a camera type, the next folder should be the session
+                if i + 1 < len(parts):
+                    return parts[i + 1]
+
+    # If nothing found but we have enough path components, make a guess
+    if len(parts) >= 3:
+        # Assume the second-to-last component might be the session
+        return parts[-2]
+
+    return None
 
 
 def display_video_info(video_path, config_manager):
@@ -1210,6 +1232,51 @@ def display_settings(config_manager):
             "Display Logs", value=st.session_state.get("display_logs", False)
         )
         st.session_state.display_logs = display_logs
+
+        # Calibration settings
+        st.subheader("Calibration Settings")
+        calibration_settings = config_manager.get_calibration_settings()
+
+        use_calibrated = st.checkbox(
+            "Use pre-calibrated footage",
+            value=calibration_settings.get("use_calibrated_footage", False),
+            help="When enabled, uses pre-calibrated footage from the 02_CALIBRATED_FOOTAGE folder. "
+            "When disabled, uses raw footage from 00_RAW and applies calibration on-the-fly.",
+        )
+
+        # Set alpha slider only shown when not using pre-calibrated footage
+        alpha = calibration_settings.get("alpha", 0.5)
+        if not use_calibrated:
+            alpha = st.slider(
+                "Calibration Alpha",
+                min_value=0.0,
+                max_value=1.0,
+                value=alpha,
+                step=0.1,
+                help="Controls calibration undistortion: 1.0 preserves all pixels, 0.0 removes black borders (may crop image)",
+            )
+
+        # When calibration settings change
+        if use_calibrated != calibration_settings.get(
+            "use_calibrated_footage", False
+        ) or alpha != calibration_settings.get("alpha", 0.5):
+            # Update settings
+            calibration_settings["use_calibrated_footage"] = use_calibrated
+            calibration_settings["alpha"] = alpha
+
+            # Save to config
+            config_manager.save_calibration_settings(calibration_settings)
+            st.success("Calibration settings saved!")
+
+            # If toggling between raw and calibrated, refresh the video list
+            if use_calibrated != calibration_settings.get(
+                "use_calibrated_footage", False
+            ):
+                if "video_files" in st.session_state:
+                    st.session_state.pop(
+                        "video_files", None
+                    )  # Force refresh of video files
+                st.rerun()
 
         # Proxy settings
         st.subheader("Proxy Settings")

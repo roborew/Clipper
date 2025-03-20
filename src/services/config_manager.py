@@ -18,6 +18,9 @@ class ConfigManager:
 
         # Initialize paths
         self.source_base = Path(self.config["directories"]["source"]["base"])
+
+        # Get source paths (raw and calibrated)
+        self.source_raw = self.source_base / self.config["directories"]["source"]["raw"]
         self.source_calibrated = (
             self.source_base / self.config["directories"]["source"]["calibrated"]
         )
@@ -83,7 +86,8 @@ class ConfigManager:
             "directories": {
                 "source": {
                     "base": "data",
-                    "calibrated": "",
+                    "raw": "00_RAW",
+                    "calibrated": "02_CALIBRATED_FOOTAGE",
                 },
                 "output": {
                     "base": ".",
@@ -104,6 +108,10 @@ class ConfigManager:
                 "quality": 28,
                 "audio_bitrate": "128k",
             },
+            "calibration": {
+                "use_calibrated_footage": False,
+                "alpha": 1.0,
+            },
         }
 
     def get_video_files(self) -> List[Path]:
@@ -111,10 +119,17 @@ class ConfigManager:
         video_files = []
         extensions = self.config["patterns"]["video_extensions"]
 
-        # If source_calibrated is empty, use source_base directly
-        search_dir = (
-            self.source_calibrated if self.source_calibrated.name else self.source_base
+        # Determine whether to use raw or calibrated source
+        use_calibrated = self.get_calibration_settings().get(
+            "use_calibrated_footage", False
         )
+
+        if use_calibrated:
+            search_dir = self.source_calibrated
+            logger.info(f"Using calibrated footage from: {search_dir}")
+        else:
+            search_dir = self.source_raw
+            logger.info(f"Using raw footage from: {search_dir}")
 
         if not search_dir.exists():
             logger.warning(f"Video directory does not exist: {search_dir}")
@@ -135,9 +150,16 @@ class ConfigManager:
 
     def get_relative_source_path(self, file_path: Path) -> Optional[Path]:
         """Get path relative to source directory"""
-        search_dir = (
-            self.source_calibrated if self.source_calibrated.name else self.source_base
+        # Determine whether to use raw or calibrated source
+        use_calibrated = self.get_calibration_settings().get(
+            "use_calibrated_footage", False
         )
+
+        if use_calibrated:
+            search_dir = self.source_calibrated
+        else:
+            search_dir = self.source_raw
+
         try:
             return file_path.relative_to(search_dir)
         except ValueError:
@@ -359,3 +381,25 @@ class ConfigManager:
             )
             logger.error(f"Please check permissions or create this directory manually")
             # Continue without raising, but log the issue
+
+    def get_calibration_settings(self) -> dict:
+        """Get calibration settings"""
+        # Ensure the calibration settings exist in the config
+        if "calibration" not in self.config:
+            self.config["calibration"] = {"use_calibrated_footage": False, "alpha": 0.5}
+        return self.config["calibration"]
+
+    def save_calibration_settings(self, settings: dict) -> bool:
+        """Save calibration settings to config file"""
+        try:
+            self.config["calibration"] = settings
+
+            # Save the updated config to the file
+            with open(self.config_path, "w") as f:
+                yaml.dump(self.config, f, default_flow_style=False)
+
+            logger.info(f"Saved calibration settings: {settings}")
+            return True
+        except Exception as e:
+            logger.error(f"Error saving calibration settings: {e}")
+            return False

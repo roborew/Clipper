@@ -1,3 +1,14 @@
+calibration:
+  alpha: 0.5
+  camera_types:
+    - GP1
+    - GP2
+    - SONY_70
+    - SONY_300
+  directories:
+    base: data/source/01_CALIBRATION
+    parameters: parameters
+  use_calibrated_footage: false
 directories:
   output:
     base: data/prept
@@ -10,15 +21,16 @@ directories:
   source:
     base: data/source
     calibrated: 02_CALIBRATED_FOOTAGE
+    raw: 00_RAW
 export:
   create_missing_dirs: true
   preserve_structure: true
 patterns:
   video_extensions:
-  - .mp4
-  - .avi
-  - .mov
-  - .mkv
+    - .mp4
+    - .avi
+    - .mov
+    - .mkv
 proxy:
   audio_bitrate: 128k
   enabled: true

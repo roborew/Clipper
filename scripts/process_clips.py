@@ -152,12 +152,59 @@ def resolve_source_path(source_path, config_manager):
     if path.is_absolute():
         return path
 
-    # Handle relative paths with data/source or data/prept prefixes
+    # Get calibration settings to determine which source folder to use
+    calib_settings = config_manager.get_calibration_settings()
+    use_calibrated_footage = calib_settings.get("use_calibrated_footage", False)
+
+    # Get folder names from config
+    raw_folder = config_manager.config["source"]["raw"]
+    calibrated_folder = config_manager.config["source"]["calibrated"]
+
+    logger.debug(f"Raw folder from config: {raw_folder}")
+    logger.debug(f"Calibrated folder from config: {calibrated_folder}")
+
+    # Determine the correct source path based on calibration settings
     str_path = str(path)
+
+    # Handle source paths that might need to be adjusted based on the calibration toggle
+    if "data/source/" in str_path:
+        # Extract the relative path after data/source/
+        rel_path = str_path.split("data/source/")[-1]
+
+        # Check if path contains either raw or calibrated folder and needs adjustment
+        if raw_folder in rel_path and use_calibrated_footage:
+            # Change from RAW to CALIBRATED
+            rel_path = rel_path.replace(raw_folder, calibrated_folder)
+            logger.info(f"Adjusted path to use calibrated footage: {rel_path}")
+        elif calibrated_folder in rel_path and not use_calibrated_footage:
+            # Change from CALIBRATED to RAW
+            rel_path = rel_path.replace(calibrated_folder, raw_folder)
+            logger.info(f"Adjusted path to use raw footage: {rel_path}")
+
+        # Join with source base
+        return Path(os.path.join(config_manager.source_base, rel_path))
+
+    # Handle relative paths with data/source or data/prept prefixes
     if str_path.startswith("data/source"):
-        return Path(
-            os.path.join(config_manager.source_base, str_path.split("data/source/")[-1])
-        )
+        rel_path = str_path.split("data/source/")[-1]
+
+        # Determine which subfolder to use based on calibration setting
+        if use_calibrated_footage:
+            # If using calibrated footage, ensure path includes the calibrated subfolder
+            if calibrated_folder not in rel_path:
+                if raw_folder in rel_path:
+                    rel_path = rel_path.replace(raw_folder, calibrated_folder)
+                else:
+                    rel_path = os.path.join(calibrated_folder, rel_path)
+        else:
+            # If using raw footage, ensure path includes the raw subfolder
+            if raw_folder not in rel_path:
+                if calibrated_folder in rel_path:
+                    rel_path = rel_path.replace(calibrated_folder, raw_folder)
+                else:
+                    rel_path = os.path.join(raw_folder, rel_path)
+
+        return Path(os.path.join(config_manager.source_base, rel_path))
     elif str_path.startswith("data/prept"):
         return Path(
             os.path.join(config_manager.output_base, str_path.split("data/prept/")[-1])
@@ -165,7 +212,19 @@ def resolve_source_path(source_path, config_manager):
 
     # Try to resolve using the config manager's base directories
     try:
-        # Try source base first
+        # Try source base first with appropriate subfolder based on calibration setting
+        if use_calibrated_footage:
+            # Try with calibrated footage path
+            calibrated_path = config_manager.source_calibrated / path
+            if calibrated_path.exists():
+                return calibrated_path
+        else:
+            # Try with raw footage path
+            raw_path = config_manager.source_raw / path
+            if raw_path.exists():
+                return raw_path
+
+        # Try with direct source base as fallback
         full_path = Path(config_manager.source_base) / path
         if full_path.exists():
             return full_path
@@ -208,6 +267,11 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
         logger.info(f"Resolved source path: {source_path}")
         logger.info(f"DEBUG: Source path exists: {os.path.exists(source_path)}")
 
+        # Get calibration settings
+        calib_settings = config_manager.get_calibration_settings()
+        use_calibrated_footage = calib_settings.get("use_calibrated_footage", False)
+        logger.info(f"Using calibrated footage: {use_calibrated_footage}")
+
         # Extract camera type and session folder
         camera_type = extract_camera_type(source_path)
         session_folder = extract_session_folder(source_path)
@@ -241,6 +305,9 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
         os.makedirs(output_dir, exist_ok=True)
 
         logger.info(f"Exporting clip from {source_path} to {output_path}")
+        logger.info(
+            f"Calibration will {'be skipped' if use_calibrated_footage else 'be applied'} based on configuration"
+        )
 
         # Create a progress bar
         total_frames = clip.end_frame - clip.start_frame + 1
@@ -274,7 +341,7 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
             crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
             output_resolution=clip.output_resolution,
             cv_optimized=cv_optimized,
-            config_manager=config_manager,
+            config_manager=config_manager,  # Pass config_manager with calibration settings
             progress_callback=progress_callback,  # Add the progress callback
         )
 
