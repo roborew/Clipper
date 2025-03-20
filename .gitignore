@@ -40,3 +40,4 @@ env/
 .DS_Store
 Thumbs.db
 *.csv
+*.log
