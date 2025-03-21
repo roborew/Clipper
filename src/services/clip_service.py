@@ -86,6 +86,14 @@ class Clip:
 
     def to_dict(self):
         """Convert clip to dictionary for serialization"""
+        # Handle export_path which could be a string or a list of paths
+        if isinstance(self.export_path, list):
+            # If it's a list, keep it as a list in the JSON
+            export_path_value = self.export_path
+        else:
+            # If it's a string or None, convert as before
+            export_path_value = str(self.export_path) if self.export_path else None
+
         return {
             "id": self.id,
             "name": self.name,
@@ -96,7 +104,7 @@ class Clip:
             "crop_keyframes": self.crop_keyframes,
             "crop_keyframes_proxy": self.crop_keyframes_proxy,
             "output_resolution": self.output_resolution,
-            "export_path": str(self.export_path) if self.export_path else None,
+            "export_path": export_path_value,
             "created_at": self.created_at,
             "modified_at": self.modified_at,
             "status": self.status,
@@ -142,7 +150,16 @@ class Clip:
             "crop_keyframes_proxy", clip.crop_keyframes.copy()
         )
         clip.output_resolution = data.get("output_resolution", "1080p")
-        clip.export_path = data.get("export_path")
+
+        # Handle export_path which could be a string or a list in the input data
+        export_path = data.get("export_path")
+        # If it's a list, keep it as a list
+        if isinstance(export_path, list):
+            clip.export_path = export_path
+        else:
+            # Otherwise, store it as is (string or None)
+            clip.export_path = export_path
+
         clip.created_at = data.get("created_at", datetime.now().isoformat())
         clip.modified_at = data.get("modified_at", clip.created_at)
         clip.status = data.get("status", "Draft")  # Default to "Draft" if not specified

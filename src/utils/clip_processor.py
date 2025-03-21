@@ -86,8 +86,20 @@ def update_clip_status(config_file_path, clip_index, new_status, processed_clip=
 
         # If we have a processed clip, update the export_path too
         if processed_clip and hasattr(processed_clip, "export_path"):
+            # Handle both string and list types for export_path
             clips[clip_index].export_path = processed_clip.export_path
-            logger.info(f"Updated export path to: {processed_clip.export_path}")
+
+            # Log what we're storing
+            if isinstance(processed_clip.export_path, list):
+                logger.info(
+                    f"Updated export path to multiple paths: {processed_clip.export_path}"
+                )
+            else:
+                logger.info(f"Updated export path to: {processed_clip.export_path}")
+
+            # Copy any other export-related attributes
+            if hasattr(processed_clip, "export_paths"):
+                clips[clip_index].export_paths = processed_clip.export_paths
 
         clips[clip_index].update()  # Update the modified timestamp
 

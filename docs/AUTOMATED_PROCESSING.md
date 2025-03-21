@@ -60,22 +60,60 @@ python scripts/process_clips.py --camera SONY
 
 This will only process clips from videos captured with the specified camera type. This is useful for setting up dedicated processing machines for different camera sources.
 
+#### Export Formats:
+
+By default, clips are exported in standard H.264 format. You can choose from two additional export options:
+
+```bash
+# CV-optimized export only (FFV1 codec, optimized for computer vision)
+python scripts/process_clips.py --cv-optimized
+
+# Export both formats (both H.264 and FFV1)
+python scripts/process_clips.py --both-formats
+```
+
+When using `--both-formats`, the script will:
+
+- Create two separate files for each clip (one in H.264 format and one in FFV1 format)
+- Store both file paths as an array in the clip's JSON configuration
+- Mark the clip as "Complete" only after both formats are successfully created
+
 #### Parallel Processing and Batch Controls:
 
 ```bash
-python scripts/process_clips.py --max-workers 4 --batch-size 10
+python scripts/process_clips.py --max-workers 2 --batch-size 10
 ```
 
-- `--max-workers` controls how many clips are processed in parallel (default: 4)
+- `--max-workers` controls how many clips are processed in parallel (default: 1)
 - `--batch-size` limits how many clips are processed in one batch (0 for unlimited)
+
+**Note on Resource Usage**: The default `--max-workers` value is 1, which is recommended for most systems. This is because each FFmpeg process can use up to 16 threads, so processing multiple clips in parallel can quickly oversubscribe your CPU. Only increase this value if you have a high-end workstation or server with many CPU cores.
 
 You can combine these options as needed:
 
 ```bash
-python scripts/process_clips.py --daemon --interval 120 --camera GOPRO --max-workers 2 --batch-size 5
+python scripts/process_clips.py --daemon --interval 120 --camera GOPRO --max-workers 2 --batch-size 5 --both-formats
 ```
 
-This would run as a daemon, checking every 2 minutes for GoPro clips, processing 5 clips at a time with 2 parallel workers.
+This would run as a daemon, checking every 2 minutes for GoPro clips, processing 5 clips at a time with 2 parallel workers, and creating both regular and CV-optimized versions of each clip.
+
+### Output File Structure
+
+When processing clips, the script creates the following folder structure:
+
+```
+data/prept/03_CLIPPED/
+├── h264/                   # Standard H.264 clips
+│   └── [camera]/
+│       └── [session]/
+│           └── clip_files.mp4
+└── ffv1/                   # CV-optimized clips
+    └── [camera]/
+        └── [session]/
+            └── clip_files.mkv
+```
+
+This organized structure ensures clips are properly categorized by codec type, camera, and session folder.
 
 ### Customizing Processing Logic
 
@@ -83,7 +121,7 @@ To customize the processing logic, modify the `process_clip` function in `script
 
 1. Resolves the full path to the source video
 2. Creates an output path for the processed clip
-3. Uses `video_service.export_clip` to export the clip with the specified crop region
+3. Uses `proxy_service.export_clip` to export the clip with the specified crop region
 
 You can replace this with your own processing logic, such as applying effects, encoding with specific settings, or uploading to a server.
 

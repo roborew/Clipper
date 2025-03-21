@@ -157,8 +157,8 @@ def resolve_source_path(source_path, config_manager):
     use_calibrated_footage = calib_settings.get("use_calibrated_footage", False)
 
     # Get folder names from config
-    raw_folder = config_manager.config["source"]["raw"]
-    calibrated_folder = config_manager.config["source"]["calibrated"]
+    raw_folder = config_manager.config["directories"]["source"]["raw"]
+    calibrated_folder = config_manager.config["directories"]["source"]["calibrated"]
 
     logger.debug(f"Raw folder from config: {raw_folder}")
     logger.debug(f"Calibrated folder from config: {calibrated_folder}")
@@ -240,7 +240,7 @@ def resolve_source_path(source_path, config_manager):
     return path
 
 
-def process_clip(clip, camera_filter=None, cv_optimized=False):
+def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=False):
     """
     Process a single clip - this is where you would implement your custom processing logic
 
@@ -248,6 +248,7 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
         clip: The Clip object to process
         camera_filter: Optional filter to only process clips from specific cameras
         cv_optimized: Whether to optimize for computer vision (higher quality)
+        both_formats: Whether to export in both regular and CV-optimized formats
 
     Returns:
         True if processing was successful, False otherwise
@@ -259,6 +260,8 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
         )
         if cv_optimized:
             logger.info("Using CV optimization for export")
+        if both_formats:
+            logger.info("Exporting in both regular and CV-optimized formats")
 
         # Get the full path to the source video
         config_manager = ConfigManager()
@@ -289,71 +292,138 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
 
         # Find the next available clip number for this source file
         clip_number = 1
-        while True:
-            # Generate output path preserving camera and session structure
-            output_filename = f"{original_filename}_clip{clip_number}.mp4"
-            if cv_optimized:
-                output_filename = output_filename.replace(".mp4", "_cv_optimized.mp4")
-            output_dir = config_manager.clips_dir / camera_type / session_folder
-            output_path = output_dir / output_filename
 
-            if not output_path.exists():
-                break
-            clip_number += 1
-
-        # Ensure output directory exists
-        os.makedirs(output_dir, exist_ok=True)
-
-        logger.info(f"Exporting clip from {source_path} to {output_path}")
+        # Log calibration setting
         logger.info(
             f"Calibration will {'be skipped' if use_calibrated_footage else 'be applied'} based on configuration"
         )
 
-        # Create a progress bar
-        total_frames = clip.end_frame - clip.start_frame + 1
-        pbar = tqdm(total=100, desc=f"Processing {clip.name}", unit="%")
+        # Keep track of the generated export paths
+        success = True
+        export_paths = []
 
-        # Create a progress callback for export
-        def progress_callback(progress):
-            # Update progress bar based on percentage (0-1)
-            current_percent = int(progress * 100)
-            # Update to the current percentage, avoiding going backwards
-            if current_percent > pbar.n:
-                pbar.update(current_percent - pbar.n)
+        # Log debug information about the source video path
+        logger.info(f"Exporting clip from {source_path}")
 
-        # Get crop region for current frame - we'll use this as a fallback
-        # if there are no keyframes
-        static_crop_region = clip.get_crop_region_at_frame(
-            clip.start_frame, use_proxy=False  # Use source resolution for export
-        )
-
+        # Log debug information about keyframes
         logger.info(f"DEBUG: About to call proxy_service.export_clip")
         logger.info(f"DEBUG: Crop keyframes: {clip.crop_keyframes}")
-        logger.info(f"DEBUG: Static crop region: {static_crop_region}")
 
-        # Use proxy_service.export_clip which handles keyframes properly
-        export_path = proxy_service.export_clip(
-            source_path=source_path,
-            clip_name=clip.name,
-            start_frame=clip.start_frame,
-            end_frame=clip.end_frame,
-            crop_region=static_crop_region,
-            crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
-            output_resolution=clip.output_resolution,
-            cv_optimized=cv_optimized,
-            config_manager=config_manager,  # Pass config_manager with calibration settings
-            progress_callback=progress_callback,  # Add the progress callback
-        )
+        # If both formats are requested, process regular format first
+        if both_formats or not cv_optimized:
+            # Create a progress bar for regular format
+            total_frames = clip.end_frame - clip.start_frame + 1
+            pbar = tqdm(total=100, desc=f"Processing {clip.name} (H.264)", unit="%")
 
-        logger.info(f"DEBUG: proxy_service.export_clip returned: {export_path}")
+            # Create a progress callback for export
+            def progress_callback(progress):
+                # Update progress bar based on percentage (0-1)
+                current_percent = int(progress * 100)
+                # Update to the current percentage, avoiding going backwards
+                if current_percent > pbar.n:
+                    pbar.update(current_percent - pbar.n)
 
-        # Close the progress bar
-        pbar.close()
+            # Use proxy_service.export_clip for regular format
+            standard_export_path = proxy_service.export_clip(
+                source_path=source_path,
+                clip_name=(
+                    f"{clip.name}_{clip_number}" if clip_number > 1 else clip.name
+                ),
+                start_frame=clip.start_frame,
+                end_frame=clip.end_frame,
+                crop_region=clip.get_crop_region_at_frame(
+                    clip.start_frame,
+                    use_proxy=False,  # Use source resolution for export
+                ),
+                crop_keyframes=clip.crop_keyframes,
+                output_resolution=clip.output_resolution,
+                cv_optimized=False,  # Regular format
+                config_manager=config_manager,
+                progress_callback=progress_callback,
+            )
 
-        if export_path:
-            logger.info(f"Successfully processed clip: {clip.name} -> {export_path}")
-            # Update clip's export path
-            clip.export_path = str(export_path)
+            pbar.close()
+
+            if standard_export_path:
+                logger.info(
+                    f"Successfully processed regular format: {standard_export_path}"
+                )
+                export_paths.append(standard_export_path)
+            else:
+                logger.error(f"Failed to process regular format for clip: {clip.name}")
+                success = False
+
+        # If both formats are requested or cv_optimized is set, process CV-optimized format
+        if both_formats or cv_optimized:
+            # Create a progress bar for CV-optimized format
+            total_frames = clip.end_frame - clip.start_frame + 1
+            pbar = tqdm(
+                total=100, desc=f"Processing {clip.name} (CV-optimized)", unit="%"
+            )
+
+            # Create a progress callback for export
+            def progress_callback(progress):
+                # Update progress bar based on percentage (0-1)
+                current_percent = int(progress * 100)
+                # Update to the current percentage, avoiding going backwards
+                if current_percent > pbar.n:
+                    pbar.update(current_percent - pbar.n)
+
+            # Use proxy_service.export_clip for CV-optimized format
+            cv_export_path = proxy_service.export_clip(
+                source_path=source_path,
+                clip_name=(
+                    f"{clip.name}_cv_{clip_number}"
+                    if clip_number > 1
+                    else f"{clip.name}_cv"
+                ),  # Append _cv to differentiate
+                start_frame=clip.start_frame,
+                end_frame=clip.end_frame,
+                crop_region=clip.get_crop_region_at_frame(
+                    clip.start_frame,
+                    use_proxy=False,  # Use source resolution for export
+                ),
+                crop_keyframes=clip.crop_keyframes,
+                output_resolution=clip.output_resolution,
+                cv_optimized=True,  # CV-optimized format
+                config_manager=config_manager,
+                progress_callback=progress_callback,
+            )
+
+            pbar.close()
+
+            if cv_export_path:
+                logger.info(
+                    f"Successfully processed CV-optimized format: {cv_export_path}"
+                )
+                export_paths.append(cv_export_path)
+            else:
+                logger.error(
+                    f"Failed to process CV-optimized format for clip: {clip.name}"
+                )
+                success = False
+
+        # Update clip's export path to the most recent successful export
+        if export_paths:
+            if both_formats and len(export_paths) > 1:
+                # When exporting both formats, use an array for export_path
+                # instead of a single string to store all paths
+                clip.export_path = export_paths  # Store as a list/array
+                logger.info(
+                    f"DEBUG: Multiple export paths stored as array: {clip.export_path}"
+                )
+            else:
+                # For single format, store as a simple string path
+                clip.export_path = export_paths[-1]
+
+            # Also keep the export_paths attribute for backward compatibility
+            clip.export_paths = ",".join(export_paths)
+            logger.info(
+                f"DEBUG: proxy_service.export_clip returned paths: {export_paths}"
+            )
+
+        if success:
+            logger.info(f"Successfully processed clip: {clip.name}")
             return True
         else:
             logger.error(f"Failed to process clip: {clip.name}")
@@ -364,7 +434,9 @@ def process_clip(clip, camera_filter=None, cv_optimized=False):
         return False
 
 
-def process_batch(clips, max_workers=4, camera_filter=None, cv_optimized=False):
+def process_batch(
+    clips, max_workers=4, camera_filter=None, cv_optimized=False, both_formats=False
+):
     """
     Process a batch of clips using a thread pool for parallel processing
 
@@ -373,6 +445,7 @@ def process_batch(clips, max_workers=4, camera_filter=None, cv_optimized=False):
         max_workers: Maximum number of parallel workers
         camera_filter: Optional camera type filter
         cv_optimized: Whether to optimize for computer vision
+        both_formats: Whether to export in both formats
 
     Returns:
         Number of successfully processed clips
@@ -392,6 +465,8 @@ def process_batch(clips, max_workers=4, camera_filter=None, cv_optimized=False):
         print(f"Camera filter: {camera_filter}")
     if cv_optimized:
         print(f"CV optimization: Enabled")
+    if both_formats:
+        print(f"Both formats: Enabled (will export H.264 and FFV1)")
     print(f"{'='*80}\n")
 
     # Get the mapping of clips to their config files and indices
@@ -419,7 +494,9 @@ def process_batch(clips, max_workers=4, camera_filter=None, cv_optimized=False):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all clips for processing
         future_to_clip = {
-            executor.submit(process_clip, clip, camera_filter, cv_optimized): clip
+            executor.submit(
+                process_clip, clip, camera_filter, cv_optimized, both_formats
+            ): clip
             for clip in clips
         }
 
@@ -643,8 +720,8 @@ Camera Filtering:
     parser.add_argument(
         "--max-workers",
         type=int,
-        default=4,
-        help="Maximum number of clips to process in parallel (default: 4)",
+        default=1,
+        help="Maximum number of clips to process in parallel (default: 1)",
     )
     parser.add_argument(
         "--batch-size",
@@ -656,6 +733,11 @@ Camera Filtering:
         "--cv-optimized",
         action="store_true",
         help="Export clips with CV optimization (higher quality)",
+    )
+    parser.add_argument(
+        "--both-formats",
+        action="store_true",
+        help="Export clips in both regular H.264 and CV-optimized formats",
     )
     args = parser.parse_args()
 
@@ -683,6 +765,8 @@ Camera Filtering:
             logger.info(f"Filtering for camera type: {args.camera}")
         if args.cv_optimized:
             logger.info("Using CV optimization for exports")
+        if args.both_formats:
+            logger.info("Exporting in both regular and CV-optimized formats")
 
         try:
             while True:
@@ -724,7 +808,11 @@ Camera Filtering:
                             f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
                         )
                         num_processed = process_batch(
-                            batch, args.max_workers, args.camera, args.cv_optimized
+                            batch,
+                            args.max_workers,
+                            args.camera,
+                            args.cv_optimized,
+                            args.both_formats,
                         )
                         total_processed += num_processed
 
@@ -732,7 +820,11 @@ Camera Filtering:
                 elif pending_clips:
                     # Process all clips at once
                     num_processed = process_batch(
-                        pending_clips, args.max_workers, args.camera, args.cv_optimized
+                        pending_clips,
+                        args.max_workers,
+                        args.camera,
+                        args.cv_optimized,
+                        args.both_formats,
                     )
                     logger.info(f"Processed {num_processed} clips")
                 else:
@@ -747,6 +839,8 @@ Camera Filtering:
             logger.info(f"Filtering for camera type: {args.camera}")
         if args.cv_optimized:
             logger.info("Using CV optimization for exports")
+        if args.both_formats:
+            logger.info("Exporting in both regular and CV-optimized formats")
 
         # Get all pending clips
         pending_clips = get_pending_clips(config_manager)
@@ -782,7 +876,11 @@ Camera Filtering:
                     f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
                 )
                 num_processed = process_batch(
-                    batch, args.max_workers, args.camera, args.cv_optimized
+                    batch,
+                    args.max_workers,
+                    args.camera,
+                    args.cv_optimized,
+                    args.both_formats,
                 )
                 total_processed += num_processed
 
@@ -795,7 +893,11 @@ Camera Filtering:
         elif pending_clips:
             # Process all clips at once
             num_processed = process_batch(
-                pending_clips, args.max_workers, args.camera, args.cv_optimized
+                pending_clips,
+                args.max_workers,
+                args.camera,
+                args.cv_optimized,
+                args.both_formats,
             )
             logger.info(f"Processed {num_processed} clips")
             print(f"\n{'='*80}")

@@ -1011,3 +1011,1129 @@ AttributeError: 'str' object has no attribute 'relative_to'
 2025-03-17 12:37:46,701 - clipper.clip - INFO - Saved 3 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
 2025-03-17 12:37:46,701 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
 2025-03-17 12:37:46,701 - clip_processor - INFO - Processed 1 clips
+2025-03-20 23:27:09,341 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-20 23:27:09,342 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-20 23:27:09,342 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-20 23:27:09,342 - clip_processor - INFO - Filtering for camera type: GOPRO
+2025-03-20 23:27:09,789 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:27:09,818 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:27:09,818 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:27:09,818 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:27:09,818 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:27:09,819 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:27:09,820 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:27:09,821 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:27:09,821 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:27:09,821 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:27:09,821 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:27:09,821 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-20 23:27:09,821 - clip_processor - INFO - No pending clips found
+2025-03-20 23:29:09,826 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:29:09,827 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:29:09,827 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:29:09,827 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:29:09,827 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:29:09,827 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:29:09,827 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:29:09,827 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:29:09,829 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:29:09,829 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:29:09,829 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:29:09,830 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:29:09,830 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:29:09,830 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-20 23:29:09,830 - clip_processor - WARNING - Error filtering clip clip_1: 'source'
+2025-03-20 23:29:09,830 - clip_processor - WARNING - Error filtering clip clip_2: 'source'
+2025-03-20 23:29:09,830 - clip_processor - INFO - Found 0 clips matching camera filter 'GOPRO' out of 2 total pending clips
+2025-03-20 23:29:09,830 - clip_processor - INFO - No pending clips found
+2025-03-20 23:31:09,832 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:31:09,834 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:31:09,835 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:31:09,841 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:31:09,841 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:31:09,841 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:31:09,841 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:31:09,842 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:31:09,847 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:31:09,847 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:31:09,847 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:31:09,848 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:31:09,848 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:31:09,848 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-20 23:31:09,848 - clip_processor - WARNING - Error filtering clip clip_1: 'source'
+2025-03-20 23:31:09,848 - clip_processor - WARNING - Error filtering clip clip_2: 'source'
+2025-03-20 23:31:09,848 - clip_processor - INFO - Found 0 clips matching camera filter 'GOPRO' out of 2 total pending clips
+2025-03-20 23:31:09,848 - clip_processor - INFO - No pending clips found
+2025-03-20 23:33:09,857 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:33:10,169 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:33:10,190 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:33:10,212 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:33:10,212 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:33:10,212 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:33:10,224 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:33:10,235 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:33:10,249 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:33:10,256 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:33:10,281 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:33:10,291 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:33:10,297 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:33:10,297 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-20 23:33:10,297 - clip_processor - WARNING - Error filtering clip clip_1: 'source'
+2025-03-20 23:33:10,297 - clip_processor - WARNING - Error filtering clip clip_2: 'source'
+2025-03-20 23:33:10,297 - clip_processor - INFO - Found 0 clips matching camera filter 'GOPRO' out of 2 total pending clips
+2025-03-20 23:33:10,297 - clip_processor - INFO - No pending clips found
+2025-03-20 23:35:15,265 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:35:15,293 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:35:15,306 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:35:15,328 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:35:15,328 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:35:15,328 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:35:15,340 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:35:15,351 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:35:15,365 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:35:15,372 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:35:15,397 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:35:15,408 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:35:15,413 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:35:15,413 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-20 23:35:15,413 - clip_processor - WARNING - Error filtering clip clip_1: 'source'
+2025-03-20 23:35:15,413 - clip_processor - WARNING - Error filtering clip clip_2: 'source'
+2025-03-20 23:35:15,413 - clip_processor - INFO - Found 0 clips matching camera filter 'GOPRO' out of 2 total pending clips
+2025-03-20 23:35:15,413 - clip_processor - INFO - No pending clips found
+2025-03-20 23:35:57,812 - clip_processor - INFO - Daemon stopped by user
+2025-03-20 23:59:30,407 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-20 23:59:30,407 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-20 23:59:30,407 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-20 23:59:30,426 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:59:30,455 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:59:30,896 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:59:30,918 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:30,918 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:30,918 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:30,931 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:59:30,941 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:59:30,955 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:59:30,962 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:59:30,987 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:59:30,998 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:59:31,003 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:59:31,003 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-20 23:59:31,003 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-20 23:59:31,003 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-20 23:59:31,005 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-20 23:59:31,005 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-20 23:59:31,005 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-20 23:59:31,005 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-20 23:59:31,006 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-20 23:59:31,006 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:31,006 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:31,006 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-20 23:59:31,006 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-20 23:59:31,006 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-20 23:59:31,008 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-20 23:59:31,008 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-20 23:59:31,008 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-20 23:59:31,009 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-20 23:59:31,009 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-20 23:59:31,009 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-20 23:59:31,010 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-20 23:59:31,011 - clip_processor - INFO - Processing clip: clip_1
+2025-03-20 23:59:31,011 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-20 23:59:31,012 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-20 23:59:31,012 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-20 23:59:31,012 - clip_processor - ERROR - Error processing clip clip_1: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-20 23:59:31,013 - clip_processor - WARNING - Failed to process clip: clip_1
+2025-03-20 23:59:31,013 - clip_processor - INFO - Processing clip: clip_2
+2025-03-20 23:59:31,013 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-20 23:59:31,015 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-20 23:59:31,015 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-20 23:59:31,015 - clip_processor - ERROR - Error processing clip clip_2: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-20 23:59:31,015 - clip_processor - WARNING - Failed to process clip: clip_2
+2025-03-20 23:59:31,015 - clip_processor - INFO - Processed 0 clips in batches
+2025-03-21 00:01:31,028 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:01:31,035 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:01:31,039 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:01:31,040 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,040 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,040 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,041 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:01:31,043 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:01:31,046 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:01:31,047 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:01:31,047 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:01:31,049 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:01:31,050 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:01:31,050 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:01:31,050 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:01:31,050 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:01:31,052 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:01:31,052 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,053 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,053 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:01:31,053 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:01:31,055 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:01:31,055 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:01:31,055 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:01:31,055 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:01:31,056 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:01:31,056 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:01:31,056 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:01:31,056 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:01:31,056 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:01:31,057 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:01:31,057 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:01:31,057 - clip_processor - ERROR - Error processing clip clip_1: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:01:31,058 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:01:31,058 - clip_processor - WARNING - Failed to process clip: clip_1
+2025-03-21 00:01:31,058 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:01:31,059 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:01:31,059 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:01:31,059 - clip_processor - ERROR - Error processing clip clip_2: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:01:31,059 - clip_processor - WARNING - Failed to process clip: clip_2
+2025-03-21 00:01:31,059 - clip_processor - INFO - Processed 0 clips in batches
+2025-03-21 00:02:21,980 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:05:10,891 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:05:10,891 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:05:10,891 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:05:10,891 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:05:10,891 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:05:10,892 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:05:10,892 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,892 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,892 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,892 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:05:10,892 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:05:10,894 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:05:10,894 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:05:10,894 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:05:10,895 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:05:10,895 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:05:10,895 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:05:10,895 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:05:10,895 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:05:10,896 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:05:10,896 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:05:10,896 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:05:10,896 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:05:10,896 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:05:10,897 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,897 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,897 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:05:10,897 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:05:10,897 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:05:10,898 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:05:10,898 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:05:10,898 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:05:10,899 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:05:10,899 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:05:10,899 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:05:10,899 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:05:10,899 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:05:10,899 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:05:10,900 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:05:10,900 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:05:10,900 - clip_processor - ERROR - Error processing clip clip_1: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:05:10,901 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:05:10,901 - clip_processor - WARNING - Failed to process clip: clip_1
+2025-03-21 00:05:10,901 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:05:10,902 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:05:10,902 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:05:10,902 - clip_processor - ERROR - Error processing clip clip_2: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:05:10,902 - clip_processor - WARNING - Failed to process clip: clip_2
+2025-03-21 00:05:10,903 - clip_processor - INFO - Processed 0 clips in batches
+2025-03-21 00:07:10,905 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:07:10,910 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:07:10,911 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:07:10,911 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,911 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,912 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,913 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:07:10,913 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:07:10,917 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:07:10,918 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:07:10,918 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:07:10,918 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:07:10,919 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:07:10,919 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:07:10,919 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:07:10,919 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:07:10,920 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:07:10,920 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:07:10,920 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:07:10,920 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:07:10,920 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:07:10,921 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,921 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,921 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:07:10,921 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:07:10,921 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:07:10,922 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:07:10,922 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:07:10,923 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:07:10,923 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:07:10,923 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:07:10,923 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:07:10,923 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:07:10,923 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:07:10,923 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:07:10,924 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:07:10,925 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:07:10,925 - clip_processor - ERROR - Error processing clip clip_1: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:07:10,925 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:07:10,925 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:07:10,925 - clip_processor - WARNING - Failed to process clip: clip_1
+2025-03-21 00:07:10,926 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:07:10,926 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:07:10,926 - clip_processor - ERROR - Error processing clip clip_2: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["source"]["raw"]
+                 ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:07:10,927 - clip_processor - WARNING - Failed to process clip: clip_2
+2025-03-21 00:07:10,927 - clip_processor - INFO - Processed 0 clips in batches
+2025-03-21 00:09:10,932 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:09:10,933 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:09:10,934 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:09:10,937 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,937 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,937 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,937 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:09:10,938 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:09:10,946 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:09:10,947 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:09:10,948 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:09:10,950 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:09:10,954 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:09:10,954 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:09:10,954 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:09:10,954 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:09:10,956 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:09:10,956 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:09:10,956 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:09:10,956 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:09:10,956 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:09:10,956 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,956 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,956 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:09:10,957 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:09:10,957 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:09:10,958 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:09:10,958 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:09:10,958 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:09:10,959 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:09:10,959 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:09:10,959 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:09:10,959 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:09:10,959 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:09:10,959 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:09:10,960 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:09:10,961 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:09:10,961 - clip_processor - ERROR - Error processing clip clip_1: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["directories"]["source"]["raw"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:09:10,961 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:09:10,961 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:09:10,961 - clip_processor - WARNING - Failed to process clip: clip_1
+2025-03-21 00:09:10,962 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:09:10,962 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:09:10,963 - clip_processor - ERROR - Error processing clip clip_2: 'source'
+Traceback (most recent call last):
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 265, in process_clip
+    source_path = resolve_source_path(clip.source_path, config_manager)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/robo/05 Repos/01 PROJECTS/Clipper/scripts/process_clips.py", line 160, in resolve_source_path
+    raw_folder = config_manager.config["directories"]["source"]["raw"]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'source'
+2025-03-21 00:09:10,963 - clip_processor - WARNING - Failed to process clip: clip_2
+2025-03-21 00:09:10,963 - clip_processor - INFO - Processed 0 clips in batches
+2025-03-21 00:09:16,738 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:10:18,260 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:10:18,260 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:10:18,260 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:10:18,260 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:10:18,260 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:10:18,261 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:10:18,261 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,261 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,261 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,261 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:10:18,261 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:10:18,262 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:10:18,263 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:10:18,263 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:10:18,263 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:10:18,263 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:10:18,263 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:10:18,263 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:10:18,263 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:10:18,265 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:10:18,265 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,265 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,265 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:10:18,265 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:10:18,267 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:10:18,267 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:10:18,267 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:10:18,267 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:10:18,267 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:10:18,267 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:10:18,267 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:10:18,267 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:10:18,268 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:10:18,269 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:10:18,269 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:10:18,269 - clip_processor - INFO - Adjusted path to use raw footage: 00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:10:18,269 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:10:18,269 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:10:18,269 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:10:18,269 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 to data/prept/03_CLIPPED/GP1/SESSION_030325/GX010009_clip1.mp4
+2025-03-21 00:10:18,269 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:10:18,297 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:10:18,298 - clip_processor - INFO - DEBUG: Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:10:18,298 - clip_processor - INFO - DEBUG: Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Frames: 81 to 225
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:18,298 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:10:18,708 - clipper.proxy - INFO - Time range: 1.35135 to 3.75375 seconds
+2025-03-21 00:10:18,709 - clipper.calibration - INFO - Found camera types from source raw directory: ['GP1', 'GP2', 'SONY_300', 'SONY_70']
+2025-03-21 00:10:18,709 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:10:18,709 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:10:18,709 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:10:18,758 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:10:18,758 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:10:18,775 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmprnexucsp/ffmpeg_pipe_20250321001018 -ss 1.35135 -t 2.4024 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,064 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,084 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,085 - clip_processor - INFO - Successfully processed clip: clip_1 -> data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,085 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:10:41,085 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:10:41,085 - clip_processor - INFO - DEBUG: After processing - Clip ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Complete, Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,085 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 0
+2025-03-21 00:10:41,085 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:41,085 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:10:41,086 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:10:41,087 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:41,087 - clipper.processor - INFO - Updated export path to: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,087 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:10:41,087 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:10:41,087 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:10:41,087 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:10:41,087 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:41,087 - clipper.processor - INFO - Updated clip status to Complete: clip_1
+2025-03-21 00:10:41,087 - clip_processor - INFO - Updated clip status in config file: clip_1
+2025-03-21 00:10:41,087 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 to data/prept/03_CLIPPED/GP1/SESSION_030325/GX010009_clip1.mp4
+2025-03-21 00:10:41,087 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:10:41,088 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:10:41,088 - clip_processor - INFO - DEBUG: Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:10:41,088 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:10:41,088 - clip_processor - INFO - DEBUG: Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:10:41,088 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Deleted existing export file: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:10:41,088 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:10:41,145 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:10:41,146 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:10:41,146 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:10:41,146 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:10:41,146 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:10:41,146 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:10:41,160 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmp61yyhxdt/ffmpeg_pipe_20250321001041 -ss 2.5191833333333333 -t 2.135466666666667 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,745 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,763 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,764 - clip_processor - INFO - Successfully processed clip: clip_2 -> data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,764 - clip_processor - INFO - DEBUG: After processing - Clip ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Complete, Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,764 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 1
+2025-03-21 00:11:00,764 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,764 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-21 00:11:00,764 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,764 - clipper.processor - INFO - Updated export path to: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,765 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,765 - clipper.processor - INFO - Updated clip status to Complete: clip_2
+2025-03-21 00:11:00,765 - clip_processor - INFO - Updated clip status in config file: clip_2
+2025-03-21 00:11:00,765 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,765 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,765 - clip_processor - INFO - Adjusted path to use raw footage: 00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:11:00,765 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,765 - clip_processor - INFO - Updated clip status in direct save: clip_1
+2025-03-21 00:11:00,765 - clip_processor - INFO - DEBUG: Updated export path in direct save: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:11:00,770 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,770 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,770 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,770 - clip_processor - INFO - Updated clip status in direct save: clip_2
+2025-03-21 00:11:00,770 - clip_processor - INFO - DEBUG: Updated export path in direct save: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:11:00,775 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,775 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:11:00,775 - clip_processor - INFO - Processed 2 clips in batches
+2025-03-21 00:13:00,813 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:13:00,885 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:13:00,898 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:13:00,899 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:13:00,910 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:13:00,921 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:13:00,937 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:13:00,942 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:13:00,967 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:13:00,977 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:13:00,983 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:13:00,983 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:13:00,983 - clip_processor - INFO - No pending clips found
+2025-03-21 00:15:00,989 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:15:01,299 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:15:01,300 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:15:01,301 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:15:01,302 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:15:01,303 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:15:01,306 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:15:01,306 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:15:01,307 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:15:01,308 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:15:01,308 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:15:01,308 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:15:01,308 - clip_processor - INFO - No pending clips found
+2025-03-21 00:17:01,314 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:17:01,315 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:17:01,316 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:17:01,320 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:17:01,321 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:17:01,322 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:17:01,329 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:17:01,331 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:17:01,336 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:17:01,337 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:17:01,337 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:17:01,337 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:17:01,337 - clip_processor - INFO - No pending clips found
+2025-03-21 00:18:08,520 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:18:42,644 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:18:42,645 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:18:42,645 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:18:42,645 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:18:42,645 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:18:42,645 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:18:42,646 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:18:42,646 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,646 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,646 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,646 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:18:42,646 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:18:42,648 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:18:42,648 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:18:42,648 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:18:42,648 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:18:42,648 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:18:42,648 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:18:42,648 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:18:42,648 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:18:42,650 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:18:42,650 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,650 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,650 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:18:42,650 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:18:42,652 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:18:42,652 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:18:42,652 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:18:42,652 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:18:42,652 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:18:42,652 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:18:42,652 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:18:42,652 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:18:42,653 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:18:42,653 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:18:42,654 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:18:42,654 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:18:42,654 - clip_processor - INFO - Adjusted path to use raw footage: 00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:18:42,654 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:18:42,654 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:18:42,654 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:18:42,654 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 to data/prept/03_CLIPPED/GP1/SESSION_030325/GX010009_clip1.mp4
+2025-03-21 00:18:42,655 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:18:42,655 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:18:42,655 - clip_processor - INFO - DEBUG: Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:18:42,655 - clip_processor - INFO - DEBUG: Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Frames: 81 to 225
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:18:42,665 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:18:43,137 - clipper.proxy - INFO - Time range: 1.35135 to 3.75375 seconds
+2025-03-21 00:18:43,137 - clipper.calibration - INFO - Found camera types from source raw directory: ['GP1', 'GP2', 'SONY_300', 'SONY_70']
+2025-03-21 00:18:43,137 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:18:43,137 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:18:43,138 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:18:43,139 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:18:43,139 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:18:43,152 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpoczcmf58/ffmpeg_pipe_20250321001843 -ss 1.35135 -t 2.4024 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:19:05,705 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:19:05,725 - clip_processor - INFO - Successfully processed regular format: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Exporting clip for clip_1_cv
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Frames: 81 to 225
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:19:05,725 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:19:05,726 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:05,726 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:19:05,784 - clipper.proxy - INFO - Time range: 1.35135 to 3.75375 seconds
+2025-03-21 00:19:05,784 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:19:05,784 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:19:05,784 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:19:05,785 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:19:05,785 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:19:05,799 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpaorxi0m6/ffmpeg_pipe_20250321001905 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,126 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,144 - clip_processor - INFO - Successfully processed CV-optimized format: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,144 - clip_processor - INFO - DEBUG: Multiple export paths: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4,data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,144 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,144 - clip_processor - INFO - Successfully processed clip: clip_1
+2025-03-21 00:19:27,144 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:19:27,144 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:19:27,144 - clip_processor - INFO - DEBUG: After processing - Clip ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Complete, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,144 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:19:27,144 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 0
+2025-03-21 00:19:27,146 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:19:27,146 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:19:27,146 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:19:27,146 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:19:27,146 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:19:27,146 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:19:27,146 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1.mkv
+2025-03-21 00:19:27,146 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 to data/prept/03_CLIPPED/GP1/SESSION_030325/GX010009_clip1.mp4
+2025-03-21 00:19:27,147 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:19:27,147 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:19:27,147 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:19:27,147 - clipper.processor - INFO - Updated export path to: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,147 - clip_processor - INFO - DEBUG: Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:19:27,147 - clip_processor - INFO - DEBUG: Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:19:27,147 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-21 00:19:27,147 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:19:27,147 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:19:27,147 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:19:27,148 - clipper.processor - INFO - Updated clip status to Complete: clip_1
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:19:27,148 - clip_processor - INFO - Updated clip status in config file: clip_1
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:19:27,148 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:19:27,168 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:19:27,168 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:19:27,205 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:19:27,205 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:19:27,205 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:19:27,205 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:19:27,205 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:19:27,205 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:19:27,219 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpvslxjhlt/ffmpeg_pipe_20250321001927 -ss 2.5191833333333333 -t 2.135466666666667 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:19:47,432 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:19:47,450 - clip_processor - INFO - Successfully processed regular format: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Exporting clip for clip_2_cv
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:19:47,451 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:19:47,511 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:19:47,511 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:19:47,512 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:19:47,512 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:19:47,512 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:19:47,512 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:19:47,527 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpr1slta0m/ffmpeg_pipe_20250321001947 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,080 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,101 - clip_processor - INFO - Successfully processed CV-optimized format: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,101 - clip_processor - INFO - DEBUG: Multiple export paths: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4,data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,101 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,101 - clip_processor - INFO - Successfully processed clip: clip_2
+2025-03-21 00:20:06,101 - clip_processor - INFO - DEBUG: After processing - Clip ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Complete, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,101 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 1
+2025-03-21 00:20:06,101 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,101 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-21 00:20:06,101 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,101 - clipper.processor - INFO - Updated export path to: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,102 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,102 - clipper.processor - INFO - Updated clip status to Complete: clip_2
+2025-03-21 00:20:06,102 - clip_processor - INFO - Updated clip status in config file: clip_2
+2025-03-21 00:20:06,106 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,106 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,106 - clip_processor - INFO - Adjusted path to use raw footage: 00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:20:06,107 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,107 - clip_processor - INFO - Updated clip status in direct save: clip_1
+2025-03-21 00:20:06,107 - clip_processor - INFO - DEBUG: Updated export path in direct save: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:20:06,121 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,121 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,124 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,124 - clip_processor - INFO - Updated clip status in direct save: clip_2
+2025-03-21 00:20:06,124 - clip_processor - INFO - DEBUG: Updated export path in direct save: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:20:06,128 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,129 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:20:06,129 - clip_processor - INFO - Processed 2 clips in batches
+2025-03-21 00:21:01,724 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:28:55,933 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:28:55,934 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:28:55,934 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:28:55,934 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:28:55,957 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:28:56,128 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:28:56,142 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:28:56,142 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:28:56,142 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:28:56,153 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:28:56,164 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:28:56,178 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:28:56,185 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:28:56,199 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:28:56,220 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:28:56,226 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:28:56,226 - clipper.processor - INFO - Found 1 clips pending processing
+2025-03-21 00:28:56,226 - clip_processor - INFO - Processing batch of 1 clips (remaining: 0)
+2025-03-21 00:28:56,226 - clip_processor - INFO - Processing batch of 1 clips with 1 workers
+2025-03-21 00:28:56,227 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:28:56,228 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:28:56,228 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:28:56,228 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:28:56,230 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:28:56,230 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:28:56,230 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:28:56,231 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:28:56,231 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:28:56,231 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:28:56,231 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:28:56,231 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:28:56,231 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:28:56,232 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:28:56,232 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:28:56,232 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:28:56,233 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:28:56,233 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:28:56,233 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:28:56,233 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:28:56,233 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:28:56,233 - clip_processor - INFO - DEBUG: Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:28:56,255 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:28:56,256 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:28:56,681 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:28:56,682 - clipper.calibration - INFO - Found camera types from source raw directory: ['GP1', 'GP2', 'SONY_300', 'SONY_70']
+2025-03-21 00:28:56,682 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:28:56,682 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:28:56,682 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:28:56,867 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:28:56,867 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:28:56,882 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpg22p9b1k/ffmpeg_pipe_20250321002856 -ss 2.5191833333333333 -t 2.135466666666667 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:29:17,717 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:29:17,736 - clip_processor - INFO - Successfully processed regular format: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Exporting clip for clip_2_cv
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:29:17,737 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:29:17,795 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:29:17,796 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:29:17,796 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:29:17,796 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:29:17,796 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:29:17,796 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:29:17,810 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpxgzhly0e/ffmpeg_pipe_20250321002917 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:29:36,877 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:29:36,897 - clip_processor - INFO - Successfully processed CV-optimized format: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:29:36,898 - clip_processor - INFO - DEBUG: Multiple export paths stored as array: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,898 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,898 - clip_processor - INFO - Successfully processed clip: clip_2
+2025-03-21 00:29:36,898 - clip_processor - INFO - DEBUG: After processing - Clip ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,898 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 1
+2025-03-21 00:29:36,898 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,898 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-21 00:29:36,898 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,898 - clipper.processor - INFO - Updated export path to multiple paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,899 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,899 - clipper.processor - INFO - Updated clip status to Complete: clip_2
+2025-03-21 00:29:36,899 - clip_processor - INFO - Updated clip status in config file: clip_2
+2025-03-21 00:29:36,899 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,899 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,899 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,899 - clip_processor - INFO - Updated clip status in direct save: clip_2
+2025-03-21 00:29:36,899 - clip_processor - INFO - DEBUG: Updated export path in direct save: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:29:36,906 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,906 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:29:36,906 - clip_processor - INFO - Processed 1 clips in batches
+2025-03-21 00:31:36,912 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:31:36,912 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:31:36,913 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:31:36,914 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:31:36,914 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:31:36,916 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:31:36,916 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:31:36,925 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:31:36,925 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:31:36,925 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:31:36,926 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:31:36,926 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:31:36,926 - clipper.processor - INFO - Found 1 clips pending processing
+2025-03-21 00:31:36,926 - clip_processor - INFO - Processing batch of 1 clips (remaining: 0)
+2025-03-21 00:31:36,926 - clip_processor - INFO - Processing batch of 1 clips with 1 workers
+2025-03-21 00:31:36,928 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:31:36,928 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:31:36,928 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:31:36,928 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:31:36,929 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:31:36,929 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:31:36,929 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:31:36,929 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:31:36,929 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:31:36,931 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:31:36,931 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:31:36,931 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:31:36,931 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:31:36,932 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:31:36,932 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:31:36,932 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:31:36,932 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:31:36,932 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:31:36,933 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:31:36,933 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:31:36,933 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:31:36,933 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:31:36,933 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:31:36,933 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:31:36,933 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:31:36,933 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:31:36,933 - clip_processor - INFO - DEBUG: Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Deleted existing export file: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:31:36,934 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:31:37,000 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:31:37,000 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:31:37,000 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:31:37,000 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:31:37,001 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:31:37,001 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:31:37,014 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpz3ye4dbd/ffmpeg_pipe_20250321003137 -ss 2.5191833333333333 -t 2.135466666666667 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:31:42,205 - clipper.proxy - ERROR - Error in OpenCV processing: [Errno 32] Broken pipe
+2025-03-21 00:31:42,208 - clip_processor - ERROR - Failed to process regular format for clip: clip_2
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Exporting clip for clip_2_cv
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:31:42,209 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:31:42,211 - clipper.proxy - INFO - Deleted existing export file: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:31:42,211 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:31:42,271 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:31:42,271 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:31:42,272 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:31:42,272 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:31:42,272 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:31:42,272 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:31:42,286 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpz3cs6zl5/ffmpeg_pipe_20250321003142 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:31:43,363 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:32:30,843 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:32:30,844 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:32:30,844 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:32:30,844 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:32:30,844 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:32:30,844 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:32:30,844 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:32:30,845 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,845 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,845 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,845 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:32:30,845 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:32:30,846 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:32:30,847 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:32:30,847 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:32:30,847 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:32:30,847 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:32:30,847 - clipper.processor - INFO - Found 2 clips pending processing
+2025-03-21 00:32:30,847 - clip_processor - INFO - Processing batch of 2 clips (remaining: 0)
+2025-03-21 00:32:30,847 - clip_processor - INFO - Processing batch of 2 clips with 1 workers
+2025-03-21 00:32:30,849 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:32:30,849 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,849 - clipper.processor - INFO - Found clip to process: clip_1 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,849 - clipper.processor - INFO - Found clip to process: clip_2 in data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:32:30,849 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:32:30,851 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:32:30,851 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:32:30,851 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:32:30,851 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:32:30,851 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:32:30,851 - clip_processor - INFO - DEBUG: Clip to process - ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Process, Export path: None
+2025-03-21 00:32:30,851 - clip_processor - INFO - DEBUG: Clip to process - ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Process, Export path: None
+2025-03-21 00:32:30,852 - clip_processor - INFO - Processing clip: clip_1
+2025-03-21 00:32:30,852 - clip_processor - INFO - DEBUG: Clip details - start_frame: 81, end_frame: 225
+2025-03-21 00:32:30,852 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:32:30,853 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:32:30,853 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:32:30,853 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:32:30,853 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:32:30,853 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:32:30,853 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:32:30,853 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:32:30,853 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:32:30,853 - clip_processor - INFO - DEBUG: Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Exporting clip for clip_1
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Frames: 81 to 225
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:32:30,860 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:32:30,861 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:32:30,861 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:32:30,909 - clipper.proxy - INFO - Time range: 1.35135 to 3.75375 seconds
+2025-03-21 00:32:30,909 - clipper.calibration - INFO - Found camera types from source raw directory: ['GP1', 'GP2', 'SONY_300', 'SONY_70']
+2025-03-21 00:32:30,909 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:32:30,909 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:32:30,909 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:32:30,910 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:32:30,910 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:32:30,924 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpc589ii92/ffmpeg_pipe_20250321003230 -ss 1.35135 -t 2.4024 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:32:56,698 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:32:56,718 - clip_processor - INFO - Successfully processed regular format: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4
+2025-03-21 00:32:56,718 - clipper.proxy - INFO - Exporting clip for clip_1_cv
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Frames: 81 to 225
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Static crop region: [0, 602, 1920, 1080]
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Crop keyframes: {'81': [0, 602, 1920, 1080], '225': [1382, 1293, 1920, 1080]}
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:32:56,719 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:32:56,776 - clipper.proxy - INFO - Time range: 1.35135 to 3.75375 seconds
+2025-03-21 00:32:56,776 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:32:56,776 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:32:56,777 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:32:56,777 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:32:56,777 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:32:56,791 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpjn6_hp8l/ffmpeg_pipe_20250321003256 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:33:18,419 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:33:18,437 - clip_processor - INFO - Successfully processed CV-optimized format: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv
+2025-03-21 00:33:18,438 - clip_processor - INFO - DEBUG: Multiple export paths stored as array: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:18,438 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:18,438 - clip_processor - INFO - Successfully processed clip: clip_1
+2025-03-21 00:33:18,438 - clip_processor - INFO - Processing clip: clip_2
+2025-03-21 00:33:18,438 - clip_processor - INFO - DEBUG: Clip details - start_frame: 151, end_frame: 279
+2025-03-21 00:33:18,438 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:33:18,438 - clip_processor - INFO - DEBUG: After processing - Clip ID: 42d2b5e4-6409-4d76-abe3-e39067091508, Name: clip_1, Status: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:18,438 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 0
+2025-03-21 00:33:18,439 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:33:18,440 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:33:18,440 - clip_processor - INFO - Resolved source path: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:33:18,440 - clip_processor - INFO - DEBUG: Source path exists: True
+2025-03-21 00:33:18,440 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:18,440 - clip_processor - INFO - Using calibrated footage: False
+2025-03-21 00:33:18,440 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-21 00:33:18,440 - clip_processor - INFO - Calibration will be applied based on configuration
+2025-03-21 00:33:18,440 - clip_processor - INFO - Exporting clip from data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:33:18,440 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:18,440 - clip_processor - INFO - DEBUG: About to call proxy_service.export_clip
+2025-03-21 00:33:18,440 - clipper.processor - INFO - Updated export path to multiple paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:18,440 - clip_processor - INFO - DEBUG: Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Exporting clip for clip_2
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - CV optimized: False
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:33:18,441 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:18,441 - clipper.processor - INFO - Updated clip status to Complete: clip_1
+2025-03-21 00:33:18,441 - clip_processor - INFO - Updated clip status in config file: clip_1
+2025-03-21 00:33:18,441 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/h264/GP1/SESSION_030325
+2025-03-21 00:33:18,452 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:18,452 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:18,498 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:33:18,498 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:33:18,498 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:33:18,498 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:33:18,498 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:33:18,498 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:33:18,512 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpzh4qv3v5/ffmpeg_pipe_20250321003318 -ss 2.5191833333333333 -t 2.135466666666667 -i data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4 -map "0:v" -map "1:a" "-c:v" libx264 -crf 16 -preset slow -pix_fmt yuv420p -color_range tv "-c:a" aac "-b:a" 320k data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:33:38,981 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:33:38,999 - clip_processor - INFO - Successfully processed regular format: data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Exporting clip for clip_2_cv
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Source: data/source/00_RAW/GP1/SESSION_030325/GX010009.MP4
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Frames: 151 to 279
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Static crop region: [0, 824, 1920, 1080]
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Crop keyframes: {'151': [0, 824, 1920, 1080], '279': [1920, 824, 1920, 1080]}
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Output resolution: 1080p
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - CV optimized: True
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Export path: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:33:38,999 - clipper.proxy - INFO - Created export directory: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325
+2025-03-21 00:33:39,058 - clipper.proxy - INFO - Time range: 2.5191833333333333 to 4.65465 seconds
+2025-03-21 00:33:39,058 - clipper.proxy - INFO - Loading calibration parameters for camera type: GP1
+2025-03-21 00:33:39,058 - clipper.calibration - INFO - Using calibration paths from config: data/source/01_CALIBRATION/parameters
+2025-03-21 00:33:39,058 - clipper.calibration - INFO - Loading calibration from: data/source/01_CALIBRATION/parameters/GP1/calibration.json
+2025-03-21 00:33:39,058 - clipper.proxy - INFO - Successfully loaded calibration parameters for GP1
+2025-03-21 00:33:39,058 - clipper.proxy - INFO - Using OpenCV with calibration for export
+2025-03-21 00:33:39,073 - clipper.proxy - INFO - Starting FFmpeg with calibrated frames: ffmpeg -y -f rawvideo -vcodec rawvideo -s 1920x1080 -pix_fmt bgr24 -r 59.94005994005994 -i /var/folders/f1/dm651gb52sb57prp9vn4c2nr0000gn/T/tmpqon5owhj/ffmpeg_pipe_20250321003339 "-c:v" ffv1 -level 3 -pix_fmt yuv444p -g 1 -threads 10 -slices 24 -slicecrc 1 -context 1 -an data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:33:57,739 - clipper.proxy - INFO - Successfully exported calibrated clip: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:33:57,758 - clip_processor - INFO - Successfully processed CV-optimized format: data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv
+2025-03-21 00:33:57,758 - clip_processor - INFO - DEBUG: Multiple export paths stored as array: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,758 - clip_processor - INFO - DEBUG: proxy_service.export_clip returned paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,758 - clip_processor - INFO - Successfully processed clip: clip_2
+2025-03-21 00:33:57,759 - clip_processor - INFO - DEBUG: After processing - Clip ID: ffcf1035-f364-48f2-94f8-764904343b87, Name: clip_2, Status: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,759 - clip_processor - INFO - DEBUG: Found clip by ID in lookup table - File: data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json, Index: 1
+2025-03-21 00:33:57,759 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,759 - clip_processor - INFO - DEBUG: Current clip status in file before update: Process, Export path: None
+2025-03-21 00:33:57,759 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,759 - clipper.processor - INFO - Updated export path to multiple paths: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,759 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,760 - clipper.processor - INFO - Updated clip status to Complete: clip_2
+2025-03-21 00:33:57,760 - clip_processor - INFO - Updated clip status in config file: clip_2
+2025-03-21 00:33:57,807 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,807 - clip_processor - INFO - DEBUG: Clip status after update: Complete, Export path: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,807 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,807 - clip_processor - INFO - Updated clip status in direct save: clip_1
+2025-03-21 00:33:57,807 - clip_processor - INFO - DEBUG: Updated export path in direct save: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_1.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_1_cv.mkv']
+2025-03-21 00:33:57,807 - clip_processor - INFO - Updated clip status in direct save: clip_2
+2025-03-21 00:33:57,807 - clip_processor - INFO - DEBUG: Updated export path in direct save: ['data/prept/03_CLIPPED/h264/GP1/SESSION_030325/GX010009_clip_2.mp4', 'data/prept/03_CLIPPED/ffv1/GP1/SESSION_030325/GX010009_clip_2_cv.mkv']
+2025-03-21 00:33:57,823 - clipper.clip - INFO - Saved 2 clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,824 - clip_processor - INFO - Saved updated clips to data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:33:57,824 - clip_processor - INFO - Processed 2 clips in batches
+2025-03-21 00:35:57,828 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:35:57,837 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:35:57,838 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:35:57,839 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:35:57,839 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:35:57,840 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:35:57,844 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:35:57,844 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:35:57,844 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:35:57,845 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:35:57,846 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:35:57,846 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:35:57,846 - clip_processor - INFO - No pending clips found
