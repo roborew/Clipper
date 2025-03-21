@@ -52,6 +52,14 @@ python scripts/process_clips.py --daemon --interval 60
 
 This will run continuously, scanning for new clips to process every 60 seconds (or other interval you specify).
 
+#### Watch mode for raw footage:
+
+```bash
+python scripts/process_clips.py --watch-raw
+```
+
+This will monitor your source directories for new raw footage and automatically generate proxies when new files are detected. See the [Raw Footage Watch Mode](#raw-footage-watch-mode) section for more details.
+
 #### Camera Filtering:
 
 ```bash
@@ -97,6 +105,48 @@ python scripts/process_clips.py --daemon --interval 120 --camera GOPRO --max-wor
 
 This would run as a daemon, checking every 2 minutes for GoPro clips, processing 5 clips at a time with 2 parallel workers, and creating both regular and CV-optimized versions of each clip.
 
+### Raw Footage Watch Mode
+
+The watch mode is a special option that monitors your raw footage directories for new video files and automatically generates proxy versions. This is useful for automating the proxy creation process, so when you open the Clipper application, all your footage already has proxies available.
+
+#### Basic Watch Mode:
+
+```bash
+python scripts/process_clips.py --watch-raw
+```
+
+This will:
+
+1. Process all existing raw footage that doesn't have proxy versions
+2. Continue running as a daemon, checking for new footage periodically
+3. When new footage is detected, automatically generate proxies
+
+#### Watch Mode Options:
+
+```bash
+# Check for new footage every 2 minutes
+python scripts/process_clips.py --watch-raw --watch-interval 120
+
+# Only process footage from specific cameras
+python scripts/process_clips.py --watch-raw --camera GOPRO
+
+# Skip existing files without proxies, only process new files
+python scripts/process_clips.py --watch-raw --ignore-existing
+```
+
+- `--watch-interval`: How often to check for new files (in seconds, default: 300)
+- `--camera`: Only process footage from the specified camera type
+- `--ignore-existing`: Skip processing existing files without proxies (only process new files)
+
+#### Watch Mode Workflow:
+
+1. Transfer raw footage to your source directories
+2. The watch daemon automatically detects the new files
+3. Proxies are generated for the new footage
+4. When you open Clipper, the proxies are ready to use
+
+This is particularly useful for team environments or when you're regularly importing new footage.
+
 ### Output File Structure
 
 When processing clips, the script creates the following folder structure:
@@ -135,19 +185,41 @@ To set up a dedicated processing server:
 3. Run the processing script in daemon mode
 4. Optionally, set up the script to start automatically on boot
 
+### Setting Up Auto-Start
+
+For Linux/macOS systems, you can create a systemd service or launchd configuration to start the script automatically. Here's an example systemd service file:
+
+```ini
+[Unit]
+Description=Clipper Proxy Watch Service
+After=network.target
+
+[Service]
+User=your_username
+WorkingDirectory=/path/to/clipper
+ExecStart=/usr/bin/python3 scripts/process_clips.py --watch-raw --watch-interval 300
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+```
+
 ## Workflow Example
 
 1. Videographer captures footage
-2. Editor uses Clipper to:
+2. Raw footage is transferred to source directories
+   - Watch mode automatically generates proxies (if enabled)
+3. Editor uses Clipper to:
    - Create clips from the footage
    - Set crop regions and keyframes
    - Change clip status to "Process" when ready
    - Save the configuration
-3. Processing server:
+4. Processing server:
    - Detects clips with "Process" status
    - Processes them according to the defined logic
    - Updates their status to "Complete"
-4. Editor can then:
+5. Editor can then:
    - See which clips have been processed (status: "Complete")
    - Make further edits if needed, changing status back to "Draft"
    - Set clips back to "Process" for re-processing

@@ -667,6 +667,213 @@ def list_available_cameras(config_manager):
         return []
 
 
+def watch_for_new_footage(
+    config_manager, interval=300, ignore_existing=False, camera_filter=None
+):
+    """
+    Watch for new raw footage and automatically generate proxies.
+
+    Args:
+        config_manager: ConfigManager instance
+        interval: Interval in seconds between checks
+        ignore_existing: If True, ignore existing files without proxies
+        camera_filter: Optional camera type filter
+
+    Returns:
+        None
+    """
+    try:
+        logger.info(f"Starting proxy watch daemon, checking every {interval} seconds")
+        if camera_filter:
+            logger.info(f"Filtering for camera type: {camera_filter}")
+
+        # If not ignoring existing, process all files without proxies first
+        if not ignore_existing:
+            logger.info("Processing existing files without proxies...")
+            process_all_raw_footage(config_manager, camera_filter)
+
+        # Track processed files to avoid re-processing
+        processed_files = set()
+
+        print(f"\n{'='*80}")
+        print(f"Proxy Watch Mode Active")
+        print(f"Checking for new raw footage every {interval} seconds")
+        if camera_filter:
+            print(f"Camera filter: {camera_filter}")
+        print(f"Press Ctrl+C to stop")
+        print(f"{'='*80}\n")
+
+        # Initial scan to populate processed_files
+        all_video_files = config_manager.get_video_files()
+        for video_path in all_video_files:
+            processed_files.add(str(video_path))
+
+        if camera_filter:
+            logger.info(
+                f"Initial scan found {len(processed_files)} videos, filtering for camera type: {camera_filter}"
+            )
+        else:
+            logger.info(f"Initial scan found {len(processed_files)} videos")
+
+        while True:
+            try:
+                # Get current video files
+                all_video_files = config_manager.get_video_files()
+
+                # Find new files
+                new_files = []
+                for video_path in all_video_files:
+                    video_path_str = str(video_path)
+                    if video_path_str not in processed_files:
+                        # Apply camera filter if specified
+                        if camera_filter:
+                            camera_type = extract_camera_type(video_path)
+                            if not camera_matches_filter(camera_type, camera_filter):
+                                logger.info(
+                                    f"Skipping new file {os.path.basename(video_path_str)} from camera {camera_type} (doesn't match filter)"
+                                )
+                                # Add to processed files to avoid checking again
+                                processed_files.add(video_path_str)
+                                continue
+
+                        # Check if proxy already exists
+                        if not proxy_service.proxy_exists_for_video(
+                            video_path, config_manager
+                        ):
+                            new_files.append(video_path)
+
+                        # Add to processed files to avoid checking again
+                        processed_files.add(video_path_str)
+
+                # Process new files if any
+                if new_files:
+                    logger.info(
+                        f"Found {len(new_files)} new raw footage files without proxies"
+                    )
+                    for video_path in new_files:
+                        logger.info(
+                            f"Processing new raw footage: {os.path.basename(str(video_path))}"
+                        )
+                        try:
+                            # Create proxy directly
+                            result = proxy_service.create_proxy_video(
+                                source_path=str(video_path),
+                                config_manager=config_manager,
+                            )
+                            if result:
+                                logger.info(
+                                    f"Successfully created proxy for {os.path.basename(str(video_path))}"
+                                )
+                                print(
+                                    f"✅ Created proxy for: {os.path.basename(str(video_path))}"
+                                )
+                            else:
+                                logger.error(
+                                    f"Failed to create proxy for {os.path.basename(str(video_path))}"
+                                )
+                                print(
+                                    f"❌ Failed to create proxy for: {os.path.basename(str(video_path))}"
+                                )
+                        except Exception as e:
+                            logger.exception(
+                                f"Error creating proxy for {os.path.basename(str(video_path))}: {str(e)}"
+                            )
+                            print(
+                                f"❌ Error creating proxy for: {os.path.basename(str(video_path))}"
+                            )
+                else:
+                    logger.info("No new raw footage found")
+
+                # Wait for next check
+                time.sleep(interval)
+
+            except Exception as e:
+                logger.exception(f"Error in watch daemon loop: {str(e)}")
+                # Continue running despite errors
+                time.sleep(interval)
+
+    except KeyboardInterrupt:
+        logger.info("Watch daemon stopped by user")
+        print("\nWatch daemon stopped by user")
+    except Exception as e:
+        logger.exception(f"Error in watch daemon: {str(e)}")
+        print(f"\nError in watch daemon: {str(e)}")
+
+
+def process_all_raw_footage(config_manager, camera_filter=None):
+    """
+    Process all raw footage files without proxies
+
+    Args:
+        config_manager: ConfigManager instance
+        camera_filter: Optional camera type filter
+
+    Returns:
+        Number of successfully processed files
+    """
+    # Get all video files
+    video_files = config_manager.get_video_files()
+
+    # Filter files without proxies
+    files_without_proxies = []
+    for video_path in video_files:
+        # Apply camera filter if specified
+        if camera_filter:
+            camera_type = extract_camera_type(video_path)
+            if not camera_matches_filter(camera_type, camera_filter):
+                logger.info(
+                    f"Skipping file {os.path.basename(str(video_path))} from camera {camera_type} (doesn't match filter)"
+                )
+                continue
+
+        # Check if proxy already exists
+        if not proxy_service.proxy_exists_for_video(video_path, config_manager):
+            files_without_proxies.append(video_path)
+
+    total_files = len(files_without_proxies)
+    logger.info(f"Found {total_files} raw footage files without proxies")
+
+    if total_files == 0:
+        logger.info("No raw footage files without proxies found")
+        return 0
+
+    # Process all files
+    successful = 0
+    for i, video_path in enumerate(files_without_proxies):
+        logger.info(
+            f"Processing raw footage {i+1}/{total_files}: {os.path.basename(str(video_path))}"
+        )
+        print(f"Processing {i+1}/{total_files}: {os.path.basename(str(video_path))}")
+
+        try:
+            # Create proxy directly
+            result = proxy_service.create_proxy_video(
+                source_path=str(video_path),
+                config_manager=config_manager,
+            )
+            if result:
+                logger.info(
+                    f"Successfully created proxy for {os.path.basename(str(video_path))}"
+                )
+                print(f"✅ Created proxy for: {os.path.basename(str(video_path))}")
+                successful += 1
+            else:
+                logger.error(
+                    f"Failed to create proxy for {os.path.basename(str(video_path))}"
+                )
+                print(
+                    f"❌ Failed to create proxy for: {os.path.basename(str(video_path))}"
+                )
+        except Exception as e:
+            logger.exception(
+                f"Error creating proxy for {os.path.basename(str(video_path))}: {str(e)}"
+            )
+            print(f"❌ Error creating proxy for: {os.path.basename(str(video_path))}")
+
+    logger.info(f"Processed {successful} of {total_files} raw footage files")
+    return successful
+
+
 def main():
     """
     Main function to process clips
@@ -691,6 +898,15 @@ Examples:
   # Run as a daemon, checking every 5 minutes
   python scripts/process_clips.py --daemon --interval 300
   
+  # Watch for new raw footage and auto-generate proxies
+  python scripts/process_clips.py --watch-raw
+  
+  # Watch for new raw footage from a specific camera only, ignoring existing files
+  python scripts/process_clips.py --watch-raw --camera GP1 --ignore-existing
+  
+  # Watch for new footage, checking every 2 minutes
+  python scripts/process_clips.py --watch-raw --watch-interval 120
+  
 Camera Filtering:
   The --camera option supports flexible matching:
   - Exact match: --camera GP1 matches only "GP1"
@@ -698,6 +914,15 @@ Camera Filtering:
   - Substring match: --camera GP matches "GP", "GP1", "GP2", etc.
   
   Use --list-cameras to see all available camera types.
+  
+Watch Mode:
+  The --watch-raw option sets up a daemon that watches for new raw footage and 
+  automatically generates proxies when new files are detected. This is useful 
+  for automatically processing footage as it's imported.
+  
+  --ignore-existing: Skip processing existing raw footage without proxies (only process new files)
+  --watch-interval: How often to check for new files (in seconds)
+  --camera: Filter to only watch for footage from specific cameras
 """,
     )
     parser.add_argument("--daemon", action="store_true", help="Run as a daemon process")
@@ -739,6 +964,22 @@ Camera Filtering:
         action="store_true",
         help="Export clips in both regular H.264 and CV-optimized formats",
     )
+    parser.add_argument(
+        "--watch-raw",
+        action="store_true",
+        help="Watch for new raw footage and auto-generate proxies",
+    )
+    parser.add_argument(
+        "--watch-interval",
+        type=int,
+        default=300,
+        help="Interval in seconds to check for new raw footage (default: 300)",
+    )
+    parser.add_argument(
+        "--ignore-existing",
+        action="store_true",
+        help="When watching for new footage, ignore existing files without proxies",
+    )
     args = parser.parse_args()
 
     config_manager = ConfigManager()
@@ -755,6 +996,17 @@ Camera Filtering:
             print(
                 "\nNo camera types found. Make sure your videos are organized in camera-specific folders."
             )
+        return
+
+    # Handle watch mode
+    if args.watch_raw:
+        logger.info("Starting watch mode for automatic proxy generation")
+        watch_for_new_footage(
+            config_manager,
+            interval=args.watch_interval,
+            ignore_existing=args.ignore_existing,
+            camera_filter=args.camera,
+        )
         return
 
     if args.daemon:

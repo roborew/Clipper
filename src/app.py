@@ -189,8 +189,32 @@ def main():
         and st.session_state.proxy_current_video
         and st.session_state.proxy_current_index < st.session_state.proxy_total_videos
     ):
+        # Ensure we have proxy_service module imported
+        from src.services import proxy_service as proxy_service_module
+
         # Create proxy for the current video
-        proxy_service.create_proxy_video(st.session_state.proxy_current_video)
+        proxy_service_module.create_proxy_video(st.session_state.proxy_current_video)
+
+    # Setup progress placeholder
+    progress_placeholder = st.empty()
+
+    # Add proxy generation status check - this ensures our polling mechanism works
+    # regardless of where st.rerun() is called from
+    if st.session_state.get("proxy_generation_active", False):
+        # Ensure we have proxy_service module imported
+        from src.services import proxy_service as proxy_service_module
+
+        if hasattr(proxy_service_module, "check_proxy_progress"):
+            needs_rerun = proxy_service_module.check_proxy_progress()
+            if needs_rerun:
+                st.rerun()
+
+    # Initialize session state for calibration settings if not present
+    if "calibration_settings" not in st.session_state:
+        # Get calibration settings from config manager
+        calib_settings = st.session_state.config_manager.get_calibration_settings()
+        st.session_state.calibration_settings = calib_settings
+        logger.debug(f"Initialized calibration settings: {calib_settings}")
 
 
 def initialize_session_state():

@@ -22,6 +22,19 @@ import shutil
 streamlit_logger = logging.getLogger("streamlit")
 streamlit_logger.setLevel(logging.ERROR)
 
+
+# Create a filter to remove the specific warning message
+class ScriptRunContextFilter(logging.Filter):
+    def filter(self, record):
+        return "missing ScriptRunContext" not in record.getMessage()
+
+
+# Apply filter to the streamlit.runtime.scriptrunner_utils.script_run_context logger
+script_run_context_logger = logging.getLogger(
+    "streamlit.runtime.scriptrunner_utils.script_run_context"
+)
+script_run_context_logger.addFilter(ScriptRunContextFilter())
+
 logger = logging.getLogger("clipper.proxy")
 
 # Import calibration service
@@ -49,13 +62,24 @@ def create_proxy_video(
         Path to the proxy video or None if creation failed
     """
     try:
+        in_streamlit = is_streamlit_context()
+
         # Initialize progress queue
         progress_queue = Queue()
         stop_event = threading.Event()
 
         # Get proxy settings from config manager
         if not config_manager:
-            config_manager = st.session_state.config_manager
+            # Check if we're in a Streamlit context
+            try:
+                import streamlit as st
+
+                config_manager = st.session_state.config_manager
+            except:
+                logger.warning(
+                    "Not in Streamlit context and no config_manager provided"
+                )
+                return None
 
         proxy_settings = config_manager.get_proxy_settings()
 
@@ -71,160 +95,84 @@ def create_proxy_video(
         if proxy_path.exists():
             logger.info(f"Proxy already exists: {proxy_path}")
 
-            # If this is part of batch processing, mark as completed and move to next video
-            if (
-                st.session_state.proxy_generation_active
-                and st.session_state.proxy_current_video == source_path
-            ):
-                st.session_state.proxy_completed_videos.append(source_path)
-                move_to_next_proxy_video()
+            # If this is part of batch processing in Streamlit context, mark as completed
+            if in_streamlit:
+                try:
+                    if (
+                        st.session_state.get("proxy_generation_active", False)
+                        and st.session_state.get("proxy_current_video") == source_path
+                    ):
+                        logger.info(
+                            f"Marking {os.path.basename(source_path)} as completed and moving to next video"
+                        )
+                        st.session_state.proxy_completed_videos.append(source_path)
+                        if "proxy_calibration_stage" in st.session_state:
+                            del st.session_state.proxy_calibration_stage
+                        if "proxy_calibration_start_time" in st.session_state:
+                            del st.session_state.proxy_calibration_start_time
+                        st.session_state.proxy_needs_rerun = True
+                        move_to_next_proxy_video()
+                except:
+                    pass  # Error accessing session state
 
             return str(proxy_path)
+
+        # Create progress bar if not already done
+        progress_bar = None
+        if progress_placeholder and in_streamlit:
+            progress_bar = progress_placeholder.progress(0.0)
+
+        # Get video duration for progress tracking
+        duration = get_video_duration(source_path)
+        if duration is None:
+            logger.error("Could not determine video duration")
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error("Could not determine video duration")
+            return None
+
+        # Check if this video needs calibration - using calibration_service directly
+        camera_type = calibration_service.get_camera_type_from_path(
+            source_path, config_manager
+        )
+
+        if camera_type and camera_type != "none":
+            logger.info(f"Video requires {camera_type} calibration")
+            camera_matrix, dist_coeffs, _ = calibration_service.load_calibration(
+                camera_type, config_manager=config_manager, video_path=source_path
+            )
+
+            if camera_matrix is None or dist_coeffs is None:
+                logger.error(f"Missing calibration data for camera type: {camera_type}")
+                if progress_placeholder and in_streamlit:
+                    progress_placeholder.error(
+                        f"Missing calibration data for camera type: {camera_type}"
+                    )
+                return None
+
+            # Use two-stage calibration process
+            return _create_proxy_with_calibration_two_stage(
+                source_path=source_path,
+                proxy_path=proxy_path,
+                camera_type=camera_type,
+                camera_matrix=camera_matrix,
+                dist_coeffs=dist_coeffs,
+                proxy_settings=proxy_settings,
+                duration=duration,
+                progress_placeholder=progress_placeholder,
+                progress_callback=progress_callback,
+                config_manager=config_manager,
+            )
+
+        # For non-calibrated videos, proceed with direct proxy creation
+        logger.info("Creating proxy without calibration")
+        if progress_placeholder and in_streamlit:
+            progress_placeholder.text("Creating proxy video...")
 
         # Ensure the parent directory exists
         proxy_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Ensuring proxy directory exists: {proxy_path.parent}")
 
-        # Use the provided progress placeholder or create one if in batch mode
-        actual_progress_placeholder = progress_placeholder
-        if st.session_state.proxy_generation_active and not progress_placeholder:
-            actual_progress_placeholder = st.session_state.proxy_progress_placeholder
-            progress_bar = st.session_state.proxy_progress_bar
-        else:
-            # Show progress
-            if actual_progress_placeholder:
-                actual_progress_placeholder.text(
-                    "Creating proxy video for faster playback..."
-                )
-                progress_bar = st.progress(0)
-
-        # Get video duration for progress calculation
-        duration_cmd = [
-            "ffprobe",
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            str(source_path),
-        ]
-
-        try:
-            logger.info(f"Running duration command: {' '.join(duration_cmd)}")
-            # Convert command list to a string for shell=True
-            # Ensure proper quoting for paths with spaces
-            duration_cmd_str = " ".join(
-                (
-                    f'"{arg}"'
-                    if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
-                    else str(arg)
-                )
-                for arg in duration_cmd
-            )
-            logger.info(f"Running shell command: {duration_cmd_str}")
-
-            duration_result = subprocess.run(
-                duration_cmd_str,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-            )
-            if duration_result.returncode != 0:
-                logger.warning(
-                    f"ffprobe returned non-zero exit code: {duration_result.returncode}"
-                )
-                logger.warning(f"ffprobe stderr: {duration_result.stderr}")
-                duration = 0
-            else:
-                duration = float(duration_result.stdout.strip())
-                logger.info(f"Video duration: {duration:.2f} seconds")
-        except Exception as e:
-            logger.warning(f"Could not determine video duration: {str(e)}")
-            duration = 0
-
-        # Check if we're using pre-calibrated footage
-        if calibration_service.should_skip_calibration(config_manager):
-            logger.info("Using pre-calibrated footage - skipping calibration step")
-            # Use standard FFmpeg approach for proxy generation
-            camera_matrix = None
-            dist_coeffs = None
-        else:
-            # Try to determine camera type from path and load calibration
-            camera_type = calibration_service.get_camera_type_from_path(
-                source_path, config_manager
-            )
-            camera_matrix = None
-            dist_coeffs = None
-
-            if camera_type:
-                try:
-                    logger.info(
-                        f"Loading calibration parameters for camera type: {camera_type}"
-                    )
-                    camera_matrix, dist_coeffs, _ = (
-                        calibration_service.load_calibration(
-                            camera_type,
-                            config_manager=config_manager,
-                            video_path=source_path,
-                        )
-                    )
-                    if camera_matrix is not None and dist_coeffs is not None:
-                        logger.info(
-                            f"Successfully loaded calibration parameters for {camera_type}"
-                        )
-                    else:
-                        logger.warning(
-                            f"Could not load calibration parameters for {camera_type}"
-                        )
-                except Exception as e:
-                    logger.error(f"Error loading calibration parameters: {e}")
-                    camera_matrix = None
-                    dist_coeffs = None
-
-        # If calibration parameters were loaded, use the two-stage approach
-        if camera_matrix is not None and dist_coeffs is not None:
-            logger.info(
-                "Using two-stage approach with calibration to create proxy video"
-            )
-
-            # Try the two-stage approach first
-            proxy_result = _create_proxy_with_calibration_two_stage(
-                source_path,
-                proxy_path,
-                camera_type,
-                camera_matrix,
-                dist_coeffs,
-                proxy_settings,
-                duration,
-                actual_progress_placeholder,
-                progress_callback,
-                config_manager,
-            )
-
-            # If successful, return the result
-            if proxy_result:
-                return proxy_result
-
-            # If we get here, the two-stage approach failed
-            logger.warning(
-                "Two-stage calibration approach failed, falling back to standard FFmpeg proxy creation"
-            )
-            if actual_progress_placeholder:
-                actual_progress_placeholder.warning(
-                    "Calibration failed - trying standard approach"
-                )
-                # Reset progress bar
-                progress_bar.progress(0)
-
-            # Fall back to standard approach without calibration
-            camera_matrix = None
-            dist_coeffs = None
-
-        # If we reach this point, either calibration parameters were not available or there was an error
-        # Fall back to the standard FFmpeg approach without calibration
-        # Command to create a lower-resolution, web-compatible proxy using settings from config
+        # Prepare FFmpeg command
         cmd = [
             "ffmpeg",
             "-y",
@@ -237,7 +185,7 @@ def create_proxy_video(
             "-crf",
             str(proxy_settings["quality"]),
             "-vf",
-            f"scale={proxy_settings['width']}:-2",  # Use width from config (now fixed to 960)
+            f"scale={proxy_settings['width']}:-2",
             "-c:a",
             "aac",
             "-b:a",
@@ -248,10 +196,8 @@ def create_proxy_video(
         # Log the command for debugging
         logger.info(f"Starting ffmpeg conversion: {' '.join(cmd)}")
 
-        # Start the conversion process with pipe for stderr
         try:
             # Convert command list to a string for shell=True
-            # Ensure proper quoting for paths with spaces
             cmd_str = " ".join(
                 (
                     f'"{arg}"'
@@ -267,15 +213,12 @@ def create_proxy_video(
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 universal_newlines=True,
-                bufsize=1,
                 shell=True,
             )
         except Exception as e:
             logger.error(f"Failed to start ffmpeg process: {str(e)}")
-            if actual_progress_placeholder:
-                actual_progress_placeholder.error(
-                    f"Failed to start ffmpeg process: {str(e)}"
-                )
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error(f"Failed to start ffmpeg process: {str(e)}")
             return None
 
         # Monitor progress in a separate thread
@@ -291,285 +234,314 @@ def create_proxy_video(
             last_update_time = time.time()
             try:
                 while process.poll() is None:
-                    # Check queue for progress updates (non-blocking)
                     try:
-                        progress_info = progress_queue.get(block=False)
-                        if actual_progress_placeholder:
-                            try:
-                                progress_bar.progress(progress_info["progress"])
-                                remaining = progress_info["remaining"]
+                        progress_info = progress_queue.get_nowait()
+                        if progress_placeholder and progress_bar and in_streamlit:
+                            progress_bar.progress(progress_info["progress"])
 
-                                # Calculate encoding speed (how fast we're processing the video)
-                                if "current_time" in progress_info and duration > 0:
-                                    percent_complete = int(
-                                        progress_info["progress"] * 100
-                                    )
-                                    minutes_remaining = int(remaining / 60)
-                                    seconds_remaining = int(remaining % 60)
+                            # Calculate time remaining
+                            remaining = progress_info.get("remaining", 0)
+                            minutes_remaining = int(remaining / 60)
+                            seconds_remaining = int(remaining % 60)
+                            percent_complete = int(progress_info["progress"] * 100)
 
-                                    # Get encoding speed if available
-                                    encoding_speed = progress_info.get(
-                                        "encoding_speed", 0
-                                    )
-                                    speed_text = ""
-                                    if encoding_speed > 0:
-                                        speed_ratio = encoding_speed
-                                        speed_text = f" at {speed_ratio:.2f}x speed"
+                            # Format message with encoding speed if available
+                            encoding_speed = progress_info.get("encoding_speed", 0)
+                            speed_text = (
+                                f" at {encoding_speed:.2f}x speed"
+                                if encoding_speed > 0
+                                else ""
+                            )
 
-                                    # Format the message with more accurate time estimate
-                                    message = f"Creating proxy video: {percent_complete}% complete{speed_text} "
-                                    message += f"(approx. {minutes_remaining}m {seconds_remaining}s remaining)"
+                            message = f"Creating proxy: {percent_complete}% complete{speed_text}"
+                            message += f" (approx. {minutes_remaining}m {seconds_remaining}s remaining)"
+                            progress_placeholder.text(message)
 
-                                    actual_progress_placeholder.text(message)
-                                else:
-                                    actual_progress_placeholder.text(
-                                        f"Creating proxy video: {int(progress_info['progress'] * 100)}% complete"
-                                    )
-                            except Exception:
-                                # Ignore Streamlit context errors
-                                pass
+                        if progress_callback:
+                            progress_callback(progress_info["progress"])
+
+                        # Update progress tracking for polling (Streamlit only)
+                        if in_streamlit:
+                            st.session_state.proxy_last_progress_time = time.time()
+                            st.session_state.proxy_last_progress_value = progress_info[
+                                "progress"
+                            ]
+
                         progress_queue.task_done()
                     except Exception:
                         # No progress update available, sleep briefly
-                        pass
-
-                    # Sleep to avoid consuming too much CPU
-                    time.sleep(0.1)
-
-                    # Periodically update UI even if no progress info
-                    current_time = time.time()
-                    if current_time - last_update_time > 2.0:
-                        if actual_progress_placeholder:
-                            try:
-                                elapsed_time = current_time - start_time
-                                minutes_elapsed = int(elapsed_time / 60)
-                                seconds_elapsed = int(elapsed_time % 60)
-
-                                actual_progress_placeholder.text(
-                                    f"Creating proxy video... (processing for {minutes_elapsed}m {seconds_elapsed}s)"
-                                )
-                            except Exception:
-                                # Ignore Streamlit context errors
-                                pass
-                        last_update_time = current_time
+                        time.sleep(0.1)
+            except Exception as e:
+                logger.warning(f"Error monitoring progress: {str(e)}")
             finally:
-                # Signal monitor thread to stop
+                # Stop progress monitoring
                 stop_event.set()
+                if monitor_thread and monitor_thread.is_alive():
+                    monitor_thread.join(timeout=1.0)
 
-                # Wait for process to complete
-                logger.info("Waiting for ffmpeg process to complete...")
-                return_code = process.wait()
-                logger.info(f"ffmpeg process completed with return code {return_code}")
-
-                # Check if process was successful
-                if return_code != 0:
-                    logger.error(
-                        f"ffmpeg process failed with return code {return_code}"
-                    )
-                    if actual_progress_placeholder:
-                        actual_progress_placeholder.error(
-                            f"ffmpeg process failed with return code {return_code}"
-                        )
-
-                    # If the file was created but is incomplete, remove it
-                    if os.path.exists(proxy_path):
-                        try:
-                            os.remove(proxy_path)
-                            logger.info(f"Removed incomplete proxy file: {proxy_path}")
-                        except Exception as e:
-                            logger.error(
-                                f"Failed to remove incomplete proxy file: {str(e)}"
-                            )
-
-                    # If this is part of batch processing, mark as failed and move to next video
-                    if (
-                        st.session_state.proxy_generation_active
-                        and st.session_state.proxy_current_video == source_path
-                    ):
-                        st.session_state.proxy_failed_videos.append(source_path)
-                        move_to_next_proxy_video()
-
-                    return None
-
-                # Final progress update
-                if actual_progress_placeholder:
-                    try:
-                        progress_bar.progress(1.0)
-                        # Calculate total processing time
-                        total_time = time.time() - start_time
-                        minutes = int(total_time / 60)
-                        seconds = int(total_time % 60)
-
-                        actual_progress_placeholder.text(
-                            f"Proxy video created successfully in {minutes}m {seconds}s!"
-                        )
-                    except Exception:
-                        # Ignore Streamlit context errors
-                        pass
-        else:
-            # If duration couldn't be determined, just wait for completion
-            logger.info(
-                "No duration available, waiting for process without progress updates"
-            )
-            start_time = time.time()
+            # Wait for process to complete
+            logger.info("Waiting for ffmpeg process to complete...")
             return_code = process.wait()
             logger.info(f"ffmpeg process completed with return code {return_code}")
 
-            # Check if process was successful
             if return_code != 0:
                 logger.error(f"ffmpeg process failed with return code {return_code}")
-                if actual_progress_placeholder:
-                    actual_progress_placeholder.error(
-                        f"ffmpeg process failed with return code {return_code}"
+                if progress_placeholder and in_streamlit:
+                    progress_placeholder.error(
+                        f"Failed to create proxy video (error code {return_code})"
                     )
-
-                # If the file was created but is incomplete, remove it
-                if os.path.exists(proxy_path):
-                    try:
-                        os.remove(proxy_path)
-                        logger.info(f"Removed incomplete proxy file: {proxy_path}")
-                    except Exception as e:
-                        logger.error(
-                            f"Failed to remove incomplete proxy file: {str(e)}"
-                        )
-
-                # If this is part of batch processing, mark as failed and move to next video
-                if (
-                    st.session_state.proxy_generation_active
-                    and st.session_state.proxy_current_video == source_path
-                ):
-                    st.session_state.proxy_failed_videos.append(source_path)
-                    move_to_next_proxy_video()
-
                 return None
 
+        # Verify the proxy file exists and is valid
         if os.path.exists(proxy_path):
             proxy_size = os.path.getsize(proxy_path) / (1024 * 1024)
             logger.info(
                 f"Proxy created successfully: {proxy_path} ({proxy_size:.2f} MB)"
             )
 
-            # Verify the proxy file is valid
-            verify_cmd = [
-                "ffprobe",
-                "-v",
-                "error",
-                "-select_streams",
-                "v:0",
-                "-show_entries",
-                "stream=codec_type",
-                "-of",
-                "default=noprint_wrappers=1:nokey=1",
-                str(proxy_path),
-            ]
+            # Final progress update
+            if progress_placeholder and progress_bar and in_streamlit:
+                progress_bar.progress(1.0)
+                progress_placeholder.success("Proxy video created successfully!")
 
-            try:
-                logger.debug(f"Running verification command: {' '.join(verify_cmd)}")
-                # Convert command list to a string for shell=True
-                # Ensure proper quoting for paths with spaces
-                verify_cmd_str = " ".join(
-                    (
-                        f'"{arg}"'
-                        if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
-                        else str(arg)
-                    )
-                    for arg in verify_cmd
-                )
-                logger.debug(f"Running shell command: {verify_cmd_str}")
-
-                verify_result = subprocess.run(
-                    verify_cmd_str,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    timeout=5,
-                    shell=True,
-                )
-                if (
-                    verify_result.returncode != 0
-                    or "video" not in verify_result.stdout.strip()
-                ):
-                    logger.error(f"Created proxy file is not valid: {proxy_path}")
-                    logger.error(f"ffprobe stderr: {verify_result.stderr}")
-                    if actual_progress_placeholder:
-                        actual_progress_placeholder.error(
-                            "Created proxy file is not valid. Removing and trying again."
-                        )
-
-                    # Remove the invalid file
-                    try:
-                        os.remove(proxy_path)
-                        logger.info(f"Removed invalid proxy file: {proxy_path}")
-                    except Exception as e:
-                        logger.error(f"Failed to remove invalid proxy file: {str(e)}")
-
-                    # If this is part of batch processing, mark as failed and move to next video
+            # If this is part of batch processing in Streamlit context, mark as completed
+            if in_streamlit:
+                try:
                     if (
-                        st.session_state.proxy_generation_active
-                        and st.session_state.proxy_current_video == source_path
+                        st.session_state.get("proxy_generation_active", False)
+                        and st.session_state.get("proxy_current_video") == source_path
                     ):
-                        st.session_state.proxy_failed_videos.append(source_path)
+                        st.session_state.proxy_completed_videos.append(source_path)
                         move_to_next_proxy_video()
-
-                    return None
-
-                logger.info(f"Proxy file verified as valid: {proxy_path}")
-            except Exception as e:
-                logger.warning(f"Could not verify proxy file: {str(e)}")
-                # Continue anyway since the file exists
-
-            # If this is part of batch processing, mark as completed and move to next video
-            if (
-                st.session_state.proxy_generation_active
-                and st.session_state.proxy_current_video == source_path
-            ):
-                st.session_state.proxy_completed_videos.append(source_path)
-                move_to_next_proxy_video()
+                except:
+                    pass  # Error accessing session state
 
             return str(proxy_path)
         else:
-            logger.error("Failed to create proxy video")
-            if actual_progress_placeholder:
-                actual_progress_placeholder.error("Failed to create proxy video")
-
-            # If this is part of batch processing, mark as failed and move to next video
-            if (
-                st.session_state.proxy_generation_active
-                and st.session_state.proxy_current_video == source_path
-            ):
-                st.session_state.proxy_failed_videos.append(source_path)
-                move_to_next_proxy_video()
-
+            logger.error("Failed to create proxy video - output file does not exist")
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error("Failed to create proxy video")
             return None
 
     except Exception as e:
         logger.exception(f"Error creating proxy: {str(e)}")
-        if progress_placeholder:
+        if progress_placeholder and in_streamlit:
             progress_placeholder.error(f"Error creating proxy: {str(e)}")
 
-        # If this is part of batch processing, mark as failed and move to next video
-        if (
-            st.session_state.proxy_generation_active
-            and st.session_state.proxy_current_video == source_path
-        ):
-            st.session_state.proxy_failed_videos.append(source_path)
-            move_to_next_proxy_video()
+        # If this is part of batch processing in Streamlit context, mark as failed
+        if in_streamlit:
+            try:
+                if (
+                    st.session_state.get("proxy_generation_active", False)
+                    and st.session_state.get("proxy_current_video") == source_path
+                ):
+                    st.session_state.proxy_failed_videos.append(source_path)
+                    move_to_next_proxy_video()
+            except:
+                pass  # Error accessing session state
 
         return None
 
 
 def move_to_next_proxy_video():
     """Move to the next video in the proxy generation queue"""
-    st.session_state.proxy_current_index += 1
-    if st.session_state.proxy_current_index < len(
-        st.session_state.proxy_videos_to_process
-    ):
-        st.session_state.proxy_current_video = st.session_state.proxy_videos_to_process[
-            st.session_state.proxy_current_index
-        ]
-    else:
-        st.session_state.proxy_generation_active = False
-    st.rerun()
+    try:
+        import streamlit as st
+
+        logger.info("Moving to next video in proxy queue")
+
+        # Check if we need to increment or if we're already at the end
+        if (
+            "proxy_current_index" not in st.session_state
+            or "proxy_videos_to_process" not in st.session_state
+        ):
+            logger.warning(
+                "No proxy queue found in session state - batch processing may not be active"
+            )
+            return
+
+        st.session_state.proxy_current_index += 1
+        current_index = st.session_state.proxy_current_index
+        total_videos = len(st.session_state.proxy_videos_to_process)
+
+        logger.info(f"Next video index: {current_index} of {total_videos}")
+
+        # Reset progress tracking for the next video
+        if "proxy_last_progress_time" in st.session_state:
+            del st.session_state.proxy_last_progress_time
+        if "proxy_last_progress_value" in st.session_state:
+            del st.session_state.proxy_last_progress_value
+
+        if current_index < total_videos:
+            # Move to the next video
+            st.session_state.proxy_current_video = (
+                st.session_state.proxy_videos_to_process[current_index]
+            )
+
+            # Set timestamp for when this video started processing
+            st.session_state.proxy_process_start_time = time.time()
+
+            logger.info(
+                f"Moving to next video: {os.path.basename(st.session_state.proxy_current_video)}"
+            )
+
+            # Force a rerun to start processing the next video
+            logger.info("Triggering Streamlit rerun to process next video")
+            st.rerun()
+        else:
+            # We've completed all videos
+            logger.info("All videos processed - marking batch process as complete")
+            st.session_state.proxy_generation_active = False
+
+            # Force a final rerun to update the UI
+            logger.info("Triggering final Streamlit rerun to update UI")
+            st.rerun()
+    except Exception as e:
+        # Gracefully handle errors and non-Streamlit contexts
+        logger.warning(f"Error in move_to_next_proxy_video: {str(e)}")
+        # In CLI context, we just continue without rerunning
+
+
+def check_proxy_progress():
+    """
+    Check if the current proxy generation process is stuck and advance if needed.
+    This should be called periodically by the display function.
+    """
+    # Only check if proxy generation is active and we have a current video
+    if not st.session_state.get(
+        "proxy_generation_active", False
+    ) or not st.session_state.get("proxy_current_video"):
+        return False
+
+    current_time = time.time()
+
+    # Initialize tracking variables if they don't exist
+    if "proxy_last_progress_time" not in st.session_state:
+        st.session_state.proxy_last_progress_time = current_time
+        st.session_state.proxy_last_progress_value = 0.0
+        return False
+
+    # Get current progress value
+    current_progress = st.session_state.get("proxy_current_progress", 0.0)
+
+    # Check if we're in a calibration process
+    in_calibration = "proxy_calibration_stage" in st.session_state
+    calibration_stage = st.session_state.get("proxy_calibration_stage", "")
+    calibration_timeout = 300  # 5 minutes max for calibration
+
+    # If we're in calibration, use a different timeout strategy
+    if in_calibration:
+        calibration_start_time = st.session_state.get(
+            "proxy_calibration_start_time", current_time
+        )
+        calibration_duration = current_time - calibration_start_time
+
+        # Log detailed calibration status
+        logger.info(
+            f"Calibration in progress. Stage: {calibration_stage}, Duration: {calibration_duration:.1f}s"
+        )
+
+        # If calibration is completed or has been running too long
+        if (
+            calibration_stage == "completed"
+            or calibration_duration > calibration_timeout
+        ):
+            if calibration_duration > calibration_timeout:
+                logger.warning(
+                    f"Calibration timeout exceeded ({calibration_timeout}s). Forcing progress."
+                )
+            else:
+                logger.info(
+                    "Calibration completed, checking if we need to move to next video"
+                )
+
+            # Check if the proxy file exists for the current video
+            config_manager = st.session_state.config_manager
+            current_video = st.session_state.proxy_current_video
+            proxy_path = config_manager.get_proxy_path(Path(current_video))
+
+            if proxy_path.exists():
+                logger.info(
+                    f"Proxy file exists for current video. Moving to next video."
+                )
+                # Add to completed videos if not already there
+                if current_video not in st.session_state.proxy_completed_videos:
+                    st.session_state.proxy_completed_videos.append(current_video)
+                # Move to next video
+                move_to_next_proxy_video()
+                return True
+
+    # Standard progress stall detection
+    progress_timeout = (
+        120 if in_calibration else 60
+    )  # Longer timeout during calibration
+    time_since_last_progress = current_time - st.session_state.proxy_last_progress_time
+
+    # If progress has changed, update the last progress time
+    if (
+        abs(current_progress - st.session_state.proxy_last_progress_value) > 0.01
+    ):  # 1% change
+        st.session_state.proxy_last_progress_time = current_time
+        st.session_state.proxy_last_progress_value = current_progress
+        return False
+
+    # If too much time has passed without progress, consider it stalled
+    if time_since_last_progress > progress_timeout:
+        if in_calibration:
+            logger.warning(
+                f"Calibration for {os.path.basename(st.session_state.proxy_current_video)} appears stalled (no progress for {progress_timeout}s in stage {calibration_stage}). Moving to next video."
+            )
+        else:
+            logger.warning(
+                f"Proxy generation for {os.path.basename(st.session_state.proxy_current_video)} appears stalled (no progress for {progress_timeout}s). Moving to next video."
+            )
+
+        # Add current video to failed list if it's not already there
+        if (
+            st.session_state.proxy_current_video
+            not in st.session_state.proxy_failed_videos
+        ):
+            st.session_state.proxy_failed_videos.append(
+                st.session_state.proxy_current_video
+            )
+
+        # Move to next video
+        move_to_next_proxy_video()
+        return True
+
+    # Also check for overall timeout - if a video has been processing too long
+    if "proxy_process_start_time" in st.session_state:
+        total_process_time = current_time - st.session_state.proxy_process_start_time
+        max_process_time = 3600  # 1 hour max for a single video
+
+        if total_process_time > max_process_time:
+            logger.warning(
+                f"Proxy generation for {os.path.basename(st.session_state.proxy_current_video)} exceeded maximum time ({max_process_time/60}m). Moving to next video."
+            )
+            # Add current video to failed list if it's not already there
+            if (
+                st.session_state.proxy_current_video
+                not in st.session_state.proxy_failed_videos
+            ):
+                st.session_state.proxy_failed_videos.append(
+                    st.session_state.proxy_current_video
+                )
+            # Move to next video
+            move_to_next_proxy_video()
+            return True
+
+    # Force a rerun periodically to ensure UI updates during long processes
+    if (int(current_time) % 10) == 0:  # Every 10 seconds
+        if in_calibration:
+            # More frequent updates during calibration
+            return True
+
+    # Check if the polling mechanism should trigger a rerun
+    if st.session_state.get("proxy_needs_rerun", False):
+        st.session_state.proxy_needs_rerun = False
+        return True
+
+    return False
 
 
 def generate_all_proxies(config_manager=None):
@@ -614,6 +586,14 @@ def generate_all_proxies(config_manager=None):
         st.session_state.proxy_total_videos = total_videos
         st.session_state.proxy_completed_videos = []
         st.session_state.proxy_failed_videos = []
+
+        # Initialize polling tracking variables
+        st.session_state.proxy_needs_rerun = False
+        if "proxy_last_progress_time" in st.session_state:
+            del st.session_state.proxy_last_progress_time
+        if "proxy_last_progress_value" in st.session_state:
+            del st.session_state.proxy_last_progress_value
+        st.session_state.proxy_process_start_time = time.time()
 
         # Start processing the first video
         if videos_without_proxies:
@@ -740,6 +720,17 @@ def display_proxy_generation_progress():
                 for video in st.session_state.proxy_failed_videos:
                     st.error(f"❌ {os.path.basename(video)}")
 
+        # Add process monitoring info with last update time
+        if "proxy_last_progress_time" in st.session_state:
+            time_since_update = time.time() - st.session_state.proxy_last_progress_time
+            if time_since_update > 30:  # Show warning if no updates for 30+ seconds
+                st.warning(f"⚠️ No progress updates for {int(time_since_update)}s")
+
+        # Check if we need to move to the next video (using polling mechanism)
+        needs_rerun = check_proxy_progress()
+        if needs_rerun:
+            st.rerun()
+
         # Cancel button
         if st.button("Cancel Proxy Generation"):
             st.session_state.proxy_generation_active = False
@@ -758,6 +749,10 @@ def proxy_progress_callback(progress_info):
 
         # Update session state with progress info
         st.session_state.proxy_current_progress = progress
+
+        # Track progress updates for polling mechanism
+        st.session_state.proxy_last_progress_time = time.time()
+        st.session_state.proxy_last_progress_value = progress
 
         # Store encoding speed if available
         if encoding_speed > 0:
@@ -2106,6 +2101,18 @@ def monitor_ffmpeg_stderr(stderr_pipe, duration, queue, stop_event):
     )
 
 
+def is_streamlit_context():
+    """Check if we're running in a Streamlit context"""
+    try:
+        import streamlit as st
+
+        # Try to access session state to verify we're in a Streamlit context
+        _ = st.session_state
+        return True
+    except:
+        return False
+
+
 def monitor_progress(process, duration, queue, stop_event):
     """
     Monitor FFmpeg process output for progress updates.
@@ -2118,12 +2125,14 @@ def monitor_progress(process, duration, queue, stop_event):
     """
     pattern = re.compile(r"time=(\d+):(\d+):(\d+.\d+)")
     encoding_speed_pattern = re.compile(r"speed=(\d+.\d+)x")
+    in_streamlit = is_streamlit_context()
 
     for line in iter(process.stderr.readline, ""):
         if stop_event.is_set():
             break
 
         line = line.strip()
+        logger.debug(line)  # Log the raw ffmpeg output
 
         # Extract time information
         time_match = pattern.search(line)
@@ -2140,14 +2149,24 @@ def monitor_progress(process, duration, queue, stop_event):
                 encoding_speed = float(speed_match.group(1))
 
             # Put progress info in queue
-            queue.put(
-                {
-                    "progress": progress,
-                    "current_time": current_time,
-                    "remaining": remaining,
-                    "encoding_speed": encoding_speed,
-                }
-            )
+            progress_info = {
+                "progress": progress,
+                "current_time": current_time,
+                "remaining": remaining,
+                "encoding_speed": encoding_speed,
+            }
+            queue.put(progress_info)
+
+            # Print progress to console when not in Streamlit
+            if not in_streamlit:
+                percent = int(progress * 100)
+                minutes_remaining = int(remaining / 60)
+                seconds_remaining = int(remaining % 60)
+                print(
+                    f"\rProgress: {percent}% (approx. {minutes_remaining}m {seconds_remaining}s remaining)",
+                    end="",
+                    flush=True,
+                )
 
     # Signal completion
     queue.put(
@@ -2158,6 +2177,10 @@ def monitor_progress(process, duration, queue, stop_event):
             "encoding_speed": 1.0,
         }
     )
+
+    # Print final newline when not in Streamlit
+    if not in_streamlit:
+        print()  # Add newline after progress
 
 
 def _create_proxy_with_calibration_two_stage(
@@ -2195,6 +2218,14 @@ def _create_proxy_with_calibration_two_stage(
         Path to the proxy video or None if creation failed
     """
     try:
+        in_streamlit = is_streamlit_context()
+
+        # Mark calibration start time for monitoring (only in Streamlit)
+        if in_streamlit:
+            if "proxy_calibration_start_time" not in st.session_state:
+                st.session_state.proxy_calibration_start_time = time.time()
+            st.session_state.proxy_calibration_stage = "starting"
+
         # Create a temporary file for the calibrated output
         with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp_file:
             temp_calibrated_path = tmp_file.name
@@ -2203,24 +2234,38 @@ def _create_proxy_with_calibration_two_stage(
             f"Stage 1/2: Creating temporary calibrated video at {temp_calibrated_path}"
         )
 
+        if in_streamlit:
+            st.session_state.proxy_calibration_stage = "calibrating"
+
         # Create progress bar if not already done
         progress_bar = None
-        if progress_placeholder:
+        if progress_placeholder and in_streamlit:
             progress_placeholder.text("Stage 1/2: Calibrating footage...")
             progress_bar = progress_placeholder.progress(0.0)
+        elif not in_streamlit:
+            print("Stage 1/2: Calibrating footage...")
 
         # Create a calibration progress wrapper function that scales to 0-50%
         def calibration_progress_wrapper(progress):
             # Scale progress to 0-50% for first stage
             scaled_progress = progress * 0.5
-            if progress_placeholder and progress_bar:
-                progress_bar.progress(scaled_progress)
+
+            if in_streamlit:
+                if progress_placeholder and progress_bar:
+                    progress_bar.progress(scaled_progress)
+                    percent = int(scaled_progress * 100)
+                    progress_placeholder.text(
+                        f"Stage 1/2: Calibrating footage: {percent}% complete"
+                    )
+                if progress_callback:
+                    progress_callback(scaled_progress)
+                # Update progress tracking for polling
+                st.session_state.proxy_last_progress_time = time.time()
+                st.session_state.proxy_last_progress_value = scaled_progress
+            else:
+                # Print progress to console
                 percent = int(scaled_progress * 100)
-                progress_placeholder.text(
-                    f"Stage 1/2: Calibrating footage: {percent}% complete"
-                )
-            if progress_callback:
-                progress_callback(scaled_progress)
+                print(f"\rCalibrating footage: {percent}% complete", end="", flush=True)
 
         # Apply calibration to create temporary file
         success = calibration_service.apply_calibration_to_video(
@@ -2235,15 +2280,18 @@ def _create_proxy_with_calibration_two_stage(
 
         if not success:
             logger.error("Failed to calibrate video segment")
-            if progress_placeholder:
+            if progress_placeholder and in_streamlit:
                 progress_placeholder.error(
                     "Failed to calibrate video - aborting proxy creation"
                 )
             return None
 
+        if in_streamlit:
+            st.session_state.proxy_calibration_stage = "encoding"
+
         # Now use the calibrated segment for the proxy
         logger.info("Stage 2/2: Creating proxy from calibrated video")
-        if progress_placeholder:
+        if progress_placeholder and in_streamlit:
             progress_placeholder.text("Stage 2/2: Creating proxy video...")
 
         # Initialize progress tracking
@@ -2296,7 +2344,7 @@ def _create_proxy_with_calibration_two_stage(
             )
         except Exception as e:
             logger.error(f"Failed to start ffmpeg process: {str(e)}")
-            if progress_placeholder:
+            if progress_placeholder and in_streamlit:
                 progress_placeholder.error(f"Failed to start ffmpeg process: {str(e)}")
             return None
 
@@ -2310,21 +2358,20 @@ def _create_proxy_with_calibration_two_stage(
             monitor_thread.start()
 
             # Update progress from main thread
-            last_update_time = time.time()
             try:
                 while process.poll() is None:
                     try:
                         progress_info = progress_queue.get_nowait()
-                        if progress_placeholder and progress_bar:
+                        if progress_placeholder and progress_bar and in_streamlit:
                             # Scale progress to 50-100% for second stage
-                            scaled_progress = progress_info["progress"]
+                            scaled_progress = 0.5 + (progress_info["progress"] * 0.5)
                             progress_bar.progress(scaled_progress)
 
                             # Calculate time remaining
-                            remaining = progress_info.get("time_remaining", 0)
+                            remaining = progress_info.get("remaining", 0)
                             minutes_remaining = int(remaining / 60)
                             seconds_remaining = int(remaining % 60)
-                            percent_complete = int(progress_info["progress"] * 100)
+                            percent_complete = int(scaled_progress * 100)
 
                             # Format message with encoding speed if available
                             encoding_speed = progress_info.get("encoding_speed", 0)
@@ -2334,12 +2381,17 @@ def _create_proxy_with_calibration_two_stage(
                                 else ""
                             )
 
-                            message = f"Creating preview: {percent_complete}% complete{speed_text}"
+                            message = f"Stage 2/2: Creating proxy: {percent_complete}% complete{speed_text}"
                             message += f" (approx. {minutes_remaining}m {seconds_remaining}s remaining)"
                             progress_placeholder.text(message)
 
                         if progress_callback:
-                            progress_callback(progress_info["progress"])
+                            progress_callback(scaled_progress)
+
+                        # Update progress tracking for polling
+                        if in_streamlit:
+                            st.session_state.proxy_last_progress_time = time.time()
+                            st.session_state.proxy_last_progress_value = scaled_progress
 
                         progress_queue.task_done()
                     except Exception:
@@ -2347,7 +2399,6 @@ def _create_proxy_with_calibration_two_stage(
                         time.sleep(0.1)
             except Exception as e:
                 logger.warning(f"Error monitoring progress: {str(e)}")
-                progress_monitoring_failed = True
             finally:
                 # Stop progress monitoring
                 stop_event.set()
@@ -2361,7 +2412,7 @@ def _create_proxy_with_calibration_two_stage(
 
             if return_code != 0:
                 logger.error(f"ffmpeg process failed with return code {return_code}")
-                if progress_placeholder:
+                if progress_placeholder and in_streamlit:
                     progress_placeholder.error(
                         f"Failed to create proxy video (error code {return_code})"
                     )
@@ -2374,8 +2425,11 @@ def _create_proxy_with_calibration_two_stage(
                 f"Proxy created successfully: {proxy_path} ({proxy_size:.2f} MB)"
             )
 
+            if in_streamlit:
+                st.session_state.proxy_calibration_stage = "completed"
+
             # Final progress update
-            if progress_placeholder and progress_bar:
+            if progress_placeholder and progress_bar and in_streamlit:
                 progress_bar.progress(1.0)
                 total_time = time.time() - start_time
                 minutes = int(total_time / 60)
@@ -2387,13 +2441,13 @@ def _create_proxy_with_calibration_two_stage(
             return str(proxy_path)
         else:
             logger.error("Failed to create proxy video - output file does not exist")
-            if progress_placeholder:
+            if progress_placeholder and in_streamlit:
                 progress_placeholder.error("Failed to create proxy video")
             return None
 
     except Exception as e:
         logger.exception(f"Error creating proxy: {str(e)}")
-        if progress_placeholder:
+        if progress_placeholder and in_streamlit:
             progress_placeholder.error(f"Error creating proxy: {str(e)}")
         return None
 
@@ -2409,3 +2463,66 @@ def _create_proxy_with_calibration_two_stage(
                 )
         except Exception as e:
             logger.warning(f"Failed to clean up temporary file: {str(e)}")
+
+        # Clear calibration tracking
+        if in_streamlit:
+            if "proxy_calibration_stage" in st.session_state:
+                del st.session_state.proxy_calibration_stage
+            if "proxy_calibration_start_time" in st.session_state:
+                del st.session_state.proxy_calibration_start_time
+
+
+def get_video_duration(source_path):
+    """Get the duration of a video file in seconds using ffprobe.
+
+    Args:
+        source_path: Path to the video file
+
+    Returns:
+        Duration in seconds or None if duration could not be determined
+    """
+    try:
+        duration_cmd = [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            str(source_path),
+        ]
+
+        logger.info(f"Running duration command: {' '.join(duration_cmd)}")
+        # Convert command list to a string for shell=True
+        # Ensure proper quoting for paths with spaces
+        duration_cmd_str = " ".join(
+            (
+                f'"{arg}"'
+                if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                else str(arg)
+            )
+            for arg in duration_cmd
+        )
+        logger.info(f"Running shell command: {duration_cmd_str}")
+
+        duration_result = subprocess.run(
+            duration_cmd_str,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            shell=True,
+        )
+        if duration_result.returncode != 0:
+            logger.warning(
+                f"ffprobe returned non-zero exit code: {duration_result.returncode}"
+            )
+            logger.warning(f"ffprobe stderr: {duration_result.stderr}")
+            return None
+        else:
+            duration = float(duration_result.stdout.strip())
+            logger.info(f"Video duration: {duration:.2f} seconds")
+            return duration
+    except Exception as e:
+        logger.warning(f"Could not determine video duration: {str(e)}")
+        return None

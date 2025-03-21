@@ -75,6 +75,12 @@ ls -la data/
    streamlit run app.py
    ```
 
+   or if you need access over a network and full logging:
+
+   ```
+   streamlit run app.py --server.address 0.0.0.0 --server.port 8501 --logger.level=info
+   ```
+
 2. Use the sidebar to select and load a video file.
 
 3. Navigate through the video using the player controls.
