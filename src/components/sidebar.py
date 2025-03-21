@@ -656,6 +656,47 @@ def display_clip_management():
                                 "Failed to create clips from CSV. Check logs for details."
                             )
 
+            # Add batch status update section
+            with st.expander("Update All Clips Status"):
+                st.caption("Change the status of all clips at once.")
+
+                # Status selection dropdown
+                batch_status = st.selectbox(
+                    "Select status to apply to all clips:",
+                    options=["Draft", "Process", "Complete"],
+                    key="batch_status_select",
+                )
+
+                # Apply button
+                if st.button("Apply to All Clips", key="apply_batch_status_btn"):
+                    # Load clips from file
+                    current_clips = clip_service.load_clips_from_file(clips_file)
+
+                    if current_clips:
+                        # Update status for all clips
+                        for clip in current_clips:
+                            clip.status = batch_status
+                            clip.update()  # Update modified timestamp
+
+                        # Update session state clips if they exist
+                        if "clips" in st.session_state:
+                            for clip in st.session_state.clips:
+                                clip.status = batch_status
+                                clip.update()
+
+                        # Mark as modified
+                        st.session_state.clip_modified = True
+
+                        # Save immediately
+                        success = clip_service.save_session_clips(config_manager)
+                        if success:
+                            st.success(f"All clips updated to status: {batch_status}")
+                            st.rerun()  # Reload to show updated status
+                        else:
+                            st.error("Failed to save status changes")
+                    else:
+                        st.info("No clips found to update")
+
             # Create New Clip button - moved below the CSV import section
             if st.button("Create New Clip", key="create_new_clip_sidebar"):
                 # Import here to avoid circular imports

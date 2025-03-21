@@ -2137,3 +2137,105 @@ KeyError: 'source'
 2025-03-21 00:35:57,846 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
 2025-03-21 00:35:57,846 - clipper.processor - INFO - Found 0 clips pending processing
 2025-03-21 00:35:57,846 - clip_processor - INFO - No pending clips found
+2025-03-21 00:37:58,011 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:37:58,358 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:37:58,372 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:37:58,393 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:37:58,406 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:37:58,416 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_070325/GX020019_clips.json
+2025-03-21 00:37:58,431 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:37:58,437 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:37:58,462 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:37:58,473 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:37:58,473 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:37:58,473 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:37:58,473 - clip_processor - INFO - No pending clips found
+2025-03-21 00:39:58,487 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:39:58,799 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:39:58,800 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:39:58,800 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:39:58,801 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:39:58,803 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:39:58,804 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:39:58,804 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:39:58,805 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:39:58,806 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:39:58,806 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:39:58,806 - clip_processor - INFO - No pending clips found
+2025-03-21 00:41:59,134 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:41:59,135 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:41:59,136 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:41:59,197 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:41:59,197 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:41:59,199 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:41:59,200 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:41:59,200 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:41:59,200 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:41:59,200 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:41:59,200 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:41:59,200 - clip_processor - INFO - No pending clips found
+2025-03-21 00:43:59,206 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:43:59,207 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:43:59,207 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:43:59,208 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:43:59,208 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:43:59,219 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:43:59,220 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:43:59,220 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:43:59,221 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:43:59,221 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:43:59,221 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:43:59,221 - clip_processor - INFO - No pending clips found
+2025-03-21 00:45:59,227 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:45:59,227 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:45:59,228 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:45:59,229 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:45:59,230 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:45:59,240 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:45:59,243 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:45:59,244 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:45:59,247 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:45:59,256 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:45:59,257 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:45:59,257 - clip_processor - INFO - No pending clips found
+2025-03-21 00:47:59,264 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:47:59,266 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:47:59,267 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:47:59,268 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:47:59,268 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:47:59,284 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:47:59,286 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:47:59,286 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:47:59,287 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:47:59,287 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:47:59,287 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:47:59,287 - clip_processor - INFO - No pending clips found
+2025-03-21 00:49:59,295 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:49:59,296 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:49:59,296 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:49:59,296 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:49:59,297 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:49:59,298 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:49:59,299 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:49:59,299 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:49:59,299 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:49:59,299 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:49:59,299 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:49:59,299 - clip_processor - INFO - No pending clips found
+2025-03-21 00:49:59,642 - clip_processor - INFO - Daemon stopped by user
+2025-03-21 00:50:58,037 - clipper.config - INFO - Successfully loaded config from config.yaml
+2025-03-21 00:50:58,038 - clipper.config - INFO - ConfigManager initialized with config from config.yaml
+2025-03-21 00:50:58,038 - clip_processor - INFO - Starting clip processor daemon, scanning every 120 seconds
+2025-03-21 00:50:58,038 - clip_processor - INFO - Exporting in both regular and CV-optimized formats
+2025-03-21 00:50:58,039 - clipper.clip - INFO - Loaded 0 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy copy_clips.json
+2025-03-21 00:50:58,432 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010001_copy_clips.json
+2025-03-21 00:50:58,433 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_020325/GX010004_clips.json
+2025-03-21 00:50:58,433 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_030325/GX010009_clips.json
+2025-03-21 00:50:58,433 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/GP1/SESSION_040325/GX020014_clips.json
+2025-03-21 00:50:58,436 - clipper.clip - INFO - Loaded 100 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_060325/C0019_clips.json
+2025-03-21 00:50:58,436 - clipper.clip - INFO - Loaded 1 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_070325/C0023_clips.json
+2025-03-21 00:50:58,436 - clipper.clip - INFO - Loaded 2 clips from data/prept/03_CLIPPED/_configs/SONY_300/SESSION_080325/C0004_clips.json
+2025-03-21 00:50:58,437 - clipper.clip - INFO - Loaded 24 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_020325/C0004_clips.json
+2025-03-21 00:50:58,437 - clipper.clip - INFO - Loaded 3 clips from data/prept/03_CLIPPED/_configs/SONY_70/SESSION_040325/C0015_clips.json
+2025-03-21 00:50:58,437 - clipper.processor - INFO - Found 0 clips pending processing
+2025-03-21 00:50:58,437 - clip_processor - INFO - No pending clips found
