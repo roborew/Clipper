@@ -1288,14 +1288,47 @@ def display_settings(config_manager):
         # Set alpha slider only shown when not using pre-calibrated footage
         alpha = calibration_settings.get("alpha", 0.5)
         if not use_calibrated:
-            alpha = st.slider(
-                "Calibration Alpha",
-                min_value=0.0,
-                max_value=1.0,
-                value=alpha,
-                step=0.1,
-                help="Controls calibration undistortion: 1.0 preserves all pixels, 0.0 removes black borders (may crop image)",
-            )
+            # Calibration alpha slider with direct input
+            alpha_slider_col, alpha_input_col = st.columns([3, 1])
+
+            with alpha_slider_col:
+                alpha = st.slider(
+                    "Calibration Alpha",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=alpha,
+                    step=0.1,
+                    key="alpha_slider",
+                    help="Controls calibration undistortion: 1.0 preserves all pixels, 0.0 removes black borders (may crop image)",
+                )
+
+            with alpha_input_col:
+                # Function to handle direct alpha input
+                def handle_alpha_input():
+                    # Ensure the input is within valid range
+                    alpha_value = max(0.0, min(st.session_state.alpha_input, 1.0))
+                    # Update the slider
+                    st.session_state.alpha_slider = alpha_value
+
+                # Initialize alpha_input if not exists
+                if "alpha_input" not in st.session_state:
+                    st.session_state.alpha_input = alpha
+
+                # Direct alpha input (with more precision than slider)
+                alpha_input = st.number_input(
+                    "Value",
+                    min_value=0.0,
+                    max_value=1.0,
+                    value=st.session_state.alpha_input,
+                    step=0.01,
+                    format="%.2f",
+                    key="alpha_input",
+                    on_change=handle_alpha_input,
+                )
+
+                # Ensure alpha uses the input value if changed
+                if alpha != alpha_input:
+                    alpha = alpha_input
 
         # When calibration settings change
         if use_calibrated != calibration_settings.get(
@@ -1349,13 +1382,45 @@ def display_settings(config_manager):
                 help="Width of proxy videos (height will be calculated to maintain aspect ratio)",
             )
 
-            proxy_quality = st.slider(
-                "Proxy quality",
-                min_value=18,
-                max_value=35,
-                value=proxy_settings["quality"],
-                help="CRF value (18=high quality/larger file, 35=low quality/smaller file)",
-            )
+            # Proxy quality slider with direct input
+            quality_slider_col, quality_input_col = st.columns([3, 1])
+
+            with quality_slider_col:
+                proxy_quality = st.slider(
+                    "Proxy quality",
+                    min_value=18,
+                    max_value=35,
+                    value=proxy_settings["quality"],
+                    help="CRF value (18=high quality/larger file, 35=low quality/smaller file)",
+                    key="proxy_quality_slider",
+                )
+
+            with quality_input_col:
+                # Function to handle direct quality input
+                def handle_quality_input():
+                    # Ensure the input is within valid range
+                    quality = max(18, min(st.session_state.quality_input, 35))
+                    # Update the slider
+                    st.session_state.proxy_quality_slider = quality
+
+                # Initialize quality_input if not exists
+                if "quality_input" not in st.session_state:
+                    st.session_state.quality_input = proxy_settings["quality"]
+
+                # Direct quality input
+                proxy_quality_input = st.number_input(
+                    "CRF",
+                    min_value=18,
+                    max_value=35,
+                    value=st.session_state.quality_input,
+                    step=1,
+                    key="quality_input",
+                    on_change=handle_quality_input,
+                )
+
+                # Ensure proxy_quality uses the input value if changed
+                if proxy_quality != proxy_quality_input:
+                    proxy_quality = proxy_quality_input
 
             # Update proxy settings in config if changed
             if (

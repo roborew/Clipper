@@ -160,10 +160,37 @@ def select_crop_region(frame, current_frame, clip=None, output_resolution="1080p
         # Create columns for movement controls
         col1, col2, col3 = st.columns(3)
 
-        # Movement amount slider
-        st.session_state.move_amount = st.slider(
-            "Movement Step Size", 1, 200, st.session_state.move_amount
-        )
+        # Movement amount slider with direct input
+        slider_col, input_col = st.columns([3, 1])
+
+        with slider_col:
+            st.session_state.move_amount = st.slider(
+                "Movement Step Size", 1, 200, st.session_state.move_amount
+            )
+
+        with input_col:
+            # Function to handle direct step size input
+            def handle_step_input():
+                # Ensure the input is within valid range
+                step_size = max(1, min(st.session_state.step_input, 200))
+                # Update the slider
+                st.session_state.move_amount = step_size
+
+            # Initialize step_input if not exists
+            if "step_input" not in st.session_state:
+                st.session_state.step_input = st.session_state.move_amount
+
+            # Direct step size input
+            st.number_input(
+                "Pixels",
+                min_value=1,
+                max_value=200,
+                value=st.session_state.step_input,
+                step=1,
+                key="step_input",
+                on_change=handle_step_input,
+            )
+
         move_amount = st.session_state.move_amount
 
         with col1:

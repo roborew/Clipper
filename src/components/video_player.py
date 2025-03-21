@@ -481,24 +481,63 @@ def display_video_player(
             if st.button("Last Frame ⏭️", key="btn_last", on_click=go_to_last_frame):
                 pass  # Action handled in on_click
 
-            # Frame slider
-            def handle_slider_change():
-                """Handle slider change event after release"""
-                if on_frame_change:
-                    on_frame_change(st.session_state.frame_slider)
-                # Removed st.rerun() as it's a no-op in callbacks
+            # Frame slider and direct input
+            slider_col, input_col = st.columns([4, 1])
 
-            new_frame = st.slider(
-                "Frame",
-                0,
-                max(0, total_frames - 1),
-                current_frame,
-                key="frame_slider",
-                on_change=handle_slider_change,
-            )
-            if new_frame != current_frame:
-                current_frame = new_frame
-                # Remove the immediate frame change handling here since it's handled in on_change
+            with slider_col:
+
+                def handle_slider_change():
+                    """Handle slider change event after release"""
+                    if on_frame_change:
+                        on_frame_change(st.session_state.frame_slider)
+                    # Update the numeric input field to match slider
+                    if "frame_input" in st.session_state:
+                        st.session_state.frame_input = st.session_state.frame_slider
+
+                new_frame = st.slider(
+                    "Frame",
+                    0,
+                    max(0, total_frames - 1),
+                    current_frame,
+                    key="frame_slider",
+                    on_change=handle_slider_change,
+                )
+                if new_frame != current_frame:
+                    current_frame = new_frame
+
+            with input_col:
+                # Function to handle direct frame input
+                def handle_frame_input():
+                    """Handle direct frame input"""
+                    # Ensure the input is within valid range
+                    frame_num = max(
+                        0, min(st.session_state.frame_input, total_frames - 1)
+                    )
+                    # Update the slider
+                    st.session_state.frame_slider = frame_num
+                    # Call the frame change callback
+                    if on_frame_change:
+                        on_frame_change(frame_num)
+
+                # Initialize frame_input session state if not exists
+                if "frame_input" not in st.session_state:
+                    # Make sure the initial value is within valid range
+                    st.session_state.frame_input = max(
+                        0, min(current_frame, max(0, total_frames - 1))
+                    )
+
+                # Direct frame number input - ensure value is within valid range
+                st.number_input(
+                    "Go to frame",
+                    min_value=0,
+                    max_value=max(0, total_frames - 1),
+                    value=max(
+                        0, min(st.session_state.frame_input, max(0, total_frames - 1))
+                    ),
+                    step=1,
+                    key="frame_input",
+                    on_change=handle_frame_input,
+                )
 
             # Timecode display and input
             time_col1, time_col2 = st.columns([1, 1])
@@ -566,18 +605,62 @@ def display_video_player(
                 def handle_clip_slider_change():
                     # Update the current frame to match the clip slider
                     st.session_state.current_frame = st.session_state.clip_frame_slider
+                    # Update the input field to match
+                    if "clip_frame_input" in st.session_state:
+                        st.session_state.clip_frame_input = (
+                            st.session_state.clip_frame_slider
+                        )
 
-                # Create the slider with the clip's frame range
-                new_frame = st.slider(
-                    "Navigate within clip frames",
-                    min_value=clip.start_frame,
-                    max_value=clip.end_frame,
-                    value=st.session_state.clip_frame_slider,
-                    step=1,
-                    key="clip_frame_slider",
-                    on_change=handle_clip_slider_change,
-                    help="Navigate only within the current clip's frame range",
-                )
+                # Create two columns for slider and direct input
+                clip_slider_col, clip_input_col = st.columns([4, 1])
+
+                with clip_slider_col:
+                    # Create the slider with the clip's frame range
+                    new_frame = st.slider(
+                        "Navigate within clip frames",
+                        min_value=clip.start_frame,
+                        max_value=clip.end_frame,
+                        value=st.session_state.clip_frame_slider,
+                        step=1,
+                        key="clip_frame_slider",
+                        on_change=handle_clip_slider_change,
+                        help="Navigate only within the current clip's frame range",
+                    )
+
+                with clip_input_col:
+                    # Function to handle direct frame input
+                    def handle_clip_frame_input():
+                        """Handle direct clip frame input"""
+                        # Ensure the input is within valid range
+                        frame_num = max(
+                            clip.start_frame,
+                            min(st.session_state.clip_frame_input, clip.end_frame),
+                        )
+                        # Update the slider and current frame
+                        st.session_state.clip_frame_slider = frame_num
+                        st.session_state.current_frame = frame_num
+
+                    # Initialize clip_frame_input if not exists
+                    if "clip_frame_input" not in st.session_state:
+                        # Ensure value is within clip's frame range
+                        clip_frame_value = st.session_state.clip_frame_slider
+                        st.session_state.clip_frame_input = max(
+                            clip.start_frame, min(clip_frame_value, clip.end_frame)
+                        )
+
+                    # Direct frame number input - ensure value is within valid range
+                    st.number_input(
+                        "Go to frame",
+                        min_value=clip.start_frame,
+                        max_value=clip.end_frame,
+                        value=max(
+                            clip.start_frame,
+                            min(st.session_state.clip_frame_input, clip.end_frame),
+                        ),
+                        step=1,
+                        key="clip_frame_input",
+                        on_change=handle_clip_frame_input,
+                    )
 
                 # Display the relative frame position within the clip
                 duration_frames = clip.get_duration_frames()
@@ -990,24 +1073,69 @@ def play_clip_preview(
             if st.button("Set Out Point", key="set_out_point", on_click=set_out_point):
                 pass  # Action handled in on_click
 
-            # Frame slider for precise navigation
-            def handle_preview_slider_change():
-                """Handle preview slider change event after release"""
-                if on_frame_change:
-                    on_frame_change(st.session_state.preview_frame_slider)
-                # Removed st.rerun() as it's a no-op in callbacks
+            # Frame slider for precise navigation with direct input
+            preview_slider_col, preview_input_col = st.columns([4, 1])
 
-            new_frame = st.slider(
-                "Frame",
-                start_frame,
-                end_frame,
-                st.session_state.preview_current_frame,
-                key="preview_frame_slider",
-                on_change=handle_preview_slider_change,
-            )
-            if new_frame != st.session_state.preview_current_frame:
-                st.session_state.preview_current_frame = new_frame
-                # Remove the immediate frame change handling here since it's handled in on_change
+            with preview_slider_col:
+
+                def handle_preview_slider_change():
+                    """Handle preview slider change event after release"""
+                    if on_frame_change:
+                        on_frame_change(st.session_state.preview_frame_slider)
+                    # Update the input field to match
+                    if "preview_frame_input" in st.session_state:
+                        st.session_state.preview_frame_input = (
+                            st.session_state.preview_frame_slider
+                        )
+
+                new_frame = st.slider(
+                    "Frame",
+                    start_frame,
+                    end_frame,
+                    st.session_state.preview_current_frame,
+                    key="preview_frame_slider",
+                    on_change=handle_preview_slider_change,
+                )
+                if new_frame != st.session_state.preview_current_frame:
+                    st.session_state.preview_current_frame = new_frame
+
+            with preview_input_col:
+                # Function to handle direct frame input
+                def handle_preview_frame_input():
+                    """Handle direct preview frame input"""
+                    # Ensure the input is within valid range
+                    frame_num = max(
+                        start_frame,
+                        min(st.session_state.preview_frame_input, end_frame),
+                    )
+                    # Update the slider and current frame
+                    st.session_state.preview_frame_slider = frame_num
+                    st.session_state.preview_current_frame = frame_num
+                    # Call the frame change callback
+                    if on_frame_change:
+                        on_frame_change(frame_num)
+
+                # Initialize preview_frame_input if not exists
+                if "preview_frame_input" not in st.session_state:
+                    # Ensure value is within valid frame range
+                    preview_frame_value = st.session_state.preview_current_frame
+                    st.session_state.preview_frame_input = max(
+                        start_frame, min(preview_frame_value, end_frame)
+                    )
+
+                # Direct frame number input - ensure value is within valid range
+                st.number_input(
+                    "Go to frame",
+                    min_value=start_frame,
+                    max_value=end_frame,
+                    value=max(
+                        start_frame,
+                        min(st.session_state.preview_frame_input, end_frame),
+                    ),
+                    step=1,
+                    key="preview_frame_input",
+                    on_change=handle_preview_frame_input,
+                )
 
             # Timecode display and input
             preview_time_col1, preview_time_col2 = st.columns([1, 1])
