@@ -166,8 +166,32 @@ class Clip:
         return clip
 
     def update(self):
-        """Update the modified timestamp"""
+        """Mark the clip as modified"""
         self.modified_at = datetime.now().isoformat()
+
+    def copy(self):
+        """Create a copy of this clip for variations"""
+        new_clip = Clip(
+            name=self.name,
+            source_path=self.source_path,
+            start_frame=self.start_frame,
+            end_frame=self.end_frame,
+            output_resolution=self.output_resolution,
+            status=self.status,
+            crop_keyframes=self.crop_keyframes.copy() if self.crop_keyframes else None,
+        )
+
+        # Set the id to match the original clip
+        new_clip.id = self.id
+
+        # Handle optional attributes
+        if hasattr(self, "export_path"):
+            new_clip.export_path = self.export_path
+
+        if hasattr(self, "crop_region"):
+            new_clip.crop_region = self.crop_region
+
+        return new_clip
 
     def get_duration_frames(self):
         """Get the duration of the clip in frames"""

@@ -15,6 +15,8 @@ from pathlib import Path
 import re
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
+import concurrent.futures
+from datetime import datetime
 
 # Add the project root to the path so we can import the app modules
 script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
@@ -31,6 +33,8 @@ from src.services.clip_service import save_clips, load_clips
 from src.services.config_manager import ConfigManager
 from src.services import video_service
 from src.services import proxy_service
+from src.services import clip_service
+from src.utils.multi_crop import process_clip_with_variations
 
 # Set up logging
 logging.basicConfig(
@@ -132,6 +136,54 @@ def extract_session_folder(video_path):
         return parts[-2]  # Second-to-last part is the parent folder
 
     return "UNKNOWN"
+
+
+def calculate_wider_crop(original_crop, factor, frame_dimensions):
+    """
+    Calculate a wider crop region centered around the original crop,
+    with intelligent edge boundary handling.
+
+    Args:
+        original_crop: Original crop region (x, y, width, height)
+        factor: Multiplier for crop size (1.5 = 50% larger)
+        frame_dimensions: (width, height) of the source frame
+
+    Returns:
+        New crop region (x, y, width, height)
+    """
+    if original_crop is None:
+        return None
+
+    x, y, width, height = original_crop
+    frame_width, frame_height = frame_dimensions
+
+    # Calculate new dimensions - ensure they don't exceed frame dimensions
+    new_width = min(int(width * factor), frame_width)
+    new_height = min(int(height * factor), frame_height)
+
+    # Calculate the ideal centered position
+    ideal_x = x - (new_width - width) // 2
+    ideal_y = y - (new_height - height) // 2
+
+    # Adjust position to stay within frame boundaries
+    # If we're pushing against left edge
+    if ideal_x < 0:
+        new_x = 0
+    # If we're pushing against right edge
+    elif ideal_x + new_width > frame_width:
+        new_x = max(0, frame_width - new_width)
+    else:
+        new_x = ideal_x
+
+    # Same for vertical position
+    if ideal_y < 0:
+        new_y = 0
+    elif ideal_y + new_height > frame_height:
+        new_y = max(0, frame_height - new_height)
+    else:
+        new_y = ideal_y
+
+    return (new_x, new_y, new_width, new_height)
 
 
 def resolve_source_path(source_path, config_manager):
@@ -240,7 +292,15 @@ def resolve_source_path(source_path, config_manager):
     return path
 
 
-def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=False):
+def process_clip(
+    clip,
+    camera_filter=None,
+    cv_optimized=False,
+    both_formats=False,
+    multi_crop=False,
+    crop_variations=None,
+    wide_crop_factor=1.5,
+):
     """
     Process a single clip - this is where you would implement your custom processing logic
 
@@ -249,6 +309,9 @@ def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=Fals
         camera_filter: Optional filter to only process clips from specific cameras
         cv_optimized: Whether to optimize for computer vision (higher quality)
         both_formats: Whether to export in both regular and CV-optimized formats
+        multi_crop: Whether to generate multiple crop variations
+        crop_variations: List of crop variations to generate (original, wide, full)
+        wide_crop_factor: Multiplier for the wide crop (1.5 = 50% larger)
 
     Returns:
         True if processing was successful, False otherwise
@@ -262,6 +325,9 @@ def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=Fals
             logger.info("Using CV optimization for export")
         if both_formats:
             logger.info("Exporting in both regular and CV-optimized formats")
+        if multi_crop:
+            logger.info(f"Generating multiple crop variations: {crop_variations}")
+            logger.info(f"Wide crop factor: {wide_crop_factor}")
 
         # Get the full path to the source video
         config_manager = ConfigManager()
@@ -270,16 +336,8 @@ def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=Fals
         logger.info(f"Resolved source path: {source_path}")
         logger.info(f"DEBUG: Source path exists: {os.path.exists(source_path)}")
 
-        # Get calibration settings
-        calib_settings = config_manager.get_calibration_settings()
-        use_calibrated_footage = calib_settings.get("use_calibrated_footage", False)
-        logger.info(f"Using calibrated footage: {use_calibrated_footage}")
-
-        # Extract camera type and session folder
-        camera_type = extract_camera_type(source_path)
-        session_folder = extract_session_folder(source_path)
-
         # Check camera type if filter is specified
+        camera_type = extract_camera_type(source_path)
         if camera_filter:
             if not camera_matches_filter(camera_type, camera_filter):
                 logger.info(
@@ -287,146 +345,205 @@ def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=Fals
                 )
                 return False
 
-        # Get original filename without extension
-        original_filename = os.path.splitext(os.path.basename(source_path))[0]
+        # STEP 1: Only delete previous exports if clip was previously processed
+        # Check if clip has existing export paths that need cleaning up
+        has_existing_exports = False
+        paths_to_delete = []
 
-        # Find the next available clip number for this source file
-        clip_number = 1
+        # Collect paths from export_path (either list or string)
+        if hasattr(clip, "export_path") and clip.export_path:
+            if isinstance(clip.export_path, list):
+                # Only add non-empty paths
+                valid_paths = [p for p in clip.export_path if p]
+                if valid_paths:
+                    has_existing_exports = True
+                    paths_to_delete.extend(valid_paths)
+                    logger.info(
+                        f"Found {len(valid_paths)} existing paths in export_path array"
+                    )
+            elif isinstance(clip.export_path, str) and clip.export_path.strip():
+                has_existing_exports = True
+                paths_to_delete.append(clip.export_path)
+                logger.info(f"Found existing path in export_path: {clip.export_path}")
 
-        # Log calibration setting
-        logger.info(
-            f"Calibration will {'be skipped' if use_calibrated_footage else 'be applied'} based on configuration"
-        )
-
-        # Keep track of the generated export paths
-        success = True
-        export_paths = []
-
-        # Log debug information about the source video path
-        logger.info(f"Exporting clip from {source_path}")
-
-        # Log debug information about keyframes
-        logger.info(f"DEBUG: About to call proxy_service.export_clip")
-        logger.info(f"DEBUG: Crop keyframes: {clip.crop_keyframes}")
-
-        # If both formats are requested, process regular format first
-        if both_formats or not cv_optimized:
-            # Create a progress bar for regular format
-            total_frames = clip.end_frame - clip.start_frame + 1
-            pbar = tqdm(total=100, desc=f"Processing {clip.name} (H.264)", unit="%")
-
-            # Create a progress callback for export
-            def progress_callback(progress):
-                # Update progress bar based on percentage (0-1)
-                current_percent = int(progress * 100)
-                # Update to the current percentage, avoiding going backwards
-                if current_percent > pbar.n:
-                    pbar.update(current_percent - pbar.n)
-
-            # Use proxy_service.export_clip for regular format
-            standard_export_path = proxy_service.export_clip(
-                source_path=source_path,
-                clip_name=(
-                    f"{clip.name}_{clip_number}" if clip_number > 1 else clip.name
-                ),
-                start_frame=clip.start_frame,
-                end_frame=clip.end_frame,
-                crop_region=clip.get_crop_region_at_frame(
-                    clip.start_frame,
-                    use_proxy=False,  # Use source resolution for export
-                ),
-                crop_keyframes=clip.crop_keyframes,
-                output_resolution=clip.output_resolution,
-                cv_optimized=False,  # Regular format
-                config_manager=config_manager,
-                progress_callback=progress_callback,
-            )
-
-            pbar.close()
-
-            if standard_export_path:
+        # Also check export_paths attribute as a backup
+        if hasattr(clip, "export_paths") and clip.export_paths:
+            additional_paths = [
+                p.strip() for p in clip.export_paths.split(",") if p.strip()
+            ]
+            if additional_paths:
+                has_existing_exports = True
+                for path in additional_paths:
+                    if path and path not in paths_to_delete:
+                        paths_to_delete.append(path)
                 logger.info(
-                    f"Successfully processed regular format: {standard_export_path}"
+                    f"Found {len(additional_paths)} paths in export_paths string"
                 )
-                export_paths.append(standard_export_path)
-            else:
-                logger.error(f"Failed to process regular format for clip: {clip.name}")
-                success = False
 
-        # If both formats are requested or cv_optimized is set, process CV-optimized format
-        if both_formats or cv_optimized:
-            # Create a progress bar for CV-optimized format
-            total_frames = clip.end_frame - clip.start_frame + 1
-            pbar = tqdm(
-                total=100, desc=f"Processing {clip.name} (CV-optimized)", unit="%"
-            )
-
-            # Create a progress callback for export
-            def progress_callback(progress):
-                # Update progress bar based on percentage (0-1)
-                current_percent = int(progress * 100)
-                # Update to the current percentage, avoiding going backwards
-                if current_percent > pbar.n:
-                    pbar.update(current_percent - pbar.n)
-
-            # Use proxy_service.export_clip for CV-optimized format
-            cv_export_path = proxy_service.export_clip(
-                source_path=source_path,
-                clip_name=(
-                    f"{clip.name}_cv_{clip_number}"
-                    if clip_number > 1
-                    else f"{clip.name}_cv"
-                ),  # Append _cv to differentiate
-                start_frame=clip.start_frame,
-                end_frame=clip.end_frame,
-                crop_region=clip.get_crop_region_at_frame(
-                    clip.start_frame,
-                    use_proxy=False,  # Use source resolution for export
-                ),
-                crop_keyframes=clip.crop_keyframes,
-                output_resolution=clip.output_resolution,
-                cv_optimized=True,  # CV-optimized format
-                config_manager=config_manager,
-                progress_callback=progress_callback,
-            )
-
-            pbar.close()
-
-            if cv_export_path:
-                logger.info(
-                    f"Successfully processed CV-optimized format: {cv_export_path}"
-                )
-                export_paths.append(cv_export_path)
-            else:
-                logger.error(
-                    f"Failed to process CV-optimized format for clip: {clip.name}"
-                )
-                success = False
-
-        # Update clip's export path to the most recent successful export
-        if export_paths:
-            if both_formats and len(export_paths) > 1:
-                # When exporting both formats, use an array for export_path
-                # instead of a single string to store all paths
-                clip.export_path = export_paths  # Store as a list/array
-                logger.info(
-                    f"DEBUG: Multiple export paths stored as array: {clip.export_path}"
-                )
-            else:
-                # For single format, store as a simple string path
-                clip.export_path = export_paths[-1]
-
-            # Also keep the export_paths attribute for backward compatibility
-            clip.export_paths = ",".join(export_paths)
+        # Only delete if clip was previously processed (has export paths)
+        if has_existing_exports and paths_to_delete:
             logger.info(
-                f"DEBUG: proxy_service.export_clip returned paths: {export_paths}"
+                f"Clip was previously processed. Deleting {len(paths_to_delete)} previous export(s) before processing"
             )
+            for path in paths_to_delete:
+                if os.path.exists(path):
+                    try:
+                        logger.info(f"Cleaning up previous export: {path}")
+                        os.remove(path)
+                    except Exception as e:
+                        logger.warning(f"Failed to delete previous export {path}: {e}")
+        else:
+            if not has_existing_exports:
+                logger.info(
+                    f"First-time processing for clip {clip.name} - no previous exports to clean up"
+                )
+            elif not paths_to_delete:
+                logger.info(
+                    f"Clip {clip.name} has export_path set but no valid paths to delete"
+                )
 
-        if success:
+        # STEP 2: Initialize export collections
+        # Always initialize export_path as an empty list to collect new paths
+        clip.export_path = []
+        if hasattr(clip, "export_paths"):
+            clip.export_paths = ""
+
+        # STEP 3: Determine formats to process
+        formats_to_process = []
+        if both_formats:
+            formats_to_process = [False, True]  # Regular, then CV-optimized
+        elif cv_optimized:
+            formats_to_process = [True]  # CV-optimized only
+        else:
+            formats_to_process = [False]  # Regular only
+
+        overall_success = True
+
+        # Define a function to process a single clip variation with a specific format
+        def process_single_clip(variation_clip, is_cv_format=False):
+            try:
+                # Create a descriptive progress bar
+                format_label = "CV" if is_cv_format else "H.264"
+                pbar = tqdm(
+                    total=100,
+                    desc=f"Processing {variation_clip.name} ({format_label})",
+                    unit="%",
+                )
+
+                # Create a progress callback for export
+                def progress_callback(progress):
+                    # Update progress bar based on percentage (0-1)
+                    current_percent = int(progress * 100)
+                    # Update to the current percentage, avoiding going backwards
+                    if current_percent > pbar.n:
+                        pbar.update(current_percent - pbar.n)
+
+                # Export the clip using proxy_service
+                export_path = proxy_service.export_clip(
+                    source_path=source_path,
+                    clip_name=variation_clip.name,
+                    start_frame=variation_clip.start_frame,
+                    end_frame=variation_clip.end_frame,
+                    crop_region=variation_clip.get_crop_region_at_frame(
+                        variation_clip.start_frame,
+                        use_proxy=False,  # Use source resolution for export
+                    ),
+                    crop_keyframes=variation_clip.crop_keyframes,
+                    output_resolution=variation_clip.output_resolution,
+                    cv_optimized=is_cv_format,
+                    config_manager=config_manager,
+                    progress_callback=progress_callback,
+                    clean_up_existing=False,  # Don't delete files in export_clip - we handle it at clip level
+                )
+
+                pbar.close()
+
+                if export_path:
+                    logger.info(
+                        f"Successfully processed {variation_clip.name} ({format_label}): {export_path}"
+                    )
+                    return export_path
+                else:
+                    logger.error(
+                        f"Failed to process {variation_clip.name} ({format_label})"
+                    )
+                    return None
+            except Exception as e:
+                logger.exception(f"Error processing {variation_clip.name}: {str(e)}")
+                return None
+
+        # STEP 4: Process each format and collect ALL export paths
+        for is_cv_optimized in formats_to_process:
+            format_label = "CV" if is_cv_optimized else "H.264"
+            logger.info(f"Processing format: {format_label}")
+
+            # If multi-crop is enabled, use the process_clip_with_variations function
+            if multi_crop:
+                # Process with variations - this adds paths to clip.export_path
+                format_results = process_clip_with_variations(
+                    lambda var_clip, **kwargs: process_single_clip(
+                        var_clip, is_cv_optimized
+                    ),
+                    clip,
+                    crop_variations,
+                    wide_crop_factor,
+                    camera_type=camera_type,
+                    config_manager=config_manager,
+                    multi_crop=multi_crop,
+                )
+
+                # Check if all variations were successful
+                if not all(format_results.values()):
+                    overall_success = False
+
+                # Log current state of export paths
+                if isinstance(clip.export_path, list):
+                    logger.info(
+                        f"After processing {format_label} format, export_path contains {len(clip.export_path)} paths"
+                    )
+            else:
+                # Process a single clip with no variations
+                export_path = process_single_clip(clip, is_cv_optimized)
+                if export_path:
+                    # Add to clip.export_path
+                    if isinstance(clip.export_path, list):
+                        clip.export_path.append(export_path)
+                    else:
+                        clip.export_path = [export_path]
+                else:
+                    overall_success = False
+
+        # STEP 5: Final updates to ensure consistent export path format
+        if hasattr(clip, "export_path"):
+            if isinstance(clip.export_path, list):
+                logger.info(
+                    f"Final export_path contains {len(clip.export_path)} paths: {clip.export_path}"
+                )
+
+                # Also update export_paths string attribute for compatibility
+                if hasattr(clip, "export_paths"):
+                    clip.export_paths = ",".join(clip.export_path)
+            else:
+                # Shouldn't happen but just in case
+                logger.warning(
+                    f"Unexpected: Final export_path is not a list: {clip.export_path}"
+                )
+                if isinstance(clip.export_path, str) and clip.export_path:
+                    # Convert single string to list
+                    clip.export_path = [clip.export_path]
+                    if hasattr(clip, "export_paths"):
+                        clip.export_paths = clip.export_path
+
+        # Log final export path state
+        logger.info(f"Final export_path: {clip.export_path}")
+
+        if overall_success:
             logger.info(f"Successfully processed clip: {clip.name}")
             return True
         else:
-            logger.error(f"Failed to process clip: {clip.name}")
+            logger.error(
+                f"Failed to process one or more variations of clip: {clip.name}"
+            )
             return False
 
     except Exception as e:
@@ -434,208 +551,313 @@ def process_clip(clip, camera_filter=None, cv_optimized=False, both_formats=Fals
         return False
 
 
+def save_processed_clips(clips, config_manager):
+    """
+    Save processed clips back to their config files
+
+    Args:
+        clips: List of clips that have been processed
+        config_manager: ConfigManager instance
+
+    Returns:
+        Number of successfully saved clips
+    """
+    saved_count = 0
+    logger.info(f"Saving {len(clips)} processed clips")
+
+    # Get all clip config files
+    clip_files = {}
+    for config_file in config_manager.configs_dir.glob("**/*.json"):
+        try:
+            config_clips = clip_service.load_clips(config_file)
+            if config_clips:
+                clip_files[config_file] = config_clips
+        except Exception as e:
+            logger.warning(f"Error loading clips from {config_file}: {e}")
+
+    # For each processed clip, find its source config file and update it
+    for processed_clip in clips:
+        found = False
+        for config_file, config_clips in clip_files.items():
+            for i, config_clip in enumerate(config_clips):
+                # Match by ID if available
+                if (
+                    hasattr(processed_clip, "id")
+                    and hasattr(config_clip, "id")
+                    and processed_clip.id == config_clip.id
+                ):
+                    logger.info(
+                        f"Found clip {processed_clip.name} (ID: {processed_clip.id}) in {config_file}"
+                    )
+                    config_clips[i] = processed_clip
+                    found = True
+                    break
+                # Fallback to matching by name + source_path + frames
+                elif (
+                    processed_clip.name == config_clip.name
+                    and processed_clip.source_path == config_clip.source_path
+                    and processed_clip.start_frame == config_clip.start_frame
+                    and processed_clip.end_frame == config_clip.end_frame
+                ):
+                    logger.info(
+                        f"Found clip {processed_clip.name} (matching name/source/frames) in {config_file}"
+                    )
+                    config_clips[i] = processed_clip
+                    found = True
+                    break
+
+            if found:
+                # Save the updated config
+                try:
+                    clip_service.save_clips(config_clips, config_file)
+                    logger.info(f"Saved updated clips to {config_file}")
+                    saved_count += 1
+                except Exception as e:
+                    logger.error(f"Error saving clips to {config_file}: {e}")
+                break
+
+        if not found:
+            logger.warning(
+                f"Could not find configuration file for clip: {processed_clip.name}"
+            )
+
+    return saved_count
+
+
+def verify_export_count(clip, both_formats, multi_crop, crop_variations):
+    """
+    Verify that the correct number of exported files were created.
+
+    Args:
+        clip: The processed clip
+        both_formats: Whether both formats were enabled
+        multi_crop: Whether multi-crop was enabled
+        crop_variations: The crop variations used
+
+    Returns:
+        bool: True if the correct number of exports exist, False otherwise
+    """
+    if not hasattr(clip, "export_path"):
+        logger.warning(f"Clip {clip.name} has no export_path attribute")
+        return False
+
+    if not isinstance(clip.export_path, list):
+        logger.warning(
+            f"Clip {clip.name} export_path is not a list: {clip.export_path}"
+        )
+        return False
+
+    # Calculate expected number of exports
+    expected_count = 1  # Default: single export
+
+    if multi_crop:
+        # Count the number of variations
+        if isinstance(crop_variations, str):
+            variation_list = [
+                v.strip() for v in crop_variations.split(",") if v.strip()
+            ]
+            expected_count = len(variation_list)
+        elif isinstance(crop_variations, list):
+            expected_count = len(crop_variations)
+
+    if both_formats:
+        expected_count *= 2  # Double for both formats
+
+    actual_count = len(clip.export_path)
+
+    if actual_count != expected_count:
+        logger.warning(
+            f"Expected {expected_count} exports for clip {clip.name}, but found {actual_count}. "
+            f"Options: both_formats={both_formats}, multi_crop={multi_crop}, variations={crop_variations}"
+        )
+        # Check if files actually exist on disk
+        missing_files = [path for path in clip.export_path if not os.path.exists(path)]
+        if missing_files:
+            logger.warning(
+                f"The following files in export_path don't exist on disk: {missing_files}"
+            )
+        return False
+    else:
+        logger.info(
+            f"Verified correct number of exports ({actual_count}) for clip {clip.name}"
+        )
+        # Check if files actually exist on disk
+        all_exist = all(os.path.exists(path) for path in clip.export_path)
+        if not all_exist:
+            missing_files = [
+                path for path in clip.export_path if not os.path.exists(path)
+            ]
+            logger.warning(
+                f"The following files in export_path don't exist on disk: {missing_files}"
+            )
+            return False
+
+        logger.info(f"All exported files exist on disk")
+        return True
+
+
 def process_batch(
-    clips, max_workers=4, camera_filter=None, cv_optimized=False, both_formats=False
+    clips,
+    max_workers=1,
+    camera_filter=None,
+    cv_optimized=False,
+    both_formats=False,
+    multi_crop=False,
+    crop_variations="original,wide,full",
+    wide_crop_factor=1.5,
+    crop_camera_types=None,
+    exclude_crop_camera_types=None,
 ):
     """
-    Process a batch of clips using a thread pool for parallel processing
+    Process a batch of clips in parallel
 
     Args:
         clips: List of clips to process
-        max_workers: Maximum number of parallel workers
-        camera_filter: Optional camera type filter
-        cv_optimized: Whether to optimize for computer vision
-        both_formats: Whether to export in both formats
+        max_workers: Maximum number of worker threads
+        camera_filter: Only process clips from cameras matching this filter
+        cv_optimized: Whether to use computer vision optimization
+        both_formats: Whether to export in both regular and CV-optimized formats
+        multi_crop: Whether to generate multiple crop variations
+        crop_variations: List of crop variations to generate
+        wide_crop_factor: Multiplier for the wide crop
+        crop_camera_types: List of camera types to apply crop variations to
+        exclude_crop_camera_types: List of camera types to exclude from crop variations
 
     Returns:
         Number of successfully processed clips
     """
-    logger.info(f"Processing batch of {len(clips)} clips with {max_workers} workers")
-    successful = 0
+    logger.info(f"Processing batch of {len(clips)} clips")
 
-    # Track which clips were successfully processed
-    processed_clips = []
-
-    # Print summary to terminal
-    print(f"\n{'='*80}")
-    print(
-        f"Processing {len(clips)} clips with {max_workers} {'worker' if max_workers == 1 else 'workers'}"
-    )
-    if camera_filter:
-        print(f"Camera filter: {camera_filter}")
-    if cv_optimized:
-        print(f"CV optimization: Enabled")
-    if both_formats:
-        print(f"Both formats: Enabled (will export H.264 and FFV1)")
-    print(f"{'='*80}\n")
-
-    # Get the mapping of clips to their config files and indices
-    config_manager = ConfigManager()
-    clips_to_process = scan_for_clips_to_process(config_manager)
-
-    # Create lookup dictionaries for reliable matching
-    # Primary lookup by ID
-    clip_lookup_by_id = {}
-    # Backup lookup by name and source path
-    clip_lookup_by_name_and_path = {}
-
-    for file_path, clip_index, clip_obj in clips_to_process:
-        # Use clip ID as primary key
-        clip_lookup_by_id[clip_obj.id] = (file_path, clip_index)
-        # Use name and source path as backup key
-        key = (clip_obj.name, clip_obj.source_path)
-        clip_lookup_by_name_and_path[key] = (file_path, clip_index)
-        # Debug log the clip details
-        logger.info(
-            f"DEBUG: Clip to process - ID: {clip_obj.id}, Name: {clip_obj.name}, Status: {clip_obj.status}, Export path: {clip_obj.export_path}"
+    # Log important processing parameters
+    if both_formats and multi_crop:
+        variation_list = (
+            [v.strip() for v in crop_variations.split(",") if v.strip()]
+            if isinstance(crop_variations, str)
+            else crop_variations
         )
+        expected_outputs = len(variation_list) * (2 if both_formats else 1)
+        logger.info(
+            f"Using both formats AND multi-crop: Expecting {expected_outputs} outputs per clip ({len(variation_list)} variations × {2 if both_formats else 1} formats)"
+        )
+        logger.info(f"Crop variations: {crop_variations}")
+    elif both_formats:
+        logger.info(f"Using both formats: Expecting 2 outputs per clip")
+    elif multi_crop:
+        variation_list = (
+            [v.strip() for v in crop_variations.split(",") if v.strip()]
+            if isinstance(crop_variations, str)
+            else crop_variations
+        )
+        logger.info(
+            f"Using multi-crop: Expecting {len(variation_list)} outputs per clip"
+        )
+        logger.info(f"Crop variations: {crop_variations}")
+
+    successful = 0
+    processed_clips = []
+    config_manager = ConfigManager()
 
     # Use ThreadPoolExecutor for parallel processing
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all clips for processing
-        future_to_clip = {
-            executor.submit(
-                process_clip, clip, camera_filter, cv_optimized, both_formats
-            ): clip
-            for clip in clips
-        }
+        future_to_clip = {}
+        for clip in clips:
+            future = executor.submit(
+                process_clip,
+                clip,
+                camera_filter,
+                cv_optimized,
+                both_formats,
+                multi_crop,
+                crop_variations,
+                wide_crop_factor,
+            )
+            future_to_clip[future] = clip
 
         # Process results as they complete
-        for future in future_to_clip:
-            clip = future_to_clip[future]
-            try:
-                if future.result():
-                    successful += 1
-                    # Update the clip status to "Complete"
-                    clip.status = "Complete"
-                    clip.update()
-                    logger.info(
-                        f"DEBUG: After processing - Clip ID: {clip.id}, Name: {clip.name}, Status: {clip.status}, Export path: {clip.export_path}"
-                    )
-                    processed_clips.append(clip)
+        with tqdm(
+            total=len(clips), desc="Processing clips", position=0, leave=True
+        ) as pbar:
+            for future in concurrent.futures.as_completed(future_to_clip):
+                clip = future_to_clip[future]
+                try:
+                    success = future.result()
+                    if success:
+                        successful += 1
+                        logger.info(f"Successfully processed clip: {clip.name}")
 
-                    # Try to find the clip in the lookup tables
-                    file_path = None
-                    clip_index = None
-
-                    # First try by ID
-                    if clip.id in clip_lookup_by_id:
-                        file_path, clip_index = clip_lookup_by_id[clip.id]
-                        logger.info(
-                            f"DEBUG: Found clip by ID in lookup table - File: {file_path}, Index: {clip_index}"
-                        )
-                    # Then try by name and path
-                    elif (clip.name, clip.source_path) in clip_lookup_by_name_and_path:
-                        file_path, clip_index = clip_lookup_by_name_and_path[
-                            (clip.name, clip.source_path)
-                        ]
-                        logger.info(
-                            f"DEBUG: Found clip by name and path in lookup table - File: {file_path}, Index: {clip_index}"
-                        )
-                    else:
-                        logger.warning(
-                            f"DEBUG: Could not find clip in lookup tables - ID: {clip.id}, Name: {clip.name}"
-                        )
-
-                    # Update the clip status in the config file if found
-                    if file_path and clip_index is not None:
-                        # Read the current clip from the file to check its status
-                        current_clips = load_clips(file_path)
-                        if clip_index < len(current_clips):
-                            logger.info(
-                                f"DEBUG: Current clip status in file before update: {current_clips[clip_index].status}, Export path: {current_clips[clip_index].export_path}"
-                            )
-
-                        update_success = update_clip_status(
-                            file_path, clip_index, "Complete", processed_clip=clip
-                        )
-                        if update_success:
-                            logger.info(
-                                f"Updated clip status in config file: {clip.name}"
-                            )
-
-                            # Read the clip again to verify the update
-                            updated_clips = load_clips(file_path)
-                            if clip_index < len(updated_clips):
+                        # Log the number of export paths to verify multiple variations were created
+                        if hasattr(clip, "export_path"):
+                            if isinstance(clip.export_path, list):
+                                num_variations = len(clip.export_path)
                                 logger.info(
-                                    f"DEBUG: Clip status after update: {updated_clips[clip_index].status}, Export path: {updated_clips[clip_index].export_path}"
+                                    f"Created {num_variations} variations for clip {clip.name}"
                                 )
-                        else:
-                            logger.warning(
-                                f"Failed to update clip status in config file: {clip.name}"
-                            )
-                    else:
-                        logger.warning(
-                            f"Could not find clip in lookup tables: {clip.name}"
-                        )
-                else:
-                    logger.warning(f"Failed to process clip: {clip.name}")
-            except Exception as e:
-                logger.exception(
-                    f"Exception while processing clip {clip.name}: {str(e)}"
-                )
 
-    # As a fallback, try to save all processed clips directly
+                                # Ensure each exported file actually exists and wasn't deleted
+                                non_existent_files = [
+                                    p for p in clip.export_path if not os.path.exists(p)
+                                ]
+                                if non_existent_files:
+                                    logger.error(
+                                        f"ERROR: {len(non_existent_files)} expected export files don't exist! "
+                                        f"This indicates they were possibly deleted during processing. "
+                                        f"Missing files: {non_existent_files}"
+                                    )
+
+                                # Verify if the expected number of variations was created
+                                is_valid = verify_export_count(
+                                    clip, both_formats, multi_crop, crop_variations
+                                )
+
+                                if not is_valid:
+                                    logger.warning(
+                                        f"Export validation failed for clip {clip.name}"
+                                    )
+
+                                    # Make double sure export_paths is in sync
+                                    if hasattr(clip, "export_paths") and hasattr(
+                                        clip, "export_path"
+                                    ):
+                                        if isinstance(clip.export_path, list):
+                                            clip.export_paths = ",".join(
+                                                clip.export_path
+                                            )
+                                            logger.info(
+                                                f"Synchronized export_paths to match export_path"
+                                            )
+                            else:
+                                logger.info(
+                                    f"Created single variation for clip {clip.name}"
+                                )
+                                # Convert to list if it's not already
+                                if clip.export_path:
+                                    clip.export_path = [clip.export_path]
+                                    logger.info(
+                                        f"Converted export_path to list: {clip.export_path}"
+                                    )
+
+                        # Update clip status to Complete
+                        clip.status = "Complete"
+                        clip.modified_at = datetime.now().isoformat()
+                        processed_clips.append(clip)
+                    else:
+                        logger.error(f"Failed to process clip: {clip.name}")
+                        # Update clip status to indicate error
+                        clip.status = "Error"
+                        clip.modified_at = datetime.now().isoformat()
+                except Exception as e:
+                    logger.exception(f"Error processing clip {clip.name}: {str(e)}")
+                    # Update clip status to indicate error
+                    clip.status = "Error"
+                    clip.modified_at = datetime.now().isoformat()
+                finally:
+                    pbar.update(1)
+
+    # Save all processed clips
     if processed_clips:
-        # Group clips by their source video
-        clips_by_source = {}
-        for clip in processed_clips:
-            source = clip.source_path
-            if source not in clips_by_source:
-                clips_by_source[source] = []
-            clips_by_source[source].append(clip)
-
-        # For each source video, load all clips, update the processed ones, and save
-        for source, source_clips in clips_by_source.items():
-            try:
-                # Resolve the source path
-                source_path = resolve_source_path(source, config_manager)
-
-                # Get the clips file path for this source
-                clips_file = config_manager.get_clips_file_path(source_path)
-
-                # If we couldn't get a clips file path, try a simpler approach
-                if not clips_file:
-                    # Use the video filename to create a clips file path
-                    video_filename = os.path.basename(str(source))
-                    video_name = os.path.splitext(video_filename)[0]
-                    clips_file = config_manager.configs_dir / f"{video_name}_clips.json"
-                    logger.info(f"Using fallback clips file path: {clips_file}")
-
-                # Load all clips for this source
-                all_clips = load_clips(clips_file)
-
-                # Update status for processed clips
-                updated = False
-                for processed_clip in source_clips:
-                    for i, clip in enumerate(all_clips):
-                        # Match by ID or by name and time range
-                        if clip.id == processed_clip.id or (
-                            clip.name == processed_clip.name
-                            and clip.start_frame == processed_clip.start_frame
-                            and clip.end_frame == processed_clip.end_frame
-                        ):
-                            # Update status
-                            all_clips[i].status = "Complete"
-                            all_clips[i].export_path = processed_clip.export_path
-                            all_clips[i].update()
-                            updated = True
-                            logger.info(
-                                f"Updated clip status in direct save: {clip.name}"
-                            )
-                            logger.info(
-                                f"DEBUG: Updated export path in direct save: {processed_clip.export_path}"
-                            )
-
-                # Save all clips if any were updated
-                if updated:
-                    save_success = save_clips(all_clips, clips_file)
-                    if save_success:
-                        logger.info(f"Saved updated clips to {clips_file}")
-                    else:
-                        logger.warning(f"Failed to save updated clips to {clips_file}")
-            except Exception as e:
-                logger.exception(f"Error in direct clip save fallback: {str(e)}")
+        saved = save_processed_clips(processed_clips, config_manager)
+        logger.info(f"Saved {saved} of {len(processed_clips)} processed clips")
 
     return successful
 
@@ -895,6 +1117,15 @@ Examples:
   # Process clips with CV optimization
   python scripts/process_clips.py --cv-optimized
   
+  # Process clips with multiple crop variations
+  python scripts/process_clips.py --multi-crop
+  
+  # Process clips with specific crop variations
+  python scripts/process_clips.py --multi-crop --crop-variations "original,wide"
+  
+  # Process clips with custom wide crop factor (75% larger)
+  python scripts/process_clips.py --multi-crop --wide-crop-factor 1.75
+  
   # Run as a daemon, checking every 5 minutes
   python scripts/process_clips.py --daemon --interval 300
   
@@ -951,7 +1182,7 @@ Watch Mode:
     parser.add_argument(
         "--batch-size",
         type=int,
-        default=0,
+        default=5,
         help="Maximum clips to process in one batch (0 for unlimited)",
     )
     parser.add_argument(
@@ -963,6 +1194,23 @@ Watch Mode:
         "--both-formats",
         action="store_true",
         help="Export clips in both regular H.264 and CV-optimized formats",
+    )
+    parser.add_argument(
+        "--multi-crop",
+        action="store_true",
+        help="Generate multiple crop variations of each clip",
+    )
+    parser.add_argument(
+        "--crop-variations",
+        type=str,
+        default="original,wide,full",
+        help="Comma-separated list of crop variations to generate (original, wide, full)",
+    )
+    parser.add_argument(
+        "--wide-crop-factor",
+        type=float,
+        default=1.5,
+        help="Multiplier for the wide crop (1.5 = 50%% larger than original)",
     )
     parser.add_argument(
         "--watch-raw",
@@ -980,9 +1228,39 @@ Watch Mode:
         action="store_true",
         help="When watching for new footage, ignore existing files without proxies",
     )
+    parser.add_argument(
+        "--crop-camera-types",
+        type=str,
+        help="Comma-separated list of camera types to apply crop variations to",
+    )
+    parser.add_argument(
+        "--exclude-crop-camera-types",
+        type=str,
+        help="Comma-separated list of camera types to exclude from crop variations",
+    )
     args = parser.parse_args()
 
     config_manager = ConfigManager()
+
+    # Parse crop camera types
+    crop_camera_types = None
+    exclude_crop_camera_types = None
+
+    if args.crop_camera_types:
+        crop_camera_types = [
+            ct.strip() for ct in args.crop_camera_types.split(",") if ct.strip()
+        ]
+        logger.info(
+            f"Applying crop variations only to camera types: {crop_camera_types}"
+        )
+
+    if args.exclude_crop_camera_types:
+        exclude_crop_camera_types = [
+            ct.strip() for ct in args.exclude_crop_camera_types.split(",") if ct.strip()
+        ]
+        logger.info(
+            f"Excluding crop variations for camera types: {exclude_crop_camera_types}"
+        )
 
     # List available cameras if requested
     if args.list_cameras:
@@ -1019,6 +1297,10 @@ Watch Mode:
             logger.info("Using CV optimization for exports")
         if args.both_formats:
             logger.info("Exporting in both regular and CV-optimized formats")
+        if args.multi_crop:
+            logger.info("Generating multiple crop variations")
+            logger.info(f"Crop variations: {args.crop_variations}")
+            logger.info(f"Wide crop factor: {args.wide_crop_factor}")
 
         try:
             while True:
@@ -1065,6 +1347,11 @@ Watch Mode:
                             args.camera,
                             args.cv_optimized,
                             args.both_formats,
+                            args.multi_crop,
+                            args.crop_variations,
+                            args.wide_crop_factor,
+                            crop_camera_types,
+                            exclude_crop_camera_types,
                         )
                         total_processed += num_processed
 
@@ -1077,6 +1364,11 @@ Watch Mode:
                         args.camera,
                         args.cv_optimized,
                         args.both_formats,
+                        args.multi_crop,
+                        args.crop_variations,
+                        args.wide_crop_factor,
+                        crop_camera_types,
+                        exclude_crop_camera_types,
                     )
                     logger.info(f"Processed {num_processed} clips")
                 else:
@@ -1133,6 +1425,11 @@ Watch Mode:
                     args.camera,
                     args.cv_optimized,
                     args.both_formats,
+                    args.multi_crop,
+                    args.crop_variations,
+                    args.wide_crop_factor,
+                    crop_camera_types,
+                    exclude_crop_camera_types,
                 )
                 total_processed += num_processed
 
@@ -1150,6 +1447,11 @@ Watch Mode:
                 args.camera,
                 args.cv_optimized,
                 args.both_formats,
+                args.multi_crop,
+                args.crop_variations,
+                args.wide_crop_factor,
+                crop_camera_types,
+                exclude_crop_camera_types,
             )
             logger.info(f"Processed {num_processed} clips")
             print(f"\n{'='*80}")

@@ -236,3 +236,86 @@ The status system is designed to be easily extended. Some possible enhancements:
 - Add additional metadata fields (e.g., "Processing Notes", "Quality Rating")
 - Integrate with external systems via webhooks or APIs
 - Create a web interface for monitoring processing status
+
+## Multi-Crop Processing
+
+The Clipper application supports generating multiple crop variations from the same source clip, which is particularly valuable for machine learning datasets. This feature is available in the command-line interface.
+
+### Multi-Crop Variations
+
+The Clipper application supports generating multiple crop variations from the same source clip, which is particularly valuable for machine learning datasets. This feature is available in the command-line interface.
+
+To generate multiple crop variations, use the `--multi-crop` flag:
+
+```bash
+python scripts/process_clips.py --input /path/to/videos --multi-crop
+```
+
+By default, this will generate all three crop variations (original, wide, and full). You can customize which variations to generate using the `--crop-variations` parameter:
+
+```bash
+python scripts/process_clips.py --input /path/to/videos --multi-crop --crop-variations "original,wide"
+```
+
+The available variations are:
+
+- `original`: The user-specified crop region
+- `wide`: A wider crop region centered around the original crop (50% larger by default)
+- `full`: The full uncropped frame
+
+You can also customize the wide crop factor (how much larger the wide crop is compared to the original):
+
+```bash
+python scripts/process_clips.py --input /path/to/videos --multi-crop --wide-crop-factor 1.3
+```
+
+#### Camera-Specific Crop Variations
+
+You can choose to apply crop variations only to specific camera types using one of these approaches:
+
+1. Specify in the command line which camera types should have crop variations:
+
+```bash
+python scripts/process_clips.py --input /path/to/videos --multi-crop --crop-camera-types "SONY_300,GP2"
+```
+
+2. Specify which camera types should be excluded from crop variations:
+
+```bash
+python scripts/process_clips.py --input /path/to/videos --multi-crop --exclude-crop-camera-types "GP1"
+```
+
+3. Configure in the `config.yaml` file:
+
+```yaml
+export:
+  create_missing_dirs: true
+  preserve_structure: true
+  crop_variations:
+    enabled: true
+    camera_types:
+      - SONY_300
+    # Alternatively, use exclude_camera_types:
+    # exclude_camera_types:
+    #   - GP1
+```
+
+If both command-line arguments and configuration settings are provided, the command-line arguments take precedence.
+
+# Process clips with CV optimization
+
+python scripts/process_clips.py --cv-optimized
+
+# Process clips with multiple crop variations
+
+python scripts/process_clips.py --multi-crop
+
+# Process clips with specific crop variations
+
+python scripts/process_clips.py --multi-crop --crop-variations "original,wide"
+
+# Process clips with custom wide crop factor (75% larger)
+
+python scripts/process_clips.py --multi-crop --wide-crop-factor 1.75
+
+# Run as a daemon, checking every 5 minutes

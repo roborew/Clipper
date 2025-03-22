@@ -656,3 +656,35 @@ def frame_to_base64(frame):
     except Exception as e:
         logger.exception(f"Error converting frame to base64: {str(e)}")
         return ""
+
+
+def get_video_dimensions(video_path):
+    """
+    Get the dimensions (width, height) of a video file.
+
+    Args:
+        video_path: Path to the video file
+
+    Returns:
+        Tuple of (width, height) or (0, 0) if the dimensions cannot be determined
+    """
+    try:
+        # Open the video file
+        cap = cv2.VideoCapture(str(video_path))
+
+        # Check if video opened successfully
+        if not cap.isOpened():
+            logger.error(f"Could not open video file: {video_path}")
+            return (0, 0)
+
+        # Get width and height
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+        # Release the video capture object
+        cap.release()
+
+        return (width, height)
+    except Exception as e:
+        logger.error(f"Error getting video dimensions for {video_path}: {str(e)}")
+        return (0, 0)

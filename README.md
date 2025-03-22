@@ -4,6 +4,15 @@ A Streamlit application for efficiently clipping and cropping videos with the ab
 
 ## Features
 
+- **Video Clip Management**: Import, organize, and export video clips with precise frame-level control
+- **Proxy Video Generation**: Create lightweight proxy videos for smooth editing on any system
+- **Precise Cropping Tools**: Define custom crop regions that follow subjects throughout the clip
+- **Batch Processing**: Process multiple clips simultaneously for efficient workflow
+- **Command-line Interface**: Automate clip processing with a powerful CLI tool
+- **Multiple Crop Variations**: Generate different crop variations (original, wide, full) from a single clip
+- **Camera-Specific Crop Variations**: Apply crop variations selectively based on camera type
+- **Calibration Support**: Apply camera calibration parameters for lens correction
+- **Flexible Export Options**: Configure resolution, quality, and format for exported clips
 - Load and preview video files
 - Set in-points and out-points for precise clip selection
 - Define crop regions that can be animated across the clip duration
