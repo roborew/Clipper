@@ -25,38 +25,94 @@ def calculate_wider_crop(original_crop, factor, frame_dimensions):
         New crop region (x, y, width, height) or None if original_crop is None
     """
     if original_crop is None:
+        logger.warning("Cannot calculate wider crop from None crop region")
         return None
 
     x, y, width, height = original_crop
     frame_width, frame_height = frame_dimensions
 
-    # Calculate new dimensions - ensure they don't exceed frame dimensions
-    new_width = min(int(width * factor), frame_width)
-    new_height = min(int(height * factor), frame_height)
+    # Log detailed calculations for debugging
+    logger.info(f"Original crop: x={x}, y={y}, width={width}, height={height}")
+    logger.info(f"Frame dimensions: width={frame_width}, height={frame_height}")
+    logger.info(f"Applying wide crop factor: {factor}")
+
+    # Calculate maximum allowable dimensions (95% of frame size)
+    max_width = int(frame_width * 0.95)
+    max_height = int(frame_height * 0.95)
+
+    # Calculate target dimensions
+    target_width = int(width * factor)
+    target_height = int(height * factor)
+    logger.info(
+        f"Initial target dimensions: width={target_width}, height={target_height}"
+    )
+
+    # If target dimensions would exceed max allowed size, scale down proportionally
+    if target_width > max_width or target_height > max_height:
+        width_scale = max_width / target_width if target_width > max_width else 1.0
+        height_scale = max_height / target_height if target_height > max_height else 1.0
+        scale_factor = min(width_scale, height_scale)
+
+        # Apply scaling
+        new_width = int(target_width * scale_factor)
+        new_height = int(target_height * scale_factor)
+        logger.info(
+            f"Scaled down to fit within 95% of frame: width={new_width}, height={new_height}"
+        )
+    else:
+        new_width = target_width
+        new_height = target_height
+        logger.info(
+            f"Using exact target dimensions: width={new_width}, height={new_height}"
+        )
 
     # Calculate the ideal centered position
     ideal_x = x - (new_width - width) // 2
     ideal_y = y - (new_height - height) // 2
 
-    # Adjust position to stay within frame boundaries
-    # If we're pushing against left edge
+    logger.info(f"Ideal centered position: x={ideal_x}, y={ideal_y}")
+
+    # Adjust position to stay within frame boundaries while maintaining crop size
+    # If pushing against left edge
     if ideal_x < 0:
         new_x = 0
-    # If we're pushing against right edge
+        logger.info("Adjusting x position to 0 (left edge)")
+    # If pushing against right edge
     elif ideal_x + new_width > frame_width:
-        new_x = max(0, frame_width - new_width)
+        new_x = frame_width - new_width
+        logger.info(f"Adjusting x position to {new_x} (right edge)")
     else:
         new_x = ideal_x
 
     # Same for vertical position
     if ideal_y < 0:
         new_y = 0
+        logger.info("Adjusting y position to 0 (top edge)")
     elif ideal_y + new_height > frame_height:
-        new_y = max(0, frame_height - new_height)
+        new_y = frame_height - new_height
+        logger.info(f"Adjusting y position to {new_y} (bottom edge)")
     else:
         new_y = ideal_y
 
-    return (new_x, new_y, new_width, new_height)
+    final_crop = (new_x, new_y, new_width, new_height)
+    logger.info(f"Final wide crop: {final_crop}")
+
+    # Verify crop is actually different from original
+    if new_width == width and new_height == height and new_x == x and new_y == y:
+        logger.info("Wide crop is identical to original crop (factor = 1.0)")
+
+    # Verify crop is not full frame
+    if new_width == frame_width and new_height == frame_height:
+        logger.warning("WARNING: Wide crop dimensions match full frame!")
+        # Force crop to be 95% of frame size
+        new_width = int(frame_width * 0.95)
+        new_height = int(frame_height * 0.95)
+        new_x = (frame_width - new_width) // 2
+        new_y = (frame_height - new_height) // 2
+        final_crop = (new_x, new_y, new_width, new_height)
+        logger.info(f"Adjusted to 95% of frame size: {final_crop}")
+
+    return final_crop
 
 
 def get_crop_for_variation(
@@ -74,23 +130,32 @@ def get_crop_for_variation(
     Returns:
         Crop region (x, y, width, height) or None for full frame
     """
-    # For 'full' variation, return None to use full frame
+    # For 'full' variation, always return None to use full frame
     if variation == "full":
         logger.info("Using full frame (no crop) for 'full' variation")
         return None
 
-    # For 'original' variation, return the original crop (which could be None)
+    # For 'original' variation, return the original crop - but special handling for None
     if variation == "original":
         if original_crop:
             logger.info(f"Using original crop: {original_crop}")
+            x, y, w, h = original_crop
+            frame_w, frame_h = frame_dimensions
+            percent_w = round((w / frame_w) * 100, 1)
+            percent_h = round((h / frame_h) * 100, 1)
+            logger.info(
+                f"Original crop dimensions: {w}x{h} ({percent_w}% × {percent_h}% of frame)"
+            )
             return original_crop
         else:
+            # If no crop is defined for 'original', use None to export the full frame
+            # This ensures the behavior matches the UI where a clip with no crop shows the full frame
             logger.warning(
                 "No original crop defined, using full frame for 'original' variation"
             )
             return None
 
-    # For 'wide' variation
+    # For 'wide' variation - needs an original crop to calculate from
     if variation == "wide":
         if original_crop:
             # Calculate a wider crop using the helper function
@@ -98,10 +163,38 @@ def get_crop_for_variation(
                 original_crop, wide_crop_factor, frame_dimensions
             )
             logger.info(
-                f"Calculated wider crop: {wider_crop} from original: {original_crop}"
+                f"Calculated wider crop: {wider_crop} (factor: {wide_crop_factor}) from original: {original_crop}"
             )
+
+            # Verify the crop is actually wider (for debugging)
+            if wider_crop and original_crop:
+                orig_x, orig_y, orig_w, orig_h = original_crop
+                wide_x, wide_y, wide_w, wide_h = wider_crop
+
+                # Check if dimensions actually changed
+                if wide_w == orig_w and wide_h == orig_h:
+                    logger.warning(
+                        "WARNING: Wide crop has same dimensions as original crop!"
+                    )
+                elif wide_w <= orig_w or wide_h <= orig_h:
+                    logger.warning(
+                        f"WARNING: Wide crop seems smaller in at least one dimension! Original: {orig_w}x{orig_h}, Wide: {wide_w}x{wide_h}"
+                    )
+
+                # Check if it's equivalent to full frame
+                frame_w, frame_h = frame_dimensions
+                if (
+                    wide_w == frame_w
+                    and wide_h == frame_h
+                    and wide_x == 0
+                    and wide_y == 0
+                ):
+                    logger.warning("WARNING: Wide crop is equivalent to full frame!")
+
             return wider_crop
         else:
+            # If trying to create 'wide' variation but no original crop exists,
+            # we can't calculate a proper 'wide' crop, so we'll use full frame as well
             logger.warning(
                 "Cannot calculate 'wide' variation without original crop. Using full frame."
             )
@@ -128,34 +221,22 @@ def process_clip_with_variations(
     Process a clip with multiple crop variations.
 
     Args:
-        process_clip_func: Function to process a single clip variation
-        clip: The clip to process
-        crop_variations: List of crop variations to process ('original', 'wide', 'full')
+        process_clip_func: Function to call for processing each variation
+        clip: Clip object to process
+        crop_variations: List of crop variations to generate or comma-separated string
         wide_crop_factor: Factor for the 'wide' crop variation (1.5 = 50% larger)
-        camera_type: The camera type for this clip
-        crop_camera_types: List of camera types to apply crop variations to
-        exclude_camera_types: List of camera types to exclude from crop variations
-        config_manager: ConfigManager instance to get config settings
-        multi_crop: Whether to force multiple crop variations
+        camera_type: Optional camera type for filtering
+        crop_camera_types: Optional list of camera types to apply variations to
+        exclude_camera_types: Optional list of camera types to exclude from variations
+        config_manager: Optional ConfigManager instance
+        multi_crop: Whether to force multi-crop processing
         **kwargs: Additional arguments to pass to process_clip_func
 
     Returns:
-        Dictionary mapping variation names to success/failure status
+        Dict of results for each variation and combined export paths
     """
-    # Ensure export_path exists as a list - we expect it to be an empty list
-    # initialized by the parent process_clip function that calls this
-    if not hasattr(clip, "export_path"):
-        clip.export_path = []
-    elif not isinstance(clip.export_path, list):
-        # Convert to list if somehow it's not a list
-        if clip.export_path:
-            clip.export_path = [clip.export_path] if clip.export_path else []
-        else:
-            clip.export_path = []
-
-    # Log the initial state of export_path
     logger.info(
-        f"Initial export_path state for multi_crop processing: {clip.export_path}"
+        f"Initial export_path state for multi_crop processing: {getattr(clip, 'export_path', None)}"
     )
 
     # Check configuration if not explicitly provided
@@ -190,47 +271,34 @@ def process_clip_with_variations(
     else:
         logger.warning("No camera type specified for variation filtering")
 
-    # If camera type is specified and we have inclusion/exclusion lists
-    if camera_type and not force_multi_crop:
-        # Check against inclusion list if provided
-        if crop_camera_types:
-            camera_type_upper = camera_type.upper() if camera_type else ""
-            crop_camera_types_upper = [ct.upper() for ct in crop_camera_types if ct]
-
-            # Check if any part of the camera type matches the inclusion list
-            matches_inclusion = False
-            for allowed_type in crop_camera_types_upper:
-                if allowed_type and allowed_type in camera_type_upper:
-                    matches_inclusion = True
-                    break
-
-            should_apply_variations = matches_inclusion
-
-            if not should_apply_variations:
-                logger.info(
-                    f"Camera type {camera_type} not in crop_camera_types list: {crop_camera_types}. Only processing original variation."
-                )
-
-        # Check against exclusion list if provided
-        if exclude_camera_types and should_apply_variations:
-            camera_type_upper = camera_type.upper() if camera_type else ""
-            exclude_camera_types_upper = [
-                ct.upper() for ct in exclude_camera_types if ct
-            ]
-
-            # Check if any part of the camera type matches the exclusion list
-            for excluded_type in exclude_camera_types_upper:
-                if excluded_type and excluded_type in camera_type_upper:
-                    should_apply_variations = False
-                    logger.info(
-                        f"Camera type {camera_type} matches excluded type {excluded_type}. Only processing original variation."
-                    )
-                    break
-
-    # If multi_crop is explicitly set, override the camera type filtering
+    # If multi_crop is forced, always apply variations regardless of camera type
     if force_multi_crop:
         logger.info("Forcing multiple crop variations due to --multi-crop flag")
         should_apply_variations = True
+    # Otherwise, only apply variations if camera type matches criteria
+    elif camera_type and crop_camera_types:
+        # Convert to list if it's a string
+        if isinstance(crop_camera_types, str):
+            crop_camera_types = [ct.strip() for ct in crop_camera_types.split(",")]
+
+        # Check if the camera type is in the allowed list
+        should_apply_variations = camera_type in crop_camera_types
+        logger.info(
+            f"Camera type {camera_type} {'is' if should_apply_variations else 'is not'} in allowed types {crop_camera_types}"
+        )
+    # Or if camera type is not in excluded list
+    elif camera_type and exclude_camera_types:
+        # Convert to list if it's a string
+        if isinstance(exclude_camera_types, str):
+            exclude_camera_types = [
+                ct.strip() for ct in exclude_camera_types.split(",")
+            ]
+
+        # Check if camera type is in exclude list
+        should_apply_variations = camera_type not in exclude_camera_types
+        logger.info(
+            f"Camera type {camera_type} {'is not' if should_apply_variations else 'is'} in excluded types {exclude_camera_types}"
+        )
 
     # Parse crop variations if provided as string
     if isinstance(crop_variations, str):
@@ -249,17 +317,6 @@ def process_clip_with_variations(
     else:
         logger.info(f"Processing all crop variations: {variation_list}")
 
-    # Check if clip has a crop region
-    original_crop = clip.get_crop_region_at_frame(clip.start_frame, use_proxy=False)
-    if not original_crop and "wide" in variation_list:
-        logger.warning(
-            f"Clip {clip.name} has no crop region, 'wide' variation may not work properly"
-        )
-
-    # Track results and export paths
-    results = {}
-    all_export_paths = []
-
     # Get the source video dimensions
     try:
         source_path = kwargs.get("source_path", clip.source_path)
@@ -271,6 +328,39 @@ def process_clip_with_variations(
             1920,
             1080,
         )  # Default to 1080p if dimensions can't be determined
+
+    # Check if clip has a crop region - IMPORTANT: Some clips may have None as crop_region
+    # Try to get it from crop_keyframes if available
+    original_crop = None
+    if hasattr(clip, "crop_region") and clip.crop_region is not None:
+        original_crop = clip.crop_region
+        logger.info(f"Using clip.crop_region: {original_crop}")
+    else:
+        # Try to get crop region from keyframes
+        original_crop = clip.get_crop_region_at_frame(clip.start_frame, use_proxy=False)
+        logger.info(f"Using crop from keyframes: {original_crop}")
+
+    # If no crop is defined at all, log an important warning
+    if original_crop is None:
+        logger.warning(f"Clip {clip.name} has no crop region defined!")
+        # For 'wide' variation to work properly, we need to create a fake original crop
+        # that matches the full frame, so the 'wide' variation can be calculated
+        if "wide" in variation_list:
+            logger.info(
+                "Creating default crop region based on full frame for 'wide' variation"
+            )
+            # Use a crop that's centered in frame but ~20% smaller than full frame
+            frame_width, frame_height = frame_dimensions
+            default_width = int(frame_width * 0.8)
+            default_height = int(frame_height * 0.8)
+            default_x = (frame_width - default_width) // 2
+            default_y = (frame_height - default_height) // 2
+            original_crop = (default_x, default_y, default_width, default_height)
+            logger.info(f"Created default crop region: {original_crop}")
+
+    # Track results and export paths
+    results = {}
+    all_export_paths = []
 
     # Process each variation
     for variation in variation_list:
@@ -286,25 +376,76 @@ def process_clip_with_variations(
         variation_clip = clip.copy()
         variation_clip.name = variation_clip_name
 
-        # Only use keyframes for original crop
-        if variation != "original":
+        # For 'wide' variation, scale each keyframe's crop region if keyframes exist
+        if (
+            variation == "wide"
+            and hasattr(clip, "crop_keyframes")
+            and clip.crop_keyframes
+        ):
+            # Create a copy of the keyframes to modify
+            scaled_keyframes = {}
+
+            # Process each keyframe to create a wider version
+            for frame_num, crop_region in clip.crop_keyframes.items():
+                # Calculate a wider crop for this keyframe
+                wider_crop = calculate_wider_crop(
+                    crop_region, wide_crop_factor, frame_dimensions
+                )
+
+                # Store the wider crop in the new keyframes dictionary
+                scaled_keyframes[frame_num] = wider_crop
+
+            # Set the scaled keyframes on the variation clip
+            variation_clip.crop_keyframes = scaled_keyframes
+            logger.info(
+                f"Created {len(scaled_keyframes)} scaled keyframes for 'wide' variation"
+            )
+        # For 'full' variation or if no crop keyframes, clear keyframes
+        elif variation != "original":
             variation_clip.crop_keyframes = None
             logger.info(
                 f"Cleared crop keyframes for non-original variation: {variation}"
             )
 
-        # Set crop region based on variation
-        variation_crop = get_crop_for_variation(
-            variation, original_crop, frame_dimensions, wide_crop_factor
-        )
+        # Set static crop region based on variation - for full and fallback for wide if no keyframes
+        if (
+            variation == "wide"
+            and not hasattr(variation_clip, "crop_keyframes")
+            or not variation_clip.crop_keyframes
+        ):
+            variation_crop = get_crop_for_variation(
+                variation, original_crop, frame_dimensions, wide_crop_factor
+            )
+            variation_clip.crop_region = variation_crop
+        elif variation == "full":
+            variation_clip.crop_region = None
 
-        if variation_crop:
-            logger.info(f"Using crop for {variation}: {variation_crop}")
+        # Log crop details for clarity
+        if (
+            variation == "wide"
+            and hasattr(variation_clip, "crop_keyframes")
+            and variation_clip.crop_keyframes
+        ):
+            # Log a sample of the scaled keyframes (first one)
+            first_frame = sorted(variation_clip.crop_keyframes.keys())[0]
+            sample_crop = variation_clip.crop_keyframes[first_frame]
+            x, y, w, h = sample_crop
+            frame_w, frame_h = frame_dimensions
+            percent_w = round((w / frame_w) * 100, 1)
+            percent_h = round((h / frame_h) * 100, 1)
+            logger.info(
+                f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop} ({percent_w}% × {percent_h}% of frame)"
+            )
+        elif hasattr(variation_clip, "crop_region") and variation_clip.crop_region:
+            x, y, w, h = variation_clip.crop_region
+            frame_w, frame_h = frame_dimensions
+            percent_w = round((w / frame_w) * 100, 1)
+            percent_h = round((h / frame_h) * 100, 1)
+            logger.info(
+                f"Using crop for {variation}: {variation_clip.crop_region} ({percent_w}% × {percent_h}% of frame)"
+            )
         else:
             logger.info(f"No crop for {variation} (full frame)")
-
-        # Store the crop region in the clip
-        variation_clip.crop_region = variation_crop
 
         # Process this variation
         logger.info(f"Sending variation {variation} to processing function")
@@ -327,20 +468,11 @@ def process_clip_with_variations(
                         all_export_paths.append(path)
                         logger.info(f"Added path from {variation}: {path}")
 
-    # Simply set the original clip's export_path to all collected paths
-    # Don't worry about preserving previous paths - that's handled in process_clip
+    # If any paths were generated, add them to the original clip
     if all_export_paths:
-        # Set export_path as a list
+        logger.info(f"Setting export_path on original clip to: {all_export_paths}")
         clip.export_path = all_export_paths
-        logger.info(
-            f"Set clip.export_path to {len(all_export_paths)} paths: {all_export_paths}"
-        )
-
-        # Update export_paths string attribute for backward compatibility
-        if hasattr(clip, "export_paths"):
-            clip.export_paths = ",".join(all_export_paths)
-            logger.info(f"Updated clip.export_paths to: {clip.export_paths}")
     else:
         logger.warning("No export paths were collected from any variations")
 
-    return results
+    return {"results": results, "export_paths": all_export_paths}

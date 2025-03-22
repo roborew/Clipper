@@ -282,7 +282,58 @@ def save_clips(clips, save_path):
     """
     try:
         # Convert clips to dictionaries
-        clips_data = [clip.to_dict() for clip in clips]
+        clips_data = []
+        for clip in clips:
+            # Perform additional checks on export_path before saving
+            if hasattr(clip, "export_path"):
+                logger.info(
+                    f"Before to_dict - clip {clip.name} export_path: {clip.export_path}"
+                )
+
+                # If export_path is empty but files exist on disk, try to reconstruct it
+                if (
+                    (
+                        not clip.export_path
+                        or (
+                            isinstance(clip.export_path, list)
+                            and len(clip.export_path) == 0
+                        )
+                    )
+                    and hasattr(clip, "export_paths")
+                    and clip.export_paths
+                ):
+                    # Try to recreate from export_paths string
+                    logger.info(
+                        f"Attempting to recreate empty export_path from export_paths: {clip.export_paths}"
+                    )
+                    paths = [
+                        p.strip() for p in clip.export_paths.split(",") if p.strip()
+                    ]
+                    if paths:
+                        clip.export_path = paths
+                        logger.info(
+                            f"Reconstructed export_path from export_paths: {clip.export_path}"
+                        )
+
+            # Now convert to dict for JSON serialization
+            clip_dict = clip.to_dict()
+            logger.info(
+                f"After to_dict - clip {clip.name} export_path in dict: {clip_dict.get('export_path')}"
+            )
+
+            # If export_path is still empty in dict but should have values based on clip status, log a warning
+            if clip.status == "Complete" and (
+                not clip_dict.get("export_path")
+                or (
+                    isinstance(clip_dict.get("export_path"), list)
+                    and len(clip_dict.get("export_path")) == 0
+                )
+            ):
+                logger.warning(
+                    f"WARNING: Clip {clip.name} has status 'Complete' but empty export_path in dict"
+                )
+
+            clips_data.append(clip_dict)
 
         # Create parent directory if it doesn't exist
         os.makedirs(os.path.dirname(save_path), exist_ok=True)

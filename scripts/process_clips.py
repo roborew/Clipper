@@ -408,6 +408,9 @@ def process_clip(
         if hasattr(clip, "export_paths"):
             clip.export_paths = ""
 
+        # Keep a master list of all generated export paths
+        all_export_paths = []
+
         # STEP 3: Determine formats to process
         formats_to_process = []
         if both_formats:
@@ -438,15 +441,16 @@ def process_clip(
                     if current_percent > pbar.n:
                         pbar.update(current_percent - pbar.n)
 
-                # Export the clip using proxy_service
+                # Export the clip using proxy_service - now correctly using keyframes if present
                 export_path = proxy_service.export_clip(
                     source_path=source_path,
                     clip_name=variation_clip.name,
                     start_frame=variation_clip.start_frame,
                     end_frame=variation_clip.end_frame,
-                    crop_region=variation_clip.get_crop_region_at_frame(
-                        variation_clip.start_frame,
-                        use_proxy=False,  # Use source resolution for export
+                    crop_region=(
+                        variation_clip.crop_region
+                        if hasattr(variation_clip, "crop_region")
+                        else None
                     ),
                     crop_keyframes=variation_clip.crop_keyframes,
                     output_resolution=variation_clip.output_resolution,
@@ -501,6 +505,13 @@ def process_clip(
                     logger.info(
                         f"After processing {format_label} format, export_path contains {len(clip.export_path)} paths"
                     )
+                    # Collect paths from this format's variations
+                    for path in clip.export_path:
+                        if path and path not in all_export_paths:
+                            all_export_paths.append(path)
+                            logger.info(
+                                f"Added path from multi_crop to master list: {path}"
+                            )
             else:
                 # Process a single clip with no variations
                 export_path = process_single_clip(clip, is_cv_optimized)
@@ -510,11 +521,28 @@ def process_clip(
                         clip.export_path.append(export_path)
                     else:
                         clip.export_path = [export_path]
+                    # Also add to our master list
+                    all_export_paths.append(export_path)
                 else:
                     overall_success = False
 
+        # Also collect all paths from clip.export_path
+        if hasattr(clip, "export_path") and isinstance(clip.export_path, list):
+            for path in clip.export_path:
+                if path and path not in all_export_paths:
+                    all_export_paths.append(path)
+
         # STEP 5: Final updates to ensure consistent export path format
         if hasattr(clip, "export_path"):
+            # Make sure clip.export_path contains ALL collected paths
+            if all_export_paths:
+                clip.export_path = list(
+                    all_export_paths
+                )  # Create a new list to avoid reference issues
+                logger.info(
+                    f"Set final export_path using master list with {len(all_export_paths)} paths"
+                )
+
             if isinstance(clip.export_path, list):
                 logger.info(
                     f"Final export_path contains {len(clip.export_path)} paths: {clip.export_path}"
@@ -536,6 +564,44 @@ def process_clip(
 
         # Log final export path state
         logger.info(f"Final export_path: {clip.export_path}")
+
+        # FINAL CHECK: Make absolutely sure export_path is not empty if we have successful exports
+        if overall_success and (not clip.export_path or len(clip.export_path) == 0):
+            logger.error(
+                f"CRITICAL ERROR: clip.export_path is empty despite successful processing!"
+            )
+            # Restore the export paths we collected during processing
+            if "all_export_paths" in locals() and all_export_paths:
+                logger.info(f"Restoring collected export paths: {all_export_paths}")
+                clip.export_path = all_export_paths
+                # Update export_paths string attribute for compatibility
+                if hasattr(clip, "export_paths"):
+                    clip.export_paths = ",".join(clip.export_path)
+            else:
+                # Try to find generated clips by scanning the filesystem
+                logger.info(f"Scanning filesystem for generated clips for {clip.name}")
+                found_files = find_generated_clips(
+                    clip,
+                    config_manager,
+                    both_formats=both_formats,
+                    multi_crop=multi_crop,
+                    crop_variations=crop_variations,
+                )
+
+                if found_files:
+                    logger.info(
+                        f"Found {len(found_files)} generated files on disk for clip {clip.name}"
+                    )
+                    clip.export_path = found_files
+
+                    # Update export_paths for compatibility
+                    if hasattr(clip, "export_paths"):
+                        clip.export_paths = ",".join(found_files)
+                        logger.info(f"Updated export_paths string: {clip.export_paths}")
+                else:
+                    logger.error(
+                        f"Could not find any generated clips on disk for {clip.name}!"
+                    )
 
         if overall_success:
             logger.info(f"Successfully processed clip: {clip.name}")
@@ -577,6 +643,29 @@ def save_processed_clips(clips, config_manager):
 
     # For each processed clip, find its source config file and update it
     for processed_clip in clips:
+        # Log the export path before saving
+        logger.info(
+            f"DEBUG before saving - Clip {processed_clip.name} export_path: {processed_clip.export_path}"
+        )
+        if hasattr(processed_clip, "export_path") and processed_clip.export_path:
+            # Check if it's list or string
+            if isinstance(processed_clip.export_path, list):
+                logger.info(
+                    f"Export path is a list with {len(processed_clip.export_path)} items"
+                )
+                # Check if list contains valid items
+                if all(os.path.exists(p) for p in processed_clip.export_path):
+                    logger.info("All paths in export_path exist on disk")
+                else:
+                    missing = [
+                        p for p in processed_clip.export_path if not os.path.exists(p)
+                    ]
+                    logger.warning(f"Some paths in export_path don't exist: {missing}")
+            else:
+                logger.info(
+                    f"Export path is not a list but a {type(processed_clip.export_path)}"
+                )
+
         found = False
         for config_file, config_clips in clip_files.items():
             for i, config_clip in enumerate(config_clips):
@@ -589,7 +678,38 @@ def save_processed_clips(clips, config_manager):
                     logger.info(
                         f"Found clip {processed_clip.name} (ID: {processed_clip.id}) in {config_file}"
                     )
+
+                    # Check state of export_path before updating
+                    if hasattr(config_clip, "export_path"):
+                        logger.info(
+                            f"Before update - config_clip.export_path: {config_clip.export_path}"
+                        )
+
+                    # Make a deep copy of the export_path to ensure it's preserved
+                    if (
+                        hasattr(processed_clip, "export_path")
+                        and processed_clip.export_path
+                    ):
+                        # Keep a reference to the original export_path to debug serialization
+                        original_export_path = processed_clip.export_path
+
+                        if isinstance(processed_clip.export_path, list):
+                            # Make a copy of the list to avoid reference issues
+                            processed_clip.export_path = list(
+                                processed_clip.export_path
+                            )
+                            logger.info(
+                                f"Made a copy of export_path list: {processed_clip.export_path}"
+                            )
+
+                    # Update the clip in the config
                     config_clips[i] = processed_clip
+
+                    # Check if the update worked
+                    logger.info(
+                        f"After update - config_clips[{i}].export_path: {config_clips[i].export_path}"
+                    )
+
                     found = True
                     break
                 # Fallback to matching by name + source_path + frames
@@ -602,15 +722,74 @@ def save_processed_clips(clips, config_manager):
                     logger.info(
                         f"Found clip {processed_clip.name} (matching name/source/frames) in {config_file}"
                     )
+
+                    # Check state of export_path before updating
+                    if hasattr(config_clip, "export_path"):
+                        logger.info(
+                            f"Before update - config_clip.export_path: {config_clip.export_path}"
+                        )
+
+                    # Make a deep copy of the export_path to ensure it's preserved
+                    if (
+                        hasattr(processed_clip, "export_path")
+                        and processed_clip.export_path
+                    ):
+                        # Keep a reference to the original export_path
+                        original_export_path = processed_clip.export_path
+
+                        if isinstance(processed_clip.export_path, list):
+                            # Make a copy of the list to avoid reference issues
+                            processed_clip.export_path = list(
+                                processed_clip.export_path
+                            )
+                            logger.info(
+                                f"Made a copy of export_path list: {processed_clip.export_path}"
+                            )
+
+                    # Update the clip in the config
                     config_clips[i] = processed_clip
+
+                    # Check if the update worked
+                    logger.info(
+                        f"After update - config_clips[{i}].export_path: {config_clips[i].export_path}"
+                    )
+
                     found = True
                     break
 
             if found:
                 # Save the updated config
                 try:
+                    # Debug what's being saved
+                    for idx, clip in enumerate(config_clips):
+                        if hasattr(clip, "export_path"):
+                            logger.info(
+                                f"Before saving to file - clip[{idx}].export_path: {clip.export_path}"
+                            )
+
+                        # Extra check - convert to dict and back to verify serialization works
+                        clip_dict = clip.to_dict()
+                        logger.info(
+                            f"Clip dict export_path value: {clip_dict.get('export_path')}"
+                        )
+                        test_clip = clip_service.Clip.from_dict(clip_dict)
+                        logger.info(
+                            f"After dict roundtrip - export_path: {test_clip.export_path}"
+                        )
+
+                    # Try saving with our debugging
                     clip_service.save_clips(config_clips, config_file)
                     logger.info(f"Saved updated clips to {config_file}")
+
+                    # Verify what was saved by reading back
+                    test_read = clip_service.load_clips(config_file)
+                    if test_read and len(test_read) > 0:
+                        for idx, clip in enumerate(test_read):
+                            if hasattr(clip, "export_path"):
+                                logger.info(
+                                    f"After reading back from file - clip[{idx}].export_path: {clip.export_path}"
+                                )
+
                     saved_count += 1
                 except Exception as e:
                     logger.error(f"Error saving clips to {config_file}: {e}")
@@ -694,6 +873,103 @@ def verify_export_count(clip, both_formats, multi_crop, crop_variations):
 
         logger.info(f"All exported files exist on disk")
         return True
+
+
+def find_generated_clips(
+    clip, config_manager, both_formats=False, multi_crop=False, crop_variations=None
+):
+    """
+    Scan filesystem for generated clips that match the clip name pattern
+
+    Args:
+        clip: The Clip object
+        config_manager: ConfigManager instance
+        both_formats: Whether both formats were generated
+        multi_crop: Whether multiple crop variations were generated
+        crop_variations: List of crop variations used
+
+    Returns:
+        List of paths to the generated clips found on disk
+    """
+    try:
+        # Figure out potential output directories
+        export_base = config_manager.output_base
+        h264_dir = Path(export_base) / "03_CLIPPED" / "h264"
+        ffv1_dir = Path(export_base) / "03_CLIPPED" / "ffv1"
+
+        # Get source path components
+        source_path = Path(clip.source_path)
+        video_name = os.path.splitext(source_path.name)[0]
+
+        # Determine which directories to check based on format options
+        dirs_to_check = []
+        if both_formats:
+            dirs_to_check = [h264_dir, ffv1_dir]
+        else:
+            # Default to h264 unless cv_optimized was explicitly used alone
+            dirs_to_check = [h264_dir]
+
+        # Determine potential clip name patterns
+        clip_patterns = []
+
+        # Base name without variation suffix
+        base_name = clip.name
+        for suffix in ["_original", "_wide", "_full"]:
+            if base_name.endswith(suffix):
+                base_name = base_name[: -len(suffix)]
+                break
+
+        # If multi_crop, create patterns for each variation
+        if multi_crop and crop_variations:
+            if isinstance(crop_variations, str):
+                variations = [
+                    v.strip() for v in crop_variations.split(",") if v.strip()
+                ]
+            else:
+                variations = crop_variations
+
+            # Create pattern for each variation
+            for variation in variations:
+                if variation == "original":
+                    # Original might not have a suffix
+                    clip_patterns.append(f"{video_name}_{base_name}")
+                    clip_patterns.append(f"{video_name}_{base_name}_original")
+                else:
+                    clip_patterns.append(f"{video_name}_{base_name}_{variation}")
+        else:
+            # Just use the clip name as is
+            clip_patterns.append(f"{video_name}_{clip.name}")
+
+        # Find matching files in each directory
+        found_files = []
+
+        for dir_path in dirs_to_check:
+            # Extract camera type and session from source path
+            camera_type = extract_camera_type(source_path)
+            session = extract_session_folder(source_path)
+
+            # Construct full directory path with camera and session subfolders
+            full_dir = dir_path / camera_type / session
+
+            if not full_dir.exists():
+                logger.warning(f"Export directory does not exist: {full_dir}")
+                continue
+
+            # Check for each pattern
+            for pattern in clip_patterns:
+                # Look for files with the pattern and both mp4 and mkv extensions
+                for ext in [".mp4", ".mkv"]:
+                    matching_files = list(full_dir.glob(f"{pattern}*{ext}"))
+                    for file in matching_files:
+                        if file.exists() and str(file) not in found_files:
+                            found_files.append(str(file))
+                            logger.info(f"Found generated clip: {file}")
+
+        return found_files
+
+    except Exception as e:
+        logger.exception(f"Error finding generated clips: {str(e)}")
+        return []
 
 
 def process_batch(
@@ -814,6 +1090,37 @@ def process_batch(
                                     logger.warning(
                                         f"Export validation failed for clip {clip.name}"
                                     )
+
+                                    # If our export_path is empty but files should exist, try to find them
+                                    if (
+                                        not clip.export_path
+                                        or len(clip.export_path) == 0
+                                    ):
+                                        logger.warning(
+                                            f"Export path is empty for clip {clip.name} - attempting to scan for generated files"
+                                        )
+                                        found_files = find_generated_clips(
+                                            clip,
+                                            config_manager,
+                                            both_formats=both_formats,
+                                            multi_crop=multi_crop,
+                                            crop_variations=crop_variations,
+                                        )
+
+                                        if found_files:
+                                            logger.info(
+                                                f"Found {len(found_files)} generated files on disk for clip {clip.name}"
+                                            )
+                                            clip.export_path = found_files
+
+                                            # Update export_paths for compatibility
+                                            if hasattr(clip, "export_paths"):
+                                                clip.export_paths = ",".join(
+                                                    found_files
+                                                )
+                                                logger.info(
+                                                    f"Updated export_paths string: {clip.export_paths}"
+                                                )
 
                                     # Make double sure export_paths is in sync
                                     if hasattr(clip, "export_paths") and hasattr(
@@ -1210,7 +1517,7 @@ Watch Mode:
         "--wide-crop-factor",
         type=float,
         default=1.5,
-        help="Multiplier for the wide crop (1.5 = 50%% larger than original)",
+        help="Multiplier for the wide crop variation - higher values = more zoomed out (default: 1.2, 1.5 = 50%% larger than original)",
     )
     parser.add_argument(
         "--watch-raw",
@@ -1300,7 +1607,9 @@ Watch Mode:
         if args.multi_crop:
             logger.info("Generating multiple crop variations")
             logger.info(f"Crop variations: {args.crop_variations}")
-            logger.info(f"Wide crop factor: {args.wide_crop_factor}")
+            logger.info(
+                f"Wide crop factor: {args.wide_crop_factor} (higher values = more zoomed out)"
+            )
 
         try:
             while True:
