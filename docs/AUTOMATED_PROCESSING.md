@@ -55,7 +55,7 @@ This will run continuously, scanning for new clips to process every 60 seconds (
 #### Watch mode for raw footage:
 
 ```bash
-python scripts/process_clips.py --watch-raw
+python scripts/process_clips.py --generate-proxies
 ```
 
 This will monitor your source directories for new raw footage and automatically generate proxies when new files are detected. See the [Raw Footage Watch Mode](#raw-footage-watch-mode) section for more details.
@@ -97,6 +97,34 @@ python scripts/process_clips.py --max-workers 2 --batch-size 10
 
 **Note on Resource Usage**: The default `--max-workers` value is 1, which is recommended for most systems. This is because each FFmpeg process can use up to 16 threads, so processing multiple clips in parallel can quickly oversubscribe your CPU. Only increase this value if you have a high-end workstation or server with many CPU cores.
 
+### Recommended Production Command
+
+For most production workflows, the following command is recommended as it provides the most comprehensive clip generation:
+
+```bash
+python scripts/process_clips.py --daemon --interval 120 --batch-size 5 --both-formats --multi-crop
+```
+
+This command:
+
+- Runs continuously as a daemon (`--daemon`), monitoring for new clips marked as "Process"
+- Checks for new clips every 2 minutes (`--interval 120`)
+- Processes clips in small batches of 5 (`--batch-size 5`) to manage system resources
+- Generates both H.264 and FFV1 formats (`--both-formats`) for maximum compatibility
+- Creates all crop variations (`--multi-crop`): original, wide, and full frame
+- Automatically saves progress after each batch, making it resilient to interruptions
+
+For each clip processed, this will generate:
+
+1. H.264 format (original crop) - For general viewing and sharing
+2. H.264 format (wide crop) - For wider context around the subject
+3. H.264 format (full frame) - For complete uncropped view
+4. FFV1 format (original crop) - For computer vision/ML processing
+5. FFV1 format (wide crop) - For CV/ML with wider context
+6. FFV1 format (full frame) - For CV/ML with full context
+
+The small batch size ensures that if any issues occur, only a few clips are affected, and the daemon can continue with the next batch. The 2-minute interval provides a good balance between responsiveness and system load.
+
 You can combine these options as needed:
 
 ```bash
@@ -112,7 +140,7 @@ The watch mode is a special option that monitors your raw footage directories fo
 #### Basic Watch Mode:
 
 ```bash
-python scripts/process_clips.py --watch-raw
+python scripts/process_clips.py --generate-proxies
 ```
 
 This will:
@@ -125,13 +153,13 @@ This will:
 
 ```bash
 # Check for new footage every 2 minutes
-python scripts/process_clips.py --watch-raw --watch-interval 120
+python scripts/process_clips.py --generate-proxies --watch-interval 120
 
 # Only process footage from specific cameras
-python scripts/process_clips.py --watch-raw --camera GOPRO
+python scripts/process_clips.py --generate-proxies --camera GOPRO
 
 # Skip existing files without proxies, only process new files
-python scripts/process_clips.py --watch-raw --ignore-existing
+python scripts/process_clips.py --generate-proxies --ignore-existing
 ```
 
 - `--watch-interval`: How often to check for new files (in seconds, default: 300)
@@ -197,7 +225,7 @@ After=network.target
 [Service]
 User=your_username
 WorkingDirectory=/path/to/clipper
-ExecStart=/usr/bin/python3 scripts/process_clips.py --watch-raw --watch-interval 300
+ExecStart=/usr/bin/python3 scripts/process_clips.py --generate-proxies --watch-interval 300
 Restart=on-failure
 RestartSec=5s
 

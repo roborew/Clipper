@@ -1437,13 +1437,13 @@ Examples:
   python scripts/process_clips.py --daemon --interval 300
   
   # Watch for new raw footage and auto-generate proxies
-  python scripts/process_clips.py --watch-raw
+  python scripts/process_clips.py --generate-proxies
   
   # Watch for new raw footage from a specific camera only, ignoring existing files
-  python scripts/process_clips.py --watch-raw --camera GP1 --ignore-existing
+  python scripts/process_clips.py --generate-proxies --camera GP1 --ignore-existing
   
   # Watch for new footage, checking every 2 minutes
-  python scripts/process_clips.py --watch-raw --watch-interval 120
+  python scripts/process_clips.py --generate-proxies --watch-interval 120
   
 Camera Filtering:
   The --camera option supports flexible matching:
@@ -1454,7 +1454,7 @@ Camera Filtering:
   Use --list-cameras to see all available camera types.
   
 Watch Mode:
-  The --watch-raw option sets up a daemon that watches for new raw footage and 
+  The --generate-proxies option sets up a daemon that watches for new raw footage and 
   automatically generates proxies when new files are detected. This is useful 
   for automatically processing footage as it's imported.
   
@@ -1520,7 +1520,7 @@ Watch Mode:
         help="Multiplier for the wide crop variation - higher values = more zoomed out (default: 1.2, 1.5 = 50%% larger than original)",
     )
     parser.add_argument(
-        "--watch-raw",
+        "--generate-proxies",
         action="store_true",
         help="Watch for new raw footage and auto-generate proxies",
     )
@@ -1584,8 +1584,8 @@ Watch Mode:
         return
 
     # Handle watch mode
-    if args.watch_raw:
-        logger.info("Starting watch mode for automatic proxy generation")
+    if args.generate_proxies:
+        logger.info("Starting proxy generation mode for automatic proxy creation")
         watch_for_new_footage(
             config_manager,
             interval=args.watch_interval,
