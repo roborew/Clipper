@@ -497,8 +497,32 @@ def process_clip(
                 )
 
                 # Check if all variations were successful
-                if not all(format_results.values()):
-                    overall_success = False
+                if format_results and isinstance(format_results, dict):
+                    variation_success = all(format_results.values())
+                    if not variation_success:
+                        overall_success = False
+                        logger.warning(
+                            f"Some variations failed for {format_label} format"
+                        )
+
+                    # Log all variation results for debugging
+                    for variation, success in format_results.items():
+                        logger.info(
+                            f"Variation {variation} result: {'Success' if success else 'Failed'}"
+                        )
+                else:
+                    # Handle the case where format_results isn't a dict (for backward compatibility)
+                    if hasattr(clip, "export_path") and clip.export_path:
+                        # We have export paths, so something worked
+                        logger.info(
+                            f"Got export paths after multi-crop processing: {clip.export_path}"
+                        )
+                    else:
+                        # No export paths suggests failure
+                        overall_success = False
+                        logger.warning(
+                            f"No export paths found after multi-crop processing for {format_label} format"
+                        )
 
                 # Log current state of export paths
                 if isinstance(clip.export_path, list):
@@ -661,10 +685,27 @@ def save_processed_clips(clips, config_manager):
                         p for p in processed_clip.export_path if not os.path.exists(p)
                     ]
                     logger.warning(f"Some paths in export_path don't exist: {missing}")
+
+                    # Filter out missing paths to avoid saving invalid paths
+                    processed_clip.export_path = [
+                        p for p in processed_clip.export_path if os.path.exists(p)
+                    ]
+                    logger.info(
+                        f"Filtered export_path to only include existing files: {len(processed_clip.export_path)} remain"
+                    )
             else:
                 logger.info(
                     f"Export path is not a list but a {type(processed_clip.export_path)}"
                 )
+                # Convert string to list if needed
+                if (
+                    isinstance(processed_clip.export_path, str)
+                    and processed_clip.export_path
+                ):
+                    processed_clip.export_path = [processed_clip.export_path]
+                    logger.info(
+                        f"Converted string export_path to list: {processed_clip.export_path}"
+                    )
 
         found = False
         for config_file, config_clips in clip_files.items():
@@ -698,101 +739,80 @@ def save_processed_clips(clips, config_manager):
                             processed_clip.export_path = list(
                                 processed_clip.export_path
                             )
+
+                            # Update the export_paths string attribute for compatibility
+                            processed_clip.export_paths = ",".join(
+                                processed_clip.export_path
+                            )
                             logger.info(
-                                f"Made a copy of export_path list: {processed_clip.export_path}"
+                                f"Set export_paths string attribute to: {processed_clip.export_paths}"
                             )
 
-                    # Update the clip in the config
-                    config_clips[i] = processed_clip
+                    # Update the clip
+                    config_clips[i].status = processed_clip.status
 
-                    # Check if the update worked
-                    logger.info(
-                        f"After update - config_clips[{i}].export_path: {config_clips[i].export_path}"
-                    )
-
-                    found = True
-                    break
-                # Fallback to matching by name + source_path + frames
-                elif (
-                    processed_clip.name == config_clip.name
-                    and processed_clip.source_path == config_clip.source_path
-                    and processed_clip.start_frame == config_clip.start_frame
-                    and processed_clip.end_frame == config_clip.end_frame
-                ):
-                    logger.info(
-                        f"Found clip {processed_clip.name} (matching name/source/frames) in {config_file}"
-                    )
-
-                    # Check state of export_path before updating
-                    if hasattr(config_clip, "export_path"):
-                        logger.info(
-                            f"Before update - config_clip.export_path: {config_clip.export_path}"
-                        )
-
-                    # Make a deep copy of the export_path to ensure it's preserved
+                    # Copy the export_path correctly
                     if (
                         hasattr(processed_clip, "export_path")
                         and processed_clip.export_path
                     ):
-                        # Keep a reference to the original export_path
-                        original_export_path = processed_clip.export_path
+                        config_clips[i].export_path = processed_clip.export_path
 
-                        if isinstance(processed_clip.export_path, list):
-                            # Make a copy of the list to avoid reference issues
-                            processed_clip.export_path = list(
-                                processed_clip.export_path
-                            )
-                            logger.info(
-                                f"Made a copy of export_path list: {processed_clip.export_path}"
-                            )
+                    # Copy the export_paths string if it exists
+                    if (
+                        hasattr(processed_clip, "export_paths")
+                        and processed_clip.export_paths
+                    ):
+                        config_clips[i].export_paths = processed_clip.export_paths
 
-                    # Update the clip in the config
-                    config_clips[i] = processed_clip
+                    # Make sure the status is correct
+                    if processed_clip.status == "Complete":
+                        config_clips[i].status = "Complete"
+                        logger.info(
+                            f"Setting status to Complete for clip {processed_clip.name}"
+                        )
 
-                    # Check if the update worked
+                    # Update modified timestamp
+                    config_clips[i].update()
+
+                    # Log what we're about to save
                     logger.info(
-                        f"After update - config_clips[{i}].export_path: {config_clips[i].export_path}"
+                        f"Before saving - Updated clip {config_clips[i].name} with status: {config_clips[i].status}, "
+                        f"export_path: {config_clips[i].export_path}"
                     )
+
+                    # Save the changes
+                    save_success = clip_service.save_clips(config_clips, config_file)
+
+                    if save_success:
+                        saved_count += 1
+                        logger.info(
+                            f"Successfully saved updated clip {processed_clip.name} to {config_file}"
+                        )
+
+                        # Double-check the saved file to verify changes were saved
+                        try:
+                            reloaded_clips = clip_service.load_clips(config_file)
+                            if i < len(reloaded_clips):
+                                logger.info(
+                                    f"Verification - Reloaded clip has status: {reloaded_clips[i].status}, "
+                                    f"export_path: {reloaded_clips[i].export_path}"
+                                )
+                            else:
+                                logger.warning(
+                                    f"Verification - Could not reload clip at index {i}"
+                                )
+                        except Exception as e:
+                            logger.warning(f"Error verifying saved clip: {e}")
+                    else:
+                        logger.error(
+                            f"Failed to save updated clip {processed_clip.name}"
+                        )
 
                     found = True
                     break
 
             if found:
-                # Save the updated config
-                try:
-                    # Debug what's being saved
-                    for idx, clip in enumerate(config_clips):
-                        if hasattr(clip, "export_path"):
-                            logger.info(
-                                f"Before saving to file - clip[{idx}].export_path: {clip.export_path}"
-                            )
-
-                        # Extra check - convert to dict and back to verify serialization works
-                        clip_dict = clip.to_dict()
-                        logger.info(
-                            f"Clip dict export_path value: {clip_dict.get('export_path')}"
-                        )
-                        test_clip = clip_service.Clip.from_dict(clip_dict)
-                        logger.info(
-                            f"After dict roundtrip - export_path: {test_clip.export_path}"
-                        )
-
-                    # Try saving with our debugging
-                    clip_service.save_clips(config_clips, config_file)
-                    logger.info(f"Saved updated clips to {config_file}")
-
-                    # Verify what was saved by reading back
-                    test_read = clip_service.load_clips(config_file)
-                    if test_read and len(test_read) > 0:
-                        for idx, clip in enumerate(test_read):
-                            if hasattr(clip, "export_path"):
-                                logger.info(
-                                    f"After reading back from file - clip[{idx}].export_path: {clip.export_path}"
-                                )
-
-                    saved_count += 1
-                except Exception as e:
-                    logger.error(f"Error saving clips to {config_file}: {e}")
                 break
 
         if not found:
@@ -1033,6 +1053,31 @@ def process_batch(
     processed_clips = []
     config_manager = ConfigManager()
 
+    # Create a map of processed clips to their original file paths and indices
+    # This is necessary for properly updating statuses
+    clip_sources = {}
+
+    # Map all clips to their config files and indices first
+    for clip in clips:
+        # Find the clip's source config file
+        found = False
+        for config_file in config_manager.configs_dir.glob("**/*.json"):
+            if not found:
+                try:
+                    config_clips = clip_service.load_clips(config_file)
+                    for i, config_clip in enumerate(config_clips):
+                        # Match by ID if available
+                        if (
+                            hasattr(clip, "id")
+                            and hasattr(config_clip, "id")
+                            and clip.id == config_clip.id
+                        ):
+                            clip_sources[clip.id] = (config_file, i)
+                            found = True
+                            break
+                except Exception as e:
+                    logger.warning(f"Error loading clips from {config_file}: {e}")
+
     # Use ThreadPoolExecutor for parallel processing
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all clips for processing
@@ -1165,6 +1210,19 @@ def process_batch(
     if processed_clips:
         saved = save_processed_clips(processed_clips, config_manager)
         logger.info(f"Saved {saved} of {len(processed_clips)} processed clips")
+
+        # Directly update clip status using update_clip_status for each clip
+        for clip in processed_clips:
+            if hasattr(clip, "id") and clip.id in clip_sources:
+                config_file, clip_index = clip_sources[clip.id]
+                logger.info(f"Updating clip status for {clip.name} in {config_file}")
+                update_success = update_clip_status(
+                    config_file, clip_index, "Complete", clip
+                )
+                if update_success:
+                    logger.info(f"Successfully updated clip status for {clip.name}")
+                else:
+                    logger.error(f"Failed to update clip status for {clip.name}")
 
     return successful
 
@@ -1403,6 +1461,102 @@ def process_all_raw_footage(config_manager, camera_filter=None):
     return successful
 
 
+def fix_processed_clips(config_manager):
+    """
+    Fix clips that have already been processed but not marked as Complete.
+    This function scans for clips that have export_path but status is not Complete
+    and updates them.
+
+    Args:
+        config_manager: ConfigManager instance
+
+    Returns:
+        Number of fixed clips
+    """
+    fixed_count = 0
+    logger.info("Scanning for clips with export_path but not marked Complete...")
+
+    # Scan all clip config files
+    for config_file in config_manager.configs_dir.glob("**/*.json"):
+        try:
+            clips = clip_service.load_clips(config_file)
+            needs_save = False
+
+            for i, clip in enumerate(clips):
+                # Check if clip has export_path but is not marked Complete
+                has_export_path = False
+                if hasattr(clip, "export_path") and clip.export_path:
+                    if isinstance(clip.export_path, list) and len(clip.export_path) > 0:
+                        has_export_path = True
+                    elif isinstance(clip.export_path, str) and clip.export_path.strip():
+                        has_export_path = True
+
+                # Check alternate export_paths attribute also
+                if (
+                    not has_export_path
+                    and hasattr(clip, "export_paths")
+                    and clip.export_paths
+                ):
+                    paths = [
+                        p.strip() for p in clip.export_paths.split(",") if p.strip()
+                    ]
+                    if paths:
+                        has_export_path = True
+                        # Convert to proper export_path list
+                        clip.export_path = paths
+                        logger.info(
+                            f"Converted export_paths to export_path list for {clip.name}: {paths}"
+                        )
+
+                if has_export_path and clip.status != "Complete":
+                    logger.info(
+                        f"Found clip {clip.name} with export_path but status is '{clip.status}'"
+                    )
+
+                    # Verify files exist on disk
+                    paths_exist = False
+                    if isinstance(clip.export_path, list):
+                        existing_paths = [
+                            p for p in clip.export_path if os.path.exists(p)
+                        ]
+                        if existing_paths:
+                            paths_exist = True
+                            if len(existing_paths) != len(clip.export_path):
+                                logger.warning(
+                                    f"Some export paths don't exist for {clip.name}, updating to keep only existing paths"
+                                )
+                                clip.export_path = existing_paths
+                                if hasattr(clip, "export_paths"):
+                                    clip.export_paths = ",".join(existing_paths)
+                    else:
+                        paths_exist = os.path.exists(clip.export_path)
+
+                    if paths_exist:
+                        # Update status to Complete
+                        clip.status = "Complete"
+                        clip.update()  # Update modified timestamp
+                        logger.info(f"Updated clip {clip.name} status to Complete")
+                        fixed_count += 1
+                        needs_save = True
+                    else:
+                        logger.warning(
+                            f"Clip {clip.name} has export_path but files don't exist, not updating status"
+                        )
+
+            # Save the config file if any clips were updated
+            if needs_save:
+                success = clip_service.save_clips(clips, config_file)
+                if success:
+                    logger.info(f"Saved updated clips to {config_file}")
+                else:
+                    logger.error(f"Failed to save updated clips to {config_file}")
+
+        except Exception as e:
+            logger.exception(f"Error processing config file {config_file}: {str(e)}")
+
+    return fixed_count
+
+
 def main():
     """
     Main function to process clips
@@ -1444,6 +1598,9 @@ Examples:
   
   # Watch for new footage, checking every 2 minutes
   python scripts/process_clips.py --generate-proxies --watch-interval 120
+  
+  # Fix clips that were processed but not marked as Complete
+  python scripts/process_clips.py --fix-processed
   
 Camera Filtering:
   The --camera option supports flexible matching:
@@ -1545,9 +1702,25 @@ Watch Mode:
         type=str,
         help="Comma-separated list of camera types to exclude from crop variations",
     )
+    parser.add_argument(
+        "--fix-processed",
+        action="store_true",
+        help="Fix clips that were processed but not marked as Complete",
+    )
     args = parser.parse_args()
 
     config_manager = ConfigManager()
+
+    # Handle fixing processed clips
+    if args.fix_processed:
+        fixed_count = fix_processed_clips(config_manager)
+        if fixed_count > 0:
+            print(
+                f"\nFixed {fixed_count} clips that were processed but not marked as Complete"
+            )
+        else:
+            print("\nNo clips needed fixing")
+        return
 
     # Parse crop camera types
     crop_camera_types = None
@@ -1643,6 +1816,35 @@ Watch Mode:
                 # Process clips in batches if batch size is specified
                 if args.batch_size > 0 and pending_clips:
                     total_processed = 0
+
+                    # Store mapping of processed clips to their config files and indices
+                    processed_clip_info = []
+
+                    # Before processing, find the file paths and indices for all clips
+                    for clip in pending_clips:
+                        # Find clip's source config file
+                        for config_file in config_manager.configs_dir.glob("**/*.json"):
+                            try:
+                                config_clips = clip_service.load_clips(config_file)
+                                for i, config_clip in enumerate(config_clips):
+                                    # Match by ID if available
+                                    if (
+                                        hasattr(clip, "id")
+                                        and hasattr(config_clip, "id")
+                                        and clip.id == config_clip.id
+                                    ):
+                                        processed_clip_info.append(
+                                            (clip.id, config_file, i)
+                                        )
+                                        logger.info(
+                                            f"Found config file for clip {clip.name}: {config_file}"
+                                        )
+                                        break
+                            except Exception as e:
+                                logger.warning(
+                                    f"Error loading clips from {config_file}: {e}"
+                                )
+
                     while pending_clips:
                         batch = pending_clips[: args.batch_size]
                         pending_clips = pending_clips[args.batch_size :]
@@ -1650,6 +1852,10 @@ Watch Mode:
                         logger.info(
                             f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
                         )
+
+                        # Keep track of successfully processed clips in this batch
+                        successfully_processed = []
+
                         num_processed = process_batch(
                             batch,
                             args.max_workers,
@@ -1663,6 +1869,36 @@ Watch Mode:
                             exclude_crop_camera_types,
                         )
                         total_processed += num_processed
+
+                        # For each processed clip, directly update its status using update_clip_status
+                        for clip in batch:
+                            if hasattr(clip, "status") and clip.status == "Complete":
+                                successfully_processed.append(clip)
+                                # Find the clip info in our mapping
+                                for (
+                                    clip_id,
+                                    config_file,
+                                    clip_index,
+                                ) in processed_clip_info:
+                                    if hasattr(clip, "id") and clip.id == clip_id:
+                                        logger.info(
+                                            f"Directly updating status for clip {clip.name} in {config_file}"
+                                        )
+                                        update_success = update_clip_status(
+                                            config_file, clip_index, "Complete", clip
+                                        )
+                                        if update_success:
+                                            logger.info(
+                                                f"Successfully updated clip status for {clip.name}"
+                                            )
+                                        else:
+                                            logger.error(
+                                                f"Failed to update clip status for {clip.name}"
+                                            )
+
+                        logger.info(
+                            f"Successfully processed {len(successfully_processed)} clips in this batch"
+                        )
 
                     logger.info(f"Processed {total_processed} clips in batches")
                 elif pending_clips:
