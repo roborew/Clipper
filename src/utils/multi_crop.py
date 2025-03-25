@@ -239,6 +239,13 @@ def process_clip_with_variations(
         f"Initial export_path state for multi_crop processing: {getattr(clip, 'export_path', None)}"
     )
 
+    # Initialize the clip's export_path as an empty list if it doesn't exist
+    if not hasattr(clip, "export_path") or clip.export_path is None:
+        clip.export_path = []
+    elif not isinstance(clip.export_path, list):
+        # Convert to list if it's not already
+        clip.export_path = [clip.export_path] if clip.export_path else []
+
     # Check configuration if not explicitly provided
     if config_manager and (crop_camera_types is None and exclude_camera_types is None):
         try:
@@ -248,54 +255,55 @@ def process_clip_with_variations(
 
             if crop_variations_config.get("enabled", True):
                 # Get camera types from config
-                crop_camera_types = crop_variations_config.get("camera_types")
+                crop_camera_types = crop_variations_config.get("camera_types", [])
                 exclude_camera_types = crop_variations_config.get(
-                    "exclude_camera_types"
+                    "exclude_camera_types", []
                 )
-                logger.info(f"Read crop camera types from config: {crop_camera_types}")
+
                 logger.info(
-                    f"Read exclude camera types from config: {exclude_camera_types}"
+                    f"Using camera types from config: crop_camera_types={crop_camera_types}, exclude_camera_types={exclude_camera_types}"
                 )
+            else:
+                logger.info("Crop variations disabled in config")
+                # Force to only use original
+                crop_variations = ["original"]
+                # Don't apply camera type filtering
+                crop_camera_types = None
+                exclude_camera_types = None
         except Exception as e:
-            logger.warning(f"Error reading crop variations config: {e}")
+            logger.warning(f"Error accessing crop variations config: {str(e)}")
 
-    # Force multi_crop if explicitly requested with variations
-    force_multi_crop = kwargs.get("multi_crop", False) or multi_crop
-
-    # Determine if we should apply all variations or just the original
+    # Determine if we should apply variations based on camera type
     should_apply_variations = True
 
-    # Log camera type for debugging
-    if camera_type:
-        logger.info(f"Checking camera type: {camera_type} for variations")
-    else:
-        logger.warning("No camera type specified for variation filtering")
-
-    # If multi_crop is forced, always apply variations regardless of camera type
-    if force_multi_crop:
-        logger.info("Forcing multiple crop variations due to --multi-crop flag")
-        should_apply_variations = True
-    # Otherwise, only apply variations if camera type matches criteria
-    elif camera_type and crop_camera_types:
+    # If there's a camera filter in crop_camera_types (include only)
+    if crop_camera_types:
         # Convert to list if it's a string
         if isinstance(crop_camera_types, str):
-            crop_camera_types = [ct.strip() for ct in crop_camera_types.split(",")]
+            crop_camera_types = [
+                t.strip() for t in crop_camera_types.split(",") if t.strip()
+            ]
 
-        # Check if the camera type is in the allowed list
-        should_apply_variations = camera_type in crop_camera_types
+        # Only apply variations if camera type matches one in the list
+        if camera_type and camera_type not in crop_camera_types:
+            should_apply_variations = False
+
         logger.info(
-            f"Camera type {camera_type} {'is' if should_apply_variations else 'is not'} in allowed types {crop_camera_types}"
+            f"Camera type {camera_type} {'is' if should_apply_variations else 'is not'} in included types {crop_camera_types}"
         )
-    # Or if camera type is not in excluded list
-    elif camera_type and exclude_camera_types:
+
+    # If there's a camera filter in exclude_camera_types
+    if exclude_camera_types and should_apply_variations:
         # Convert to list if it's a string
         if isinstance(exclude_camera_types, str):
             exclude_camera_types = [
-                ct.strip() for ct in exclude_camera_types.split(",")
+                t.strip() for t in exclude_camera_types.split(",") if t.strip()
             ]
 
-        # Check if camera type is in exclude list
-        should_apply_variations = camera_type not in exclude_camera_types
+        # Don't apply variations if camera type is in excluded list
+        if camera_type and camera_type in exclude_camera_types:
+            should_apply_variations = False
+
         logger.info(
             f"Camera type {camera_type} {'is not' if should_apply_variations else 'is'} in excluded types {exclude_camera_types}"
         )
@@ -449,30 +457,80 @@ def process_clip_with_variations(
 
         # Process this variation
         logger.info(f"Sending variation {variation} to processing function")
-        success = process_clip_func(variation_clip, **kwargs)
-        results[variation] = success
-        logger.info(f"Result for {variation}: {'Success' if success else 'Failed'}")
+        result = process_clip_func(variation_clip, **kwargs)
+        results[variation] = result
+        logger.info(f"Result for {variation}: {'Success' if result else 'Failed'}")
 
         # Store export path
-        if success and hasattr(variation_clip, "export_path"):
-            if variation_clip.export_path:
-                # Handle list or string export_path from the variation
-                if isinstance(variation_clip.export_path, list):
-                    for path in variation_clip.export_path:
-                        if path and path not in all_export_paths:
-                            all_export_paths.append(path)
-                            logger.info(f"Added path from {variation}: {path}")
-                else:
-                    path = variation_clip.export_path
+        if (
+            result
+            and hasattr(variation_clip, "export_path")
+            and variation_clip.export_path
+        ):
+            # Log what we found to debug
+            logger.info(
+                f"Found export path(s) for variation {variation}: {variation_clip.export_path}"
+            )
+
+            # Handle list or string export_path from the variation
+            if isinstance(variation_clip.export_path, list):
+                for path in variation_clip.export_path:
                     if path and path not in all_export_paths:
                         all_export_paths.append(path)
                         logger.info(f"Added path from {variation}: {path}")
+            else:
+                path = variation_clip.export_path
+                if path and path not in all_export_paths:
+                    all_export_paths.append(path)
+                    logger.info(f"Added path from {variation}: {path}")
 
     # If any paths were generated, add them to the original clip
     if all_export_paths:
         logger.info(f"Setting export_path on original clip to: {all_export_paths}")
+        # Force export_path to be a list
         clip.export_path = all_export_paths
+
+        # Set the export_paths string attribute for compatibility
+        if hasattr(clip, "export_paths"):
+            clip.export_paths = ",".join(all_export_paths)
+            logger.info(f"Set export_paths attribute to: {clip.export_paths}")
+
+        # Explicitly log the final result for debugging
+        logger.info(f"FINAL: Clip {clip.name} has export_path: {clip.export_path}")
+        return results
     else:
         logger.warning("No export paths were collected from any variations")
 
-    return {"results": results, "export_paths": all_export_paths}
+        # Check if the files exist on disk but weren't properly added to export_path
+        # This is a fallback mechanism to try to recover from issues
+        try:
+            if config_manager:
+                from scripts.process_clips import find_generated_clips
+
+                logger.info(f"Attempting to find clips on disk for {clip.name}")
+                found_files = find_generated_clips(
+                    clip,
+                    config_manager,
+                    both_formats=kwargs.get("both_formats", False),
+                    multi_crop=True,
+                    crop_variations=crop_variations,
+                )
+
+                if found_files:
+                    logger.info(
+                        f"Found {len(found_files)} files on disk: {found_files}"
+                    )
+                    clip.export_path = found_files
+
+                    # Set the export_paths string attribute for compatibility
+                    if hasattr(clip, "export_paths"):
+                        clip.export_paths = ",".join(found_files)
+
+                    logger.info(
+                        f"RECOVERED: Set export_path to found files: {clip.export_path}"
+                    )
+                    return results
+        except Exception as e:
+            logger.exception(f"Error in fallback file search: {e}")
+
+    return results

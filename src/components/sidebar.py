@@ -910,7 +910,7 @@ def display_clip_management():
                                 crop_region=crop_region,
                                 crop_keyframes=clip.crop_keyframes,  # Use original keyframes for export
                                 output_resolution=clip.output_resolution,
-                                progress_placeholder=progress_placeholder,
+                                progress_callback=progress_placeholder,
                                 config_manager=config_manager,
                                 cv_optimized=cv_optimized,  # Pass the CV optimization flag
                             )
