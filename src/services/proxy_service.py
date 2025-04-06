@@ -1927,3 +1927,196 @@ def export_clip(
     except Exception as e:
         logger.error(f"Error in clip export: {str(e)}")
         return None
+
+
+def _create_proxy_with_calibration_two_stage(
+    source_path,
+    proxy_path,
+    camera_type,
+    camera_matrix,
+    dist_coeffs,
+    proxy_settings,
+    duration,
+    progress_placeholder=None,
+    progress_callback=None,
+    config_manager=None,
+):
+    """
+    Create a proxy video with calibration applied in two stages.
+
+    Args:
+        source_path: Path to the source video
+        proxy_path: Path where the proxy video should be saved
+        camera_type: Type of camera (GP1, GP2, SONY_70, SONY_300)
+        camera_matrix: Camera matrix from calibration file
+        dist_coeffs: Distortion coefficients from calibration file
+        proxy_settings: Proxy video settings from config
+        duration: Expected duration of the video in seconds
+        progress_placeholder: Streamlit placeholder for progress updates
+        progress_callback: Callback function for progress updates
+        config_manager: ConfigManager instance
+
+    Returns:
+        Path to the proxy video or None if creation failed
+    """
+    try:
+        in_streamlit = is_streamlit_context()
+
+        # Create a temporary file for the calibrated video
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
+            calibrated_path = temp_file.name
+
+        # Stage 1: Apply calibration
+        logger.info("Stage 1: Applying calibration")
+        if progress_placeholder and in_streamlit:
+            progress_placeholder.text("Stage 1/2: Applying calibration...")
+
+        # Use calibration service to apply calibration
+        calibration_success = calibration_service.apply_calibration_to_video(
+            input_path=source_path,
+            output_path=calibrated_path,
+            camera_type=camera_type,
+            camera_matrix=camera_matrix,
+            dist_coeffs=dist_coeffs,
+            quality_preset="high",  # Use high quality for calibration
+            progress_callback=lambda p: _progress_callback_stage1(
+                p, progress_placeholder, None, progress_callback, in_streamlit
+            ),
+            config_manager=config_manager,
+        )
+
+        if not calibration_success:
+            logger.error("Failed to apply calibration")
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error("Failed to apply calibration")
+            return None
+
+        # Stage 2: Create proxy from calibrated video
+        logger.info("Stage 2: Creating proxy from calibrated video")
+        if progress_placeholder and in_streamlit:
+            progress_placeholder.text("Stage 2/2: Creating proxy video...")
+
+        # Ensure the parent directory exists
+        proxy_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Prepare FFmpeg command for proxy creation
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            str(calibrated_path),
+            "-c:v",
+            "libx264",
+            "-preset",
+            "fast",
+            "-crf",
+            str(proxy_settings["quality"]),
+            "-vf",
+            f"scale={proxy_settings['width']}:-2",
+            "-c:a",
+            "aac",
+            "-b:a",
+            proxy_settings["audio_bitrate"],
+            str(proxy_path),
+        ]
+
+        # Convert command list to a string for shell=True
+        cmd_str = " ".join(
+            (
+                f'"{arg}"'
+                if " " in str(arg) or "+" in str(arg) or ":" in str(arg)
+                else str(arg)
+            )
+            for arg in cmd
+        )
+
+        # Initialize progress tracking
+        progress_queue = Queue()
+        stop_event = threading.Event()
+
+        # Start FFmpeg process
+        process = subprocess.Popen(
+            cmd_str,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            universal_newlines=True,
+            shell=True,
+        )
+
+        # Monitor progress in a separate thread
+        if duration > 0:
+            monitor_thread = threading.Thread(
+                target=monitor_progress,
+                args=(process, duration, progress_queue, stop_event),
+            )
+            monitor_thread.daemon = True
+            monitor_thread.start()
+
+            # Update progress from main thread
+            last_update_time = time.time()
+            try:
+                while process.poll() is None:
+                    try:
+                        progress_info = progress_queue.get_nowait()
+                        # Scale progress to 50-100% for second stage
+                        scaled_progress = 0.5 + (progress_info["progress"] * 0.5)
+
+                        if progress_placeholder and in_streamlit:
+                            percent_complete = int(scaled_progress * 100)
+                            progress_placeholder.text(
+                                f"Stage 2/2: Creating proxy: {percent_complete}% complete"
+                            )
+
+                        if progress_callback:
+                            progress_callback(scaled_progress)
+
+                        # Update progress tracking for polling
+                        if in_streamlit:
+                            st.session_state.proxy_last_progress_time = time.time()
+                            st.session_state.proxy_last_progress_value = scaled_progress
+
+                        progress_queue.task_done()
+                    except Exception:
+                        # No progress update available, sleep briefly
+                        time.sleep(0.1)
+            except Exception as e:
+                logger.warning(f"Error monitoring progress: {str(e)}")
+            finally:
+                # Stop progress monitoring
+                stop_event.set()
+                if monitor_thread and monitor_thread.is_alive():
+                    monitor_thread.join(timeout=1.0)
+
+        # Wait for process to complete
+        return_code = process.wait()
+
+        # Clean up temporary file
+        try:
+            os.unlink(calibrated_path)
+        except Exception as e:
+            logger.warning(f"Failed to delete temporary calibrated file: {e}")
+
+        if return_code != 0:
+            logger.error(f"FFmpeg process failed with return code {return_code}")
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error("Failed to create proxy video")
+            return None
+
+        # Verify the proxy file exists and is valid
+        if os.path.exists(proxy_path):
+            proxy_size = os.path.getsize(proxy_path) / (1024 * 1024)
+            logger.info(
+                f"Proxy created successfully: {proxy_path} ({proxy_size:.2f} MB)"
+            )
+            return str(proxy_path)
+        else:
+            logger.error("Failed to create proxy video - output file does not exist")
+            if progress_placeholder and in_streamlit:
+                progress_placeholder.error("Failed to create proxy video")
+            return None
+
+    except Exception as e:
+        logger.exception(f"Error in two-stage proxy creation: {str(e)}")
+        if progress_placeholder and in_streamlit:
+            progress_placeholder.error(f"Error creating proxy: {str(e)}")
+        return None
