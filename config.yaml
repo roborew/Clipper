@@ -29,6 +29,7 @@ export:
     enabled: true
     camera_types:
       - SONY_300
+      - SONY_70
 patterns:
   video_extensions:
     - .mp4

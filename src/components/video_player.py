@@ -411,7 +411,9 @@ def display_video_player(
                         frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                st.image(frame, use_container_width=True)
+                st.image(
+                    frame, width=None
+                )  # Let Streamlit determine the width automatically
 
                 # Display frame information
                 st.caption(
@@ -905,7 +907,9 @@ def play_clip_preview(
                     frame = video_service.draw_crop_overlay(frame, frame_crop)
 
                 # Display the frame
-                st.image(frame, use_container_width=True)
+                st.image(
+                    frame, width=None
+                )  # Let Streamlit determine the width automatically
 
                 # Display frame information
                 st.caption(
