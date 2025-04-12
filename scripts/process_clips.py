@@ -1808,144 +1808,210 @@ Watch Mode:
                 f"Wide crop factor: {args.wide_crop_factor} (higher values = more zoomed out)"
             )
 
+        # Add a heartbeat file to track if daemon is running
+        heartbeat_file = script_dir / "daemon_heartbeat.txt"
+        last_heartbeat = time.time()
+
         try:
+            iteration = 0
             while True:
-                # Get all pending clips
-                pending_clips = get_pending_clips(config_manager)
+                iteration += 1
+                current_time = time.time()
 
-                # Apply camera filter if specified
-                if args.camera and pending_clips:
-                    filtered_clips = []
-                    for clip in pending_clips:
-                        try:
-                            # Resolve the source path
-                            source_path = resolve_source_path(
-                                clip.source_path, config_manager
-                            )
-                            # Extract camera type
-                            camera_type = extract_camera_type(source_path)
-                            if camera_matches_filter(camera_type, args.camera):
-                                filtered_clips.append(clip)
-                        except Exception as e:
-                            logger.warning(
-                                f"Error filtering clip {clip.name}: {str(e)}"
-                            )
-                            # Skip this clip if we can't resolve its path
-                            continue
-                    logger.info(
-                        f"Found {len(filtered_clips)} clips matching camera filter '{args.camera}' out of {len(pending_clips)} total pending clips"
+                # Update heartbeat file
+                with open(heartbeat_file, "w") as f:
+                    f.write(f"Last heartbeat: {datetime.now().isoformat()}\n")
+                    f.write(f"Iteration: {iteration}\n")
+                    f.write(
+                        f"Total runtime: {int(current_time - last_heartbeat)} seconds\n"
                     )
-                    pending_clips = filtered_clips
 
-                # Process clips in batches if batch size is specified
-                if args.batch_size > 0 and pending_clips:
-                    total_processed = 0
+                logger.info(f"Starting daemon iteration {iteration}")
+                print(f"\n{'='*80}")
+                print(f"Daemon Iteration {iteration}")
+                print(f"Last heartbeat: {datetime.now().isoformat()}")
+                print(f"{'='*80}\n")
 
-                    # Store mapping of processed clips to their config files and indices
-                    processed_clip_info = []
+                try:
+                    # Get all pending clips
+                    pending_clips = get_pending_clips(config_manager)
+                    logger.info(f"Found {len(pending_clips)} pending clips")
 
-                    # Before processing, find the file paths and indices for all clips
-                    for clip in pending_clips:
-                        # Find clip's source config file
-                        for config_file in config_manager.configs_dir.glob("**/*.json"):
+                    # Apply camera filter if specified
+                    if args.camera and pending_clips:
+                        filtered_clips = []
+                        for clip in pending_clips:
                             try:
-                                config_clips = clip_service.load_clips(config_file)
-                                for i, config_clip in enumerate(config_clips):
-                                    # Match by ID if available
-                                    if (
-                                        hasattr(clip, "id")
-                                        and hasattr(config_clip, "id")
-                                        and clip.id == config_clip.id
-                                    ):
-                                        processed_clip_info.append(
-                                            (clip.id, config_file, i)
-                                        )
-                                        logger.info(
-                                            f"Found config file for clip {clip.name}: {config_file}"
-                                        )
-                                        break
+                                # Resolve the source path
+                                source_path = resolve_source_path(
+                                    clip.source_path, config_manager
+                                )
+                                # Extract camera type
+                                camera_type = extract_camera_type(source_path)
+                                if camera_matches_filter(camera_type, args.camera):
+                                    filtered_clips.append(clip)
                             except Exception as e:
                                 logger.warning(
-                                    f"Error loading clips from {config_file}: {e}"
+                                    f"Error filtering clip {clip.name}: {str(e)}"
                                 )
-
-                    while pending_clips:
-                        batch = pending_clips[: args.batch_size]
-                        pending_clips = pending_clips[args.batch_size :]
-
+                                # Skip this clip if we can't resolve its path
+                                continue
                         logger.info(
-                            f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
+                            f"Found {len(filtered_clips)} clips matching camera filter '{args.camera}' out of {len(pending_clips)} total pending clips"
                         )
+                        pending_clips = filtered_clips
 
-                        # Keep track of successfully processed clips in this batch
-                        successfully_processed = []
+                    # Process clips in batches if batch size is specified
+                    if args.batch_size > 0 and pending_clips:
+                        total_processed = 0
+                        batch_start_time = time.time()
 
-                        num_processed = process_batch(
-                            batch,
-                            args.max_workers,
-                            args.camera,
-                            args.cv_optimized,
-                            args.both_formats,
-                            args.multi_crop,
-                            args.crop_variations,
-                            args.wide_crop_factor,
-                            crop_camera_types,
-                            exclude_crop_camera_types,
-                        )
-                        total_processed += num_processed
+                        # Store mapping of processed clips to their config files and indices
+                        processed_clip_info = []
 
-                        # For each processed clip, directly update its status using update_clip_status
-                        for clip in batch:
-                            if hasattr(clip, "status") and clip.status == "Complete":
-                                successfully_processed.append(clip)
-                                # Find the clip info in our mapping
-                                for (
-                                    clip_id,
-                                    config_file,
-                                    clip_index,
-                                ) in processed_clip_info:
-                                    if hasattr(clip, "id") and clip.id == clip_id:
-                                        logger.info(
-                                            f"Directly updating status for clip {clip.name} in {config_file}"
-                                        )
-                                        update_success = update_clip_status(
-                                            config_file, clip_index, "Complete", clip
-                                        )
-                                        if update_success:
+                        # Before processing, find the file paths and indices for all clips
+                        for clip in pending_clips:
+                            # Find clip's source config file
+                            for config_file in config_manager.configs_dir.glob(
+                                "**/*.json"
+                            ):
+                                try:
+                                    config_clips = clip_service.load_clips(config_file)
+                                    for i, config_clip in enumerate(config_clips):
+                                        # Match by ID if available
+                                        if (
+                                            hasattr(clip, "id")
+                                            and hasattr(config_clip, "id")
+                                            and clip.id == config_clip.id
+                                        ):
+                                            processed_clip_info.append(
+                                                (clip.id, config_file, i)
+                                            )
                                             logger.info(
-                                                f"Successfully updated clip status for {clip.name}"
+                                                f"Found config file for clip {clip.name}: {config_file}"
                                             )
-                                        else:
-                                            logger.error(
-                                                f"Failed to update clip status for {clip.name}"
-                                            )
+                                            break
+                                except Exception as e:
+                                    logger.warning(
+                                        f"Error loading clips from {config_file}: {e}"
+                                    )
 
+                        while pending_clips:
+                            batch = pending_clips[: args.batch_size]
+                            pending_clips = pending_clips[args.batch_size :]
+
+                            logger.info(
+                                f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
+                            )
+
+                            # Keep track of successfully processed clips in this batch
+                            successfully_processed = []
+
+                            try:
+                                num_processed = process_batch(
+                                    batch,
+                                    args.max_workers,
+                                    args.camera,
+                                    args.cv_optimized,
+                                    args.both_formats,
+                                    args.multi_crop,
+                                    args.crop_variations,
+                                    args.wide_crop_factor,
+                                    crop_camera_types,
+                                    exclude_crop_camera_types,
+                                )
+                                total_processed += num_processed
+
+                                # For each processed clip, directly update its status using update_clip_status
+                                for clip in batch:
+                                    if (
+                                        hasattr(clip, "status")
+                                        and clip.status == "Complete"
+                                    ):
+                                        successfully_processed.append(clip)
+                                        # Find the clip info in our mapping
+                                        for (
+                                            clip_id,
+                                            config_file,
+                                            clip_index,
+                                        ) in processed_clip_info:
+                                            if (
+                                                hasattr(clip, "id")
+                                                and clip.id == clip_id
+                                            ):
+                                                logger.info(
+                                                    f"Directly updating status for clip {clip.name} in {config_file}"
+                                                )
+                                                update_success = update_clip_status(
+                                                    config_file,
+                                                    clip_index,
+                                                    "Complete",
+                                                    clip,
+                                                )
+                                                if update_success:
+                                                    logger.info(
+                                                        f"Successfully updated clip status for {clip.name}"
+                                                    )
+                                                else:
+                                                    logger.error(
+                                                        f"Failed to update clip status for {clip.name}"
+                                                    )
+
+                                logger.info(
+                                    f"Successfully processed {len(successfully_processed)} clips in this batch"
+                                )
+                            except Exception as e:
+                                logger.exception(f"Error processing batch: {str(e)}")
+                                # Continue with next batch even if this one failed
+                                continue
+
+                        batch_time = time.time() - batch_start_time
                         logger.info(
-                            f"Successfully processed {len(successfully_processed)} clips in this batch"
+                            f"Processed {total_processed} clips in {batch_time:.2f} seconds"
                         )
+                    elif pending_clips:
+                        # Process all clips at once
+                        try:
+                            num_processed = process_batch(
+                                pending_clips,
+                                args.max_workers,
+                                args.camera,
+                                args.cv_optimized,
+                                args.both_formats,
+                                args.multi_crop,
+                                args.crop_variations,
+                                args.wide_crop_factor,
+                                crop_camera_types,
+                                exclude_crop_camera_types,
+                            )
+                            logger.info(f"Processed {num_processed} clips")
+                        except Exception as e:
+                            logger.exception(f"Error processing clips: {str(e)}")
+                    else:
+                        logger.info("No pending clips found")
 
-                    logger.info(f"Processed {total_processed} clips in batches")
-                elif pending_clips:
-                    # Process all clips at once
-                    num_processed = process_batch(
-                        pending_clips,
-                        args.max_workers,
-                        args.camera,
-                        args.cv_optimized,
-                        args.both_formats,
-                        args.multi_crop,
-                        args.crop_variations,
-                        args.wide_crop_factor,
-                        crop_camera_types,
-                        exclude_crop_camera_types,
-                    )
-                    logger.info(f"Processed {num_processed} clips")
-                else:
-                    logger.info("No pending clips found")
+                except Exception as e:
+                    logger.exception(f"Error in daemon iteration: {str(e)}")
+                    # Continue running despite errors
 
-                time.sleep(args.interval)
+                # Calculate sleep time, ensuring we don't sleep too long
+                elapsed = time.time() - current_time
+                sleep_time = max(0, args.interval - elapsed)
+                logger.info(
+                    f"Sleeping for {sleep_time:.2f} seconds until next iteration"
+                )
+                time.sleep(sleep_time)
+
         except KeyboardInterrupt:
             logger.info("Daemon stopped by user")
+            print("\nDaemon stopped by user")
+        except Exception as e:
+            logger.exception(f"Fatal error in daemon: {str(e)}")
+            print(f"\nFatal error in daemon: {str(e)}")
+        finally:
+            # Clean up heartbeat file
+            if heartbeat_file.exists():
+                heartbeat_file.unlink()
     else:
         logger.info("Running one-time clip processing scan")
         if args.camera:
