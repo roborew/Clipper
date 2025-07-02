@@ -218,6 +218,47 @@ def resolve_source_path(source_path, config_manager):
     # Determine the correct source path based on calibration settings
     str_path = str(path)
 
+    # HANDLE LEGACY HARDCODED PATHS: Check for old "data/source/" prefix
+    if str_path.startswith("data/source/"):
+        logger.info(f"Detected legacy hardcoded path: {str_path}")
+        # Strip the "data/source/" prefix to get the relative part
+        legacy_relative = str_path[len("data/source/"):]
+        logger.info(f"Extracted legacy relative path: {legacy_relative}")
+        
+        # The legacy relative path should start with a folder like "00_RAW" or "RAW"
+        # Replace it with the current config and rebuild with proper source base
+        if legacy_relative.startswith("00_RAW/") or legacy_relative.startswith("RAW/"):
+            # Extract the part after the folder
+            if legacy_relative.startswith("00_RAW/"):
+                rel_path_after_folder = legacy_relative[len("00_RAW/"):]
+            else:  # RAW/
+                rel_path_after_folder = legacy_relative[len("RAW/"):]
+            
+            # Build the new path using the current config
+            if use_calibrated_footage:
+                corrected_path = config_manager.source_calibrated / rel_path_after_folder
+            else:
+                corrected_path = config_manager.source_raw / rel_path_after_folder
+            
+            logger.info(f"Corrected legacy path to: {corrected_path}")
+            return corrected_path
+        
+        elif legacy_relative.startswith("01_CALIBRATION/") or legacy_relative.startswith("CALIBRATION/"):
+            # Extract the part after the calibration folder
+            if legacy_relative.startswith("01_CALIBRATION/"):
+                rel_path_after_folder = legacy_relative[len("01_CALIBRATION/"):]
+            else:  # CALIBRATION/
+                rel_path_after_folder = legacy_relative[len("CALIBRATION/"):]
+            
+            # Build the new path using the current config
+            if use_calibrated_footage:
+                corrected_path = config_manager.source_calibrated / rel_path_after_folder
+            else:
+                corrected_path = config_manager.source_raw / rel_path_after_folder
+            
+            logger.info(f"Corrected legacy calibration path to: {corrected_path}")
+            return corrected_path
+
     # Handle relative paths that start with the configured source folder names
     if str_path.startswith(raw_folder) or str_path.startswith(calibrated_folder):
         # Determine which subfolder to use based on calibration setting
