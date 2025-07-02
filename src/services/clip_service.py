@@ -48,30 +48,89 @@ class Clip:
         self.id = str(uuid.uuid4())
         self.name = name or f"clip_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        # Convert source path to relative if it contains data/source or data/prept
+        # Convert source path to relative using ConfigManager
         if source_path:
             source_path = str(source_path)
-            if "data/source" in source_path:
-                source_path = os.path.join(
-                    "data/source", source_path.split("data/source/")[-1]
-                )
-            elif "data/prept" in source_path:
-                source_path = os.path.join(
-                    "data/prept", source_path.split("data/prept/")[-1]
-                )
+            # Get ConfigManager from session state or create a new one
+            try:
+                import streamlit as st
+
+                config_manager = st.session_state.get("config_manager")
+                if not config_manager:
+                    from src.services.config_manager import ConfigManager
+
+                    config_manager = ConfigManager()
+
+                # Convert absolute path to relative based on actual config
+                source_path_obj = Path(source_path)
+                if source_path_obj.is_absolute():
+                    # Try to make it relative to source directories
+                    try:
+                        relative_path = source_path_obj.relative_to(
+                            config_manager.source_raw
+                        )
+                        source_path = str(
+                            Path(config_manager.config["directories"]["source"]["raw"])
+                            / relative_path
+                        )
+                    except ValueError:
+                        try:
+                            relative_path = source_path_obj.relative_to(
+                                config_manager.source_calibrated
+                            )
+                            source_path = str(
+                                Path(
+                                    config_manager.config["directories"]["source"][
+                                        "calibrated"
+                                    ]
+                                )
+                                / relative_path
+                            )
+                        except ValueError:
+                            try:
+                                relative_path = source_path_obj.relative_to(
+                                    config_manager.source_base
+                                )
+                                source_path = str(relative_path)
+                            except ValueError:
+                                # If we can't make it relative, keep as is
+                                pass
+            except Exception as e:
+                logger.warning(f"Could not use ConfigManager for path conversion: {e}")
+                # Keep original path if ConfigManager fails
+                pass
         self.source_path = source_path
 
-        # Convert proxy path to relative if it contains data/source or data/prept
+        # Convert proxy path to relative using ConfigManager
         if proxy_path:
             proxy_path = str(proxy_path)
-            if "data/source" in proxy_path:
-                proxy_path = os.path.join(
-                    "data/source", proxy_path.split("data/source/")[-1]
+            try:
+                import streamlit as st
+
+                config_manager = st.session_state.get("config_manager")
+                if not config_manager:
+                    from src.services.config_manager import ConfigManager
+
+                    config_manager = ConfigManager()
+
+                # Convert absolute path to relative based on actual config
+                proxy_path_obj = Path(proxy_path)
+                if proxy_path_obj.is_absolute():
+                    # Try to make it relative to proxy directories
+                    try:
+                        relative_path = proxy_path_obj.relative_to(
+                            config_manager.proxy_base
+                        )
+                        proxy_path = str(relative_path)
+                    except ValueError:
+                        # If we can't make it relative, keep as is
+                        pass
+            except Exception as e:
+                logger.warning(
+                    f"Could not use ConfigManager for proxy path conversion: {e}"
                 )
-            elif "data/prept" in proxy_path:
-                proxy_path = os.path.join(
-                    "data/prept", proxy_path.split("data/prept/")[-1]
-                )
+                # Keep original path if ConfigManager fails
+                pass
         self.proxy_path = proxy_path
 
         self.start_frame = start_frame
@@ -117,30 +176,10 @@ class Clip:
         clip.id = data.get("id", str(uuid.uuid4()))
         clip.name = data.get("name", "Unnamed Clip")
 
-        # Ensure paths are relative when loading from dict
-        source_path = data.get("source_path")
-        if source_path:
-            if "data/source" in source_path:
-                source_path = os.path.join(
-                    "data/source", source_path.split("data/source/")[-1]
-                )
-            elif "data/prept" in source_path:
-                source_path = os.path.join(
-                    "data/prept", source_path.split("data/prept/")[-1]
-                )
-        clip.source_path = source_path
-
-        proxy_path = data.get("proxy_path")
-        if proxy_path:
-            if "data/source" in proxy_path:
-                proxy_path = os.path.join(
-                    "data/source", proxy_path.split("data/source/")[-1]
-                )
-            elif "data/prept" in proxy_path:
-                proxy_path = os.path.join(
-                    "data/prept", proxy_path.split("data/prept/")[-1]
-                )
-        clip.proxy_path = proxy_path
+        # Handle paths when loading from dict - keep stored paths as they are
+        # since they should already be in the correct relative format
+        clip.source_path = data.get("source_path")
+        clip.proxy_path = data.get("proxy_path")
 
         clip.start_frame = data.get("start_frame", 0)
         clip.end_frame = data.get("end_frame", 0)
@@ -499,27 +538,52 @@ def add_clip(source_path, start_frame, end_frame, name=None, output_resolution="
             logger.error("No config manager found in session state")
             return None
 
-        # Convert source path to relative path if it contains data/source or data/prept
-        source_path = str(source_path)  # Ensure string type
-        if "data/source" in source_path:
-            source_path = os.path.join(
-                "data/source", source_path.split("data/source/")[-1]
-            )
-        elif "data/prept" in source_path:
-            source_path = os.path.join(
-                "data/prept", source_path.split("data/prept/")[-1]
-            )
+        # Convert source path to relative path using ConfigManager
+        source_path_obj = Path(source_path)
 
-        # Get proxy path from config manager and ensure it's relative
-        proxy_path = str(
-            config_manager.get_proxy_path(Path(source_path), is_clip=False)
-        )
-        if "data/source" in proxy_path:
-            proxy_path = os.path.join(
-                "data/source", proxy_path.split("data/source/")[-1]
-            )
-        elif "data/prept" in proxy_path:
-            proxy_path = os.path.join("data/prept", proxy_path.split("data/prept/")[-1])
+        # If it's an absolute path, try to make it relative to the source directories
+        if source_path_obj.is_absolute():
+            try:
+                relative_path = source_path_obj.relative_to(config_manager.source_raw)
+                source_path = str(
+                    Path(config_manager.config["directories"]["source"]["raw"])
+                    / relative_path
+                )
+            except ValueError:
+                try:
+                    relative_path = source_path_obj.relative_to(
+                        config_manager.source_calibrated
+                    )
+                    source_path = str(
+                        Path(
+                            config_manager.config["directories"]["source"]["calibrated"]
+                        )
+                        / relative_path
+                    )
+                except ValueError:
+                    try:
+                        relative_path = source_path_obj.relative_to(
+                            config_manager.source_base
+                        )
+                        source_path = str(relative_path)
+                    except ValueError:
+                        # Keep as absolute path if we can't make it relative
+                        source_path = str(source_path_obj)
+        else:
+            # Already relative, keep as is
+            source_path = str(source_path_obj)
+
+        # Get proxy path from config manager
+        proxy_path = config_manager.get_proxy_path(source_path_obj, is_clip=False)
+
+        # Convert proxy path to relative if possible
+        if proxy_path and Path(proxy_path).is_absolute():
+            try:
+                relative_proxy = Path(proxy_path).relative_to(config_manager.proxy_base)
+                proxy_path = str(relative_proxy)
+            except ValueError:
+                # Keep as is if we can't make it relative
+                proxy_path = str(proxy_path)
 
         if os.path.exists(proxy_path):
             logger.info(f"Using relative proxy path: {proxy_path}")

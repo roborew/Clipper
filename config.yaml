@@ -1,4 +1,4 @@
-calibration:
+~calibration:
   alpha: 0.5
   camera_types:
     - GP1
@@ -6,12 +6,12 @@ calibration:
     - SONY_70
     - SONY_300
   directories:
-    base: data/source/01_CALIBRATION
+    base: data/SD_01_SURF_FOOTAGE_SOURCE
     parameters: parameters
   use_calibrated_footage: false
 directories:
   output:
-    base: data/prept
+    base: data/SD_02_SURF_FOOTAGE_PREPT
     clips: 03_CLIPPED
     configs: _configs
   proxy:
@@ -19,8 +19,8 @@ directories:
     clipped: CLIPPED
     raw: RAW
   source:
-    base: data/source
-    calibrated: 02_CALIBRATED_FOOTAGE
+    base: data/SD_01_SURF_FOOTAGE_SOURCE
+    calibrated: 01_CALIBRATION
     raw: 00_RAW
 export:
   create_missing_dirs: true

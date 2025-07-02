@@ -1131,21 +1131,25 @@ def process_csv_clips(csv_file, video_path, clips_file, overwrite=False):
                     if proxy_path:
                         new_clip.proxy_path = proxy_path
                     else:
-                        # Create a default proxy path
+                        # Create a default proxy path using ConfigManager
                         base_name = Path(video_path).stem
-                        # Safely handle path conversion
                         try:
-                            if "data/source" in video_path_str:
-                                relative_path = Path(video_path).relative_to(
-                                    Path("data/source")
+                            # Get config manager
+                            config_manager = st.session_state.get("config_manager")
+                            if config_manager:
+                                # Use ConfigManager to get proper proxy path
+                                proxy_path = config_manager.get_proxy_path(
+                                    Path(video_path), is_clip=False
                                 )
-                                new_clip.proxy_path = f"proxy_videos/RAW/{relative_path.parent}/{base_name}_proxy.mp4"
+                                new_clip.proxy_path = str(proxy_path)
                             else:
+                                # Fallback to basic proxy path structure
                                 new_clip.proxy_path = (
                                     f"proxy_videos/RAW/{base_name}_proxy.mp4"
                                 )
-                        except ValueError:
-                            # If relative_to fails, just use the filename
+                        except Exception as e:
+                            logger.warning(f"Error generating proxy path: {e}")
+                            # Simple fallback
                             new_clip.proxy_path = (
                                 f"proxy_videos/RAW/{base_name}_proxy.mp4"
                             )

@@ -6,6 +6,7 @@ for generating multiple variations of the same clip.
 """
 
 import logging
+import os
 from src.services import video_service
 
 logger = logging.getLogger("clipper.multi_crop")
@@ -35,6 +36,21 @@ def calculate_wider_crop(original_crop, factor, frame_dimensions):
     logger.info(f"Original crop: x={x}, y={y}, width={width}, height={height}")
     logger.info(f"Frame dimensions: width={frame_width}, height={frame_height}")
     logger.info(f"Applying wide crop factor: {factor}")
+
+    # Check for invalid frame dimensions and use fallback
+    if frame_width <= 0 or frame_height <= 0:
+        logger.warning(
+            f"Invalid frame dimensions ({frame_width}, {frame_height}), estimating from crop position"
+        )
+        # Estimate minimum frame size based on crop position and size
+        estimated_width = max(
+            3840, x + width + 100
+        )  # Assume at least 4K or crop extent + margin
+        estimated_height = max(
+            2160, y + height + 100
+        )  # Assume at least 4K or crop extent + margin
+        frame_width, frame_height = estimated_width, estimated_height
+        logger.info(f"Using estimated frame dimensions: {frame_width}x{frame_height}")
 
     # Calculate maximum allowable dimensions (95% of frame size)
     max_width = int(frame_width * 0.95)
@@ -67,10 +83,18 @@ def calculate_wider_crop(original_crop, factor, frame_dimensions):
         )
 
     # Calculate the ideal centered position
-    ideal_x = x - (new_width - width) // 2
-    ideal_y = y - (new_height - height) // 2
+    # The center of the original crop should remain the center of the new crop
+    original_center_x = x + width // 2
+    original_center_y = y + height // 2
 
+    ideal_x = original_center_x - new_width // 2
+    ideal_y = original_center_y - new_height // 2
+
+    logger.info(f"Original crop center: ({original_center_x}, {original_center_y})")
     logger.info(f"Ideal centered position: x={ideal_x}, y={ideal_y}")
+    logger.info(
+        f"Size difference: width_diff={new_width - width}, height_diff={new_height - height}"
+    )
 
     # Adjust position to stay within frame boundaries while maintaining crop size
     # If pushing against left edge
@@ -96,6 +120,18 @@ def calculate_wider_crop(original_crop, factor, frame_dimensions):
 
     final_crop = (new_x, new_y, new_width, new_height)
     logger.info(f"Final wide crop: {final_crop}")
+
+    # Verify centering is correct
+    new_center_x = new_x + new_width // 2
+    new_center_y = new_y + new_height // 2
+    logger.info(f"New crop center: ({new_center_x}, {new_center_y})")
+
+    center_diff_x = abs(new_center_x - original_center_x)
+    center_diff_y = abs(new_center_y - original_center_y)
+    if center_diff_x > 5 or center_diff_y > 5:  # Allow small rounding differences
+        logger.warning(
+            f"WARNING: Center may have shifted! Diff: ({center_diff_x}, {center_diff_y})"
+        )
 
     # Verify crop is actually different from original
     if new_width == width and new_height == height and new_x == x and new_y == y:
@@ -141,11 +177,18 @@ def get_crop_for_variation(
             logger.info(f"Using original crop: {original_crop}")
             x, y, w, h = original_crop
             frame_w, frame_h = frame_dimensions
-            percent_w = round((w / frame_w) * 100, 1)
-            percent_h = round((h / frame_h) * 100, 1)
-            logger.info(
-                f"Original crop dimensions: {w}x{h} ({percent_w}% × {percent_h}% of frame)"
-            )
+            # Prevent division by zero
+            if frame_w > 0 and frame_h > 0:
+                percent_w = round((w / frame_w) * 100, 1)
+                percent_h = round((h / frame_h) * 100, 1)
+                logger.info(
+                    f"Original crop dimensions: {w}x{h} ({percent_w}% × {percent_h}% of frame)"
+                )
+            else:
+                logger.warning(
+                    f"Frame dimensions are zero ({frame_w}, {frame_h}), cannot calculate percentages"
+                )
+                logger.info(f"Original crop dimensions: {w}x{h}")
             return original_crop
         else:
             # If no crop is defined for 'original', use None to export the full frame
@@ -327,9 +370,33 @@ def process_clip_with_variations(
 
     # Get the source video dimensions
     try:
-        source_path = kwargs.get("source_path", clip.source_path)
+        # IMPORTANT: Use the resolved source path from kwargs if available, 
+        # otherwise try to resolve the clip's source path
+        source_path = kwargs.get("source_path")
+        if source_path is None:
+            # Fallback: try to resolve the clip's source path if config_manager is available
+            if config_manager:
+                from scripts.process_clips import resolve_source_path
+                source_path = resolve_source_path(clip.source_path, config_manager)
+                logger.info(f"Resolved clip source path: {source_path}")
+            else:
+                source_path = clip.source_path
+                logger.warning(f"Using unresolved clip source path: {source_path}")
+        else:
+            logger.info(f"Using provided source path: {source_path}")
+            
+        logger.info(f"Source path exists: {os.path.exists(source_path) if source_path else 'None'}")
+
         frame_dimensions = video_service.get_video_dimensions(source_path)
         logger.info(f"Source video dimensions: {frame_dimensions}")
+
+        # Check if dimensions are valid (not zero)
+        if frame_dimensions[0] == 0 or frame_dimensions[1] == 0:
+            logger.warning(
+                f"Invalid frame dimensions {frame_dimensions}, using default 1920x1080"
+            )
+            frame_dimensions = (1920, 1080)
+
     except Exception as e:
         logger.error(f"Error getting video dimensions: {str(e)}")
         frame_dimensions = (
@@ -439,19 +506,35 @@ def process_clip_with_variations(
             sample_crop = variation_clip.crop_keyframes[first_frame]
             x, y, w, h = sample_crop
             frame_w, frame_h = frame_dimensions
-            percent_w = round((w / frame_w) * 100, 1)
-            percent_h = round((h / frame_h) * 100, 1)
-            logger.info(
-                f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop} ({percent_w}% × {percent_h}% of frame)"
-            )
+            # Prevent division by zero
+            if frame_w > 0 and frame_h > 0:
+                percent_w = round((w / frame_w) * 100, 1)
+                percent_h = round((h / frame_h) * 100, 1)
+                logger.info(
+                    f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop} ({percent_w}% × {percent_h}% of frame)"
+                )
+            else:
+                logger.warning(
+                    f"Frame dimensions are zero ({frame_w}, {frame_h}), cannot calculate percentages"
+                )
+                logger.info(
+                    f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop}"
+                )
         elif hasattr(variation_clip, "crop_region") and variation_clip.crop_region:
             x, y, w, h = variation_clip.crop_region
             frame_w, frame_h = frame_dimensions
-            percent_w = round((w / frame_w) * 100, 1)
-            percent_h = round((h / frame_h) * 100, 1)
-            logger.info(
-                f"Using crop for {variation}: {variation_clip.crop_region} ({percent_w}% × {percent_h}% of frame)"
-            )
+            # Prevent division by zero
+            if frame_w > 0 and frame_h > 0:
+                percent_w = round((w / frame_w) * 100, 1)
+                percent_h = round((h / frame_h) * 100, 1)
+                logger.info(
+                    f"Using crop for {variation}: {variation_clip.crop_region} ({percent_w}% × {percent_h}% of frame)"
+                )
+            else:
+                logger.warning(
+                    f"Frame dimensions are zero ({frame_w}, {frame_h}), cannot calculate percentages"
+                )
+                logger.info(f"Using crop for {variation}: {variation_clip.crop_region}")
         else:
             logger.info(f"No crop for {variation} (full frame)")
 

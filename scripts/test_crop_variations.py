@@ -309,12 +309,9 @@ def process_clip_with_variations(
 
 
 def resolve_source_path(rel_path, config_manager):
-    """Resolve relative path to absolute path"""
-    if rel_path.startswith("data/source"):
-        return os.path.join(config_manager.workspace_dir, rel_path)
-    elif rel_path.startswith("data/prept"):
-        return os.path.join(config_manager.workspace_dir, rel_path)
-    return rel_path
+    """Resolve relative path to absolute path using ConfigManager"""
+    from scripts.process_clips import resolve_source_path as main_resolve
+    return main_resolve(rel_path, config_manager)
 
 
 def get_video_dimensions(video_path):

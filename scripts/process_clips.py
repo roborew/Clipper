@@ -188,7 +188,7 @@ def calculate_wider_crop(original_crop, factor, frame_dimensions):
 
 def resolve_source_path(source_path, config_manager):
     """
-    Resolve a source path to an absolute path, handling relative paths and symlinks
+    Resolve a source path to an absolute path, handling relative paths and calibration settings
 
     Args:
         source_path: The source path to resolve
@@ -218,49 +218,25 @@ def resolve_source_path(source_path, config_manager):
     # Determine the correct source path based on calibration settings
     str_path = str(path)
 
-    # Handle source paths that might need to be adjusted based on the calibration toggle
-    if "data/source/" in str_path:
-        # Extract the relative path after data/source/
-        rel_path = str_path.split("data/source/")[-1]
-
-        # Check if path contains either raw or calibrated folder and needs adjustment
-        if raw_folder in rel_path and use_calibrated_footage:
-            # Change from RAW to CALIBRATED
-            rel_path = rel_path.replace(raw_folder, calibrated_folder)
-            logger.info(f"Adjusted path to use calibrated footage: {rel_path}")
-        elif calibrated_folder in rel_path and not use_calibrated_footage:
-            # Change from CALIBRATED to RAW
-            rel_path = rel_path.replace(calibrated_folder, raw_folder)
-            logger.info(f"Adjusted path to use raw footage: {rel_path}")
-
-        # Join with source base
-        return Path(os.path.join(config_manager.source_base, rel_path))
-
-    # Handle relative paths with data/source or data/prept prefixes
-    if str_path.startswith("data/source"):
-        rel_path = str_path.split("data/source/")[-1]
-
+    # Handle relative paths that start with the configured source folder names
+    if str_path.startswith(raw_folder) or str_path.startswith(calibrated_folder):
         # Determine which subfolder to use based on calibration setting
         if use_calibrated_footage:
-            # If using calibrated footage, ensure path includes the calibrated subfolder
-            if calibrated_folder not in rel_path:
-                if raw_folder in rel_path:
-                    rel_path = rel_path.replace(raw_folder, calibrated_folder)
-                else:
-                    rel_path = os.path.join(calibrated_folder, rel_path)
+            # If using calibrated footage, ensure path uses the calibrated subfolder
+            if str_path.startswith(raw_folder):
+                rel_path = str_path.replace(raw_folder, calibrated_folder, 1)
+                logger.info(f"Adjusted path to use calibrated footage: {rel_path}")
+            else:
+                rel_path = str_path
         else:
-            # If using raw footage, ensure path includes the raw subfolder
-            if raw_folder not in rel_path:
-                if calibrated_folder in rel_path:
-                    rel_path = rel_path.replace(calibrated_folder, raw_folder)
-                else:
-                    rel_path = os.path.join(raw_folder, rel_path)
+            # If using raw footage, ensure path uses the raw subfolder
+            if str_path.startswith(calibrated_folder):
+                rel_path = str_path.replace(calibrated_folder, raw_folder, 1)
+                logger.info(f"Adjusted path to use raw footage: {rel_path}")
+            else:
+                rel_path = str_path
 
         return Path(os.path.join(config_manager.source_base, rel_path))
-    elif str_path.startswith("data/prept"):
-        return Path(
-            os.path.join(config_manager.output_base, str_path.split("data/prept/")[-1])
-        )
 
     # Try to resolve using the config manager's base directories
     try:
@@ -494,6 +470,7 @@ def process_clip(
                     camera_type=camera_type,
                     config_manager=config_manager,
                     multi_crop=multi_crop,
+                    source_path=source_path,  # Pass the resolved source path
                 )
 
                 # Check if all variations were successful
