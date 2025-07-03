@@ -444,26 +444,13 @@ def apply_calibration_to_video(
         cv2.CV_32FC1,
     )
 
-    # For lossless quality with FFV1 level 3, we need to use FFmpeg directly
-    if quality_preset == "lossless" and shutil.which("ffmpeg") is not None:
+    # For lossless quality with FFV1 level 3, we'll use OpenCV approach for now
+    # TODO: Implement a more reliable FFmpeg pipe approach in the future
+    if quality_preset == "lossless":
         logger.info(
-            f"Using lossless FFV1 codec with level 3 (multithreaded, faster encoding)"
+            f"Using lossless FFV1 codec via OpenCV (avoiding FFmpeg pipe issues)"
         )
-        output_path = _apply_calibration_ffmpeg(
-            input_path,
-            output_path,
-            cap,
-            map1,
-            map2,
-            roi,
-            alpha,
-            width,
-            height,
-            fps,
-            frame_count,
-            progress_callback,
-        )
-        return output_path is not None
+        # Fall through to OpenCV approach below
 
     # Select codec and quality settings based on preset (OpenCV approach)
     if quality_preset == "lossless":
@@ -572,22 +559,14 @@ def _apply_calibration_ffmpeg(
 ):
     """Apply calibration using FFmpeg for better FFV1 encoding with level 3.
 
-    This method processes frames with OpenCV and pipes them to FFmpeg for encoding.
+    This method processes frames with OpenCV and uses stdin pipe to FFmpeg for encoding.
+    This approach is more reliable across different platforms than named pipes.
     """
     # Prepare the output file path with .mkv extension
     output_path = os.path.splitext(output_path)[0] + ".mkv"
 
-    # Set up a named pipe (fifo) for sending frames to ffmpeg
-    tmp_dir = tempfile.mkdtemp()
-    fifo_path = os.path.join(
-        tmp_dir, f"ffmpeg_pipe_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-    )
-
     try:
-        # Create the named pipe
-        os.mkfifo(fifo_path)
-
-        # Set up FFmpeg command for FFV1 level 3 encoding
+        # Set up FFmpeg command for FFV1 level 3 encoding using stdin pipe
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",  # Overwrite output file if it exists
@@ -602,7 +581,7 @@ def _apply_calibration_ffmpeg(
             "-r",
             str(fps),
             "-i",
-            fifo_path,
+            "pipe:0",  # Read from stdin instead of named pipe
             "-c:v",
             "ffv1",
             "-level",
@@ -622,63 +601,82 @@ def _apply_calibration_ffmpeg(
             output_path,
         ]
 
-        # Start FFmpeg process
+        # Start FFmpeg process with stdin pipe
         logger.info(f"Starting FFmpeg with FFV1 level 3 encoding (CV-optimized)...")
-        ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
+        ffmpeg_process = subprocess.Popen(
+            ffmpeg_cmd,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
 
-        # Open the named pipe for writing
-        pipe_out = open(fifo_path, "wb")
-
-        # Process each frame
+        # Process each frame and write directly to FFmpeg stdin
         frame_idx = 0
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                break
+        try:
+            while True:
+                ret, frame = cap.read()
+                if not ret:
+                    break
 
-            # Apply undistortion using high-quality interpolation
-            undistorted = cv2.remap(frame, map1, map2, cv2.INTER_LANCZOS4)
+                # Apply undistortion using high-quality interpolation
+                undistorted = cv2.remap(frame, map1, map2, cv2.INTER_LANCZOS4)
 
-            # Crop the image if needed (when alpha < 1)
-            if alpha < 1.0 and roi[2] > 0 and roi[3] > 0:
-                x, y, w, h = roi
-                undistorted = undistorted[y : y + h, x : x + w]
-                undistorted = cv2.resize(
-                    undistorted, (width, height), interpolation=cv2.INTER_LANCZOS4
-                )
-
-            # Write the frame to the pipe
-            pipe_out.write(undistorted.tobytes())
-
-            # Update progress
-            frame_idx += 1
-            if frame_idx % 100 == 0:
-                progress = frame_idx / frame_count
-                if progress_callback:
-                    progress_callback(progress)
-                else:
-                    logger.info(
-                        f"Progress: {progress:.1f}% ({frame_idx}/{frame_count})"
+                # Crop the image if needed (when alpha < 1)
+                if alpha < 1.0 and roi[2] > 0 and roi[3] > 0:
+                    x, y, w, h = roi
+                    undistorted = undistorted[y : y + h, x : x + w]
+                    undistorted = cv2.resize(
+                        undistorted, (width, height), interpolation=cv2.INTER_LANCZOS4
                     )
 
-        # Close the pipe and wait for FFmpeg to finish
-        pipe_out.close()
-        ffmpeg_process.wait()
+                # Write the frame to FFmpeg stdin
+                try:
+                    ffmpeg_process.stdin.write(undistorted.tobytes())
+                    ffmpeg_process.stdin.flush()  # Ensure data is sent
+                except (BrokenPipeError, OSError):
+                    # FFmpeg process may have terminated early
+                    logger.warning("FFmpeg process terminated early")
+                    break
 
-        logger.info(f"Calibration applied to {input_path} -> {output_path}")
-        return output_path
+                # Update progress
+                frame_idx += 1
+                if frame_idx % 100 == 0:
+                    progress = frame_idx / frame_count
+                    if progress_callback:
+                        progress_callback(progress)
+                    else:
+                        logger.info(
+                            f"Progress: {progress:.1f}% ({frame_idx}/{frame_count})"
+                        )
+
+        except Exception as e:
+            logger.error(f"Error processing frames: {e}")
+        finally:
+            # Close stdin to signal end of input
+            try:
+                if ffmpeg_process.stdin and not ffmpeg_process.stdin.closed:
+                    ffmpeg_process.stdin.close()
+            except:
+                pass
+
+        # Wait for FFmpeg to finish and get output
+        stdout, stderr = ffmpeg_process.communicate()
+        return_code = ffmpeg_process.returncode
+
+        if return_code == 0:
+            logger.info(f"Calibration applied to {input_path} -> {output_path}")
+            return output_path
+        else:
+            logger.error(f"FFmpeg failed with return code {return_code}")
+            if stderr:
+                logger.error(f"FFmpeg stderr: {stderr.decode()[:500]}...")
+            return None
 
     except Exception as e:
         logger.error(f"Error in FFmpeg encoding: {e}")
         return None
 
     finally:
-        # Clean up the temporary directory and fifo
-        if os.path.exists(fifo_path):
-            os.unlink(fifo_path)
-        if os.path.exists(tmp_dir):
-            os.rmdir(tmp_dir)
-
         # Make sure to release the video capture
         if cap.isOpened():
             cap.release()
