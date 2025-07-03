@@ -360,6 +360,13 @@ def convert_to_final_format_with_crop(
         # Add crop and scale filters
         vf_filters = []
 
+        # Handle GPU acceleration for video filters
+        if gpu_acceleration and not is_cv_format:
+            # For GPU acceleration, we need to download frames to CPU for filtering, then upload back
+            # This is necessary because crop/scale filters don't work with CUDA frames
+            vf_filters.append("hwdownload")
+            vf_filters.append("format=yuv420p")
+
         # Handle dynamic crop keyframes (prioritized over static crop)
         if crop_keyframes and len(crop_keyframes) > 1:
             logger.info(f"🎯 Dynamic crop: {len(crop_keyframes)} keyframes")
@@ -463,6 +470,10 @@ def convert_to_final_format_with_crop(
 
         # Scale to exactly 1920x1080 for consistent output resolution across all variations
         vf_filters.append("scale=1920:1080")
+
+        # For GPU acceleration, upload frames back to GPU after CPU filtering
+        if gpu_acceleration and not is_cv_format:
+            vf_filters.append("hwupload_cuda")
 
         # Add video filters
         if vf_filters:
