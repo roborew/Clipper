@@ -280,6 +280,18 @@ def process_clip_with_variations(
             f"🎬 Duration: {duration_frames} frames @ {source_fps} fps = {duration_seconds:.2f}s"
         )
 
+        # Get video dimensions for crop boundary calculations
+        frame_dimensions = video_service.get_video_dimensions(source_path)
+        if frame_dimensions[0] == 0 or frame_dimensions[1] == 0:
+            logger.warning(
+                f"Invalid video dimensions {frame_dimensions}, using default 3840x2160"
+            )
+            frame_dimensions = (3840, 2160)
+        else:
+            logger.info(
+                f"🎬 Video dimensions: {frame_dimensions[0]}x{frame_dimensions[1]}"
+            )
+
         # Get crop keyframes
         crop_keyframes = {}
         if hasattr(clip, "crop_keyframes") and clip.crop_keyframes:
@@ -301,7 +313,7 @@ def process_clip_with_variations(
                 variation_keyframes = crop_keyframes
             elif variation == "wide":
                 variation_keyframes = create_wide_crop_keyframes(
-                    crop_keyframes, wide_crop_factor
+                    crop_keyframes, wide_crop_factor, frame_dimensions
                 )
             elif variation == "full":
                 variation_keyframes = create_full_frame_keyframes()
@@ -343,9 +355,12 @@ def process_clip_with_variations(
         return False
 
 
-def create_wide_crop_keyframes(original_keyframes, wide_factor):
+def create_wide_crop_keyframes(
+    original_keyframes, wide_factor, frame_dimensions=(3840, 2160)
+):
     """Create wider crop keyframes by scaling the original crops"""
     wide_keyframes = {}
+    frame_width, frame_height = frame_dimensions
 
     for frame_num, crop in original_keyframes.items():
         x, y, width, height = crop
@@ -358,9 +373,13 @@ def create_wide_crop_keyframes(original_keyframes, wide_factor):
         new_x = max(0, x - (new_width - width) // 2)
         new_y = max(0, y - (new_height - height) // 2)
 
-        # Ensure we don't exceed frame boundaries (assume 1920x1080)
-        new_x = min(new_x, 1920 - new_width)
-        new_y = min(new_y, 1080 - new_height)
+        # Ensure we don't exceed frame boundaries (use actual frame dimensions)
+        new_x = min(new_x, frame_width - new_width)
+        new_y = min(new_y, frame_height - new_height)
+
+        # Additional safety check to ensure coordinates are never negative
+        new_x = max(0, new_x)
+        new_y = max(0, new_y)
 
         wide_keyframes[frame_num] = (new_x, new_y, new_width, new_height)
 
@@ -440,9 +459,13 @@ def create_variation_export(
         export_dir = config_manager.clips_dir / format_dir / camera_type / session
 
         # Create proper filename with source video name prefix
-        source_video_name = source_path.stem  # Get filename without extension (e.g., "C0001")
+        source_video_name = (
+            source_path.stem
+        )  # Get filename without extension (e.g., "C0001")
         variation_suffix = "" if variation == "original" else f"_{variation}"
-        export_filename = f"{source_video_name}_{clip.name}{variation_suffix}{format_ext}"
+        export_filename = (
+            f"{source_video_name}_{clip.name}{variation_suffix}{format_ext}"
+        )
         export_path = export_dir / export_filename
 
         # Ensure directory exists

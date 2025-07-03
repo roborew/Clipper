@@ -499,8 +499,9 @@ def convert_to_final_format_with_crop(
                     ]
                 )
 
-        # Add pixel format (compatible with both CPU and GPU encoders)
-        cmd.extend(["-pix_fmt", "yuv420p"])
+        # Add pixel format (only for CPU encoding, GPU handles this automatically)
+        if not gpu_acceleration or is_cv_format:
+            cmd.extend(["-pix_fmt", "yuv420p"])
 
         # Preserve original audio track (copy without re-encoding)
         cmd.extend(["-c:a", "copy"])
