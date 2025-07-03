@@ -93,18 +93,16 @@ def get_gpu_encode_settings(gpu_acceleration=False, is_cv_format=False):
         encoder_args = [
             "-c:v",
             "h264_nvenc",
-            "-cq",
-            "18",  # Constant quality (equivalent to CRF)
+            "-rc",
+            "constqp",  # Use constant quantization parameter (more compatible)
+            "-qp",
+            "18",  # Quantization parameter (equivalent to CRF)
             "-preset",
             "p4",  # High quality preset
             "-profile:v",
             "high",
             "-level",
-            "4.1",
-            "-rc",
-            "vbr_hq",  # Variable bitrate high quality
-            "-b:v",
-            "0",  # Let CQ control bitrate
+            "5.2",  # Level 5.2 supports 4K resolution
         ]
         return decoder_args, encoder_args, "h264_nvenc"
 
@@ -738,7 +736,9 @@ def extract_clip_frames(
                     progress_callback(1.0)
                 return True
             else:
-                logger.error(f"❌ Extraction failed with return code {process.returncode}")
+                logger.error(
+                    f"❌ Extraction failed with return code {process.returncode}"
+                )
                 logger.error(f"FFmpeg stderr: {stderr}")
                 if stdout:
                     logger.error(f"FFmpeg stdout: {stdout}")
