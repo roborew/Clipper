@@ -1074,19 +1074,20 @@ def find_generated_clips(
             for pattern in clip_patterns:
                 # Look for files with the pattern and both mp4 and mkv extensions
                 for ext in [".mp4", ".mkv"]:
-                    # Use glob pattern that allows for additional suffixes
-                    glob_pattern = f"{pattern}*{ext}"
-                    logger.info(f"Searching with glob pattern: {glob_pattern}")
+                    # Use EXACT filename match instead of glob pattern to avoid matching other clips
+                    # This prevents C0001_clip_1 from matching C0001_clip_10, C0001_clip_11, etc.
+                    exact_filename = f"{pattern}{ext}"
+                    exact_file_path = full_dir / exact_filename
+                    logger.info(f"Searching with exact filename: {exact_filename}")
 
-                    matching_files = list(full_dir.glob(glob_pattern))
-                    logger.info(
-                        f"Found {len(matching_files)} matching files for {pattern}{ext}"
-                    )
-
-                    for file in matching_files:
-                        if file.exists() and str(file) not in found_files:
-                            found_files.append(str(file))
-                            logger.info(f"Found generated clip: {file}")
+                    if (
+                        exact_file_path.exists()
+                        and str(exact_file_path) not in found_files
+                    ):
+                        found_files.append(str(exact_file_path))
+                        logger.info(f"Found generated clip: {exact_file_path}")
+                    else:
+                        logger.debug(f"File does not exist: {exact_file_path}")
 
         logger.info(f"Total found files: {len(found_files)}")
         return found_files
