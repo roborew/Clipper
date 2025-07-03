@@ -341,13 +341,19 @@ def convert_to_final_format_with_crop(
         format_name = "FFV1" if is_cv_format else "H.264"
         logger.info(f"🎬 Converting to {format_name}")
 
+        # For crop/convert step, disable GPU acceleration to avoid filter chain issues
+        # GPU acceleration is most beneficial for initial extraction, not for crop/scale operations
+        use_gpu_for_cropping = False  # Temporarily disable GPU for crop/convert
+
         # Get GPU encoding settings
         decoder_args, encoder_args, encoder_name = get_gpu_encode_settings(
-            gpu_acceleration=gpu_acceleration, is_cv_format=is_cv_format
+            gpu_acceleration=use_gpu_for_cropping, is_cv_format=is_cv_format
         )
 
-        if gpu_acceleration and not is_cv_format:
+        if use_gpu_for_cropping and not is_cv_format:
             logger.info(f"🚀 GPU: {encoder_name}")
+        else:
+            logger.info(f"🎬 Using CPU for crop/convert (more stable)")
 
         # Build FFmpeg command with appropriate codec settings
         cmd = ["ffmpeg", "-y"]
@@ -360,12 +366,8 @@ def convert_to_final_format_with_crop(
         # Add crop and scale filters
         vf_filters = []
 
-        # Handle GPU acceleration for video filters
-        if gpu_acceleration and not is_cv_format:
-            # For GPU acceleration, we need to download frames to CPU for filtering, then upload back
-            # This is necessary because crop/scale filters don't work with CUDA frames
-            vf_filters.append("hwdownload")
-            vf_filters.append("format=yuv420p")
+        # GPU filter chain is disabled for crop/convert step for stability
+        # The initial extraction step uses GPU acceleration, which provides most of the performance benefit
 
         # Handle dynamic crop keyframes (prioritized over static crop)
         if crop_keyframes and len(crop_keyframes) > 1:
@@ -470,10 +472,6 @@ def convert_to_final_format_with_crop(
 
         # Scale to exactly 1920x1080 for consistent output resolution across all variations
         vf_filters.append("scale=1920:1080")
-
-        # For GPU acceleration, upload frames back to GPU after CPU filtering
-        if gpu_acceleration and not is_cv_format:
-            vf_filters.append("hwupload_cuda")
 
         # Add video filters
         if vf_filters:
