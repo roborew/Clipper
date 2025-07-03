@@ -1,4 +1,4 @@
-~calibration:
+calibration:
   alpha: 0.5
   camera_types:
     - GP1
@@ -7,7 +7,7 @@
     - SONY_300
   directories:
     base: data/SD_01_SURF_FOOTAGE_SOURCE
-    parameters: parameters
+    parameters: 01_CALIBRATION/parameters
   use_calibrated_footage: false
 directories:
   output:

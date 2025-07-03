@@ -1629,10 +1629,93 @@ def export_clip(
                 f"File will be overwritten by ffmpeg if it exists: {export_path}"
             )
 
+        # =============================
+        # CALIBRATION INTEGRATION STEP
+        # =============================
+
+        # Check if we should skip calibration (using pre-calibrated footage)
+        if calibration_service.should_skip_calibration(config_manager):
+            logger.info(
+                "Using pre-calibrated footage, skipping calibration during export"
+            )
+            actual_source_path = source_path
+        else:
+            # Check if this video needs calibration
+            camera_type = calibration_service.get_camera_type_from_path(
+                source_path, config_manager
+            )
+
+            if camera_type and camera_type != "none":
+                logger.info(f"Video requires {camera_type} calibration before export")
+
+                # Load calibration parameters
+                camera_matrix, dist_coeffs, _ = calibration_service.load_calibration(
+                    camera_type, config_manager=config_manager, video_path=source_path
+                )
+
+                if camera_matrix is not None and dist_coeffs is not None:
+                    logger.info(
+                        "Applying calibration to full-frame source before cropping/export"
+                    )
+
+                    # Create a temporary file for the calibrated video
+                    with tempfile.NamedTemporaryFile(
+                        suffix=".mp4", delete=False
+                    ) as temp_file:
+                        calibrated_temp_path = temp_file.name
+
+                    # Apply calibration to the full source video first
+                    calibration_success = (
+                        calibration_service.apply_calibration_to_video(
+                            input_path=source_path,
+                            output_path=calibrated_temp_path,
+                            camera_type=camera_type,
+                            camera_matrix=camera_matrix,
+                            dist_coeffs=dist_coeffs,
+                            quality_preset=(
+                                "lossless" if cv_optimized else "high"
+                            ),  # Use lossless for CV, high for regular
+                            progress_callback=lambda p: (
+                                progress_callback(p * 0.5)
+                                if progress_callback
+                                else None
+                            ),  # First 50% of progress
+                            config_manager=config_manager,
+                        )
+                    )
+
+                    if calibration_success:
+                        logger.info(
+                            "Calibration applied successfully, proceeding with calibrated source"
+                        )
+                        actual_source_path = calibrated_temp_path
+                    else:
+                        logger.error(
+                            "Failed to apply calibration, using original source"
+                        )
+                        actual_source_path = source_path
+                        # Clean up temp file
+                        try:
+                            os.unlink(calibrated_temp_path)
+                        except:
+                            pass
+                else:
+                    logger.warning(
+                        f"Missing calibration data for camera type: {camera_type}, proceeding without calibration"
+                    )
+                    actual_source_path = source_path
+            else:
+                logger.info("No calibration required for this video")
+                actual_source_path = source_path
+
+        # =============================
+        # END CALIBRATION INTEGRATION
+        # =============================
+
         # IMPORTANT: All cleanup of previous exports is handled at the clip level in process_clip
         # We should NOT delete any files here except the one being directly overwritten
 
-        # Get video FPS
+        # Get video FPS from the actual source (calibrated or original)
         fps_cmd = [
             "ffprobe",
             "-v",
@@ -1643,7 +1726,7 @@ def export_clip(
             "stream=r_frame_rate",
             "-of",
             "default=noprint_wrappers=1:nokey=1",
-            str(source_path),
+            str(actual_source_path),
         ]
 
         fps = 30.0  # Default fallback
@@ -1668,7 +1751,7 @@ def export_clip(
             f"Start time: {start_time}s, Duration: {duration}s for frames {start_frame} to {end_frame}"
         )
 
-        # Build FFmpeg command
+        # Build FFmpeg command using the actual source (calibrated if needed)
         cmd = [
             "ffmpeg",
             "-y",  # Overwrite output
@@ -1677,7 +1760,7 @@ def export_clip(
             "-t",
             str(duration),  # Duration
             "-i",
-            str(source_path),  # Input file
+            str(actual_source_path),  # Input file (calibrated or original)
         ]
 
         # Add video filters
@@ -1886,12 +1969,19 @@ def export_clip(
                 monitor_thread.daemon = True
                 monitor_thread.start()
 
-                # Update progress via callback
+                # Update progress via callback (second 50% of progress if calibration was applied)
+                base_progress = 0.5 if actual_source_path != source_path else 0.0
+                progress_multiplier = 0.5 if actual_source_path != source_path else 1.0
+
                 while process.poll() is None:
                     try:
                         progress_info = progress_queue.get_nowait()
                         if progress_callback:
-                            progress_callback(progress_info["progress"])
+                            # Adjust progress based on whether calibration was applied
+                            adjusted_progress = base_progress + (
+                                progress_info["progress"] * progress_multiplier
+                            )
+                            progress_callback(adjusted_progress)
                         progress_queue.task_done()
                     except Exception:
                         # No progress update available, sleep briefly
@@ -1908,6 +1998,14 @@ def export_clip(
         logger.info("Waiting for ffmpeg process to complete...")
         return_code = process.wait()
         logger.info(f"ffmpeg process completed with return code {return_code}")
+
+        # Clean up temporary calibrated file if used
+        if actual_source_path != source_path:
+            try:
+                os.unlink(actual_source_path)
+                logger.info("Cleaned up temporary calibrated file")
+            except Exception as e:
+                logger.warning(f"Failed to delete temporary calibrated file: {e}")
 
         if return_code != 0:
             logger.error(f"ffmpeg process failed with return code {return_code}")
