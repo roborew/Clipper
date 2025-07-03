@@ -19,7 +19,48 @@ from queue import Queue
 import numpy as np
 from . import calibration_service
 
+try:
+    from tqdm import tqdm
+
+    TQDM_AVAILABLE = True
+except ImportError:
+    TQDM_AVAILABLE = False
+
 logger = logging.getLogger("clipper.clip_export")
+
+
+def show_progress_bar(process, operation_name="Processing", duration_seconds=None):
+    """Show progress bar for FFmpeg processes"""
+    if TQDM_AVAILABLE and duration_seconds:
+        # Use real progress bar if we know duration
+        with tqdm(
+            total=100,
+            desc=operation_name,
+            unit="%",
+            ncols=80,
+            bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt}%",
+        ) as pbar:
+            start_time = time.time()
+            while process.poll() is None:
+                elapsed = time.time() - start_time
+                if duration_seconds > 0:
+                    progress = min(100, (elapsed / duration_seconds) * 100)
+                    pbar.n = int(progress)
+                    pbar.refresh()
+                time.sleep(0.5)
+            pbar.n = 100
+            pbar.refresh()
+    else:
+        # Fallback to spinner
+        spinner = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+        i = 0
+        while process.poll() is None:
+            print(
+                f"\r{spinner[i % len(spinner)]} {operation_name}...", end="", flush=True
+            )
+            i += 1
+            time.sleep(0.1)
+        print(f"\r✅ {operation_name} complete!" + " " * 20)
 
 
 def get_gpu_encode_settings(gpu_acceleration=False, is_cv_format=False):
@@ -218,17 +259,47 @@ def apply_calibration_to_clip(
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        # Run extraction
-        process = subprocess.run(cmd, capture_output=True, text=True)
+        # Debug: Log the full command being executed
+        logger.info(f"🔧 Running FFmpeg command: {' '.join(cmd)}")
+        logger.info(f"🔧 Input: {input_path} (exists: {os.path.exists(input_path)})")
+        logger.info(f"🔧 Output: {output_path}")
 
-        if process.returncode == 0:
-            logger.info(f"✅ Calibrated: {duration:.1f}s")
-            if progress_callback:
-                progress_callback(1.0)
-            return True
-        else:
-            logger.error(f"❌ Calibration failed: {process.stderr[:100]}...")
-            logger.debug(f"Full command: {' '.join(cmd)}")
+        # Run extraction with progress indication
+        try:
+            logger.info(f"🔧 Calibrating: {os.path.basename(input_path)}")
+
+            # Start the process
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+
+            # Start progress indicator in background
+            progress_thread = threading.Thread(
+                target=show_progress_bar,
+                args=(process, "🔧 Calibrating", duration),
+                daemon=True,
+            )
+            progress_thread.start()
+
+            # Wait for completion with timeout
+            try:
+                stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
+            except subprocess.TimeoutExpired:
+                process.kill()
+                logger.error(f"❌ Calibration timeout after 5 minutes")
+                return False
+
+            if process.returncode == 0:
+                logger.info(f"✅ Calibrated: {duration:.1f}s")
+                if progress_callback:
+                    progress_callback(1.0)
+                return True
+            else:
+                logger.error(f"❌ Calibration failed: {stderr[:200]}...")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Calibration error: {e}")
             return False
 
     except Exception as e:
@@ -426,23 +497,76 @@ def convert_to_final_format_with_crop(
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        # Run conversion
-        process = subprocess.run(cmd, capture_output=True, text=True)
+        # Debug: Log the full command being executed
+        logger.info(f"🎬 Running FFmpeg crop/convert: {' '.join(cmd)}")
+        logger.info(f"🎬 Input: {input_path} (exists: {os.path.exists(input_path)})")
+        logger.info(f"🎬 Output: {output_path}")
 
-        if process.returncode == 0:
-            # Verify file was created and get size
-            if os.path.exists(output_path):
-                file_size = os.path.getsize(output_path) / (1024 * 1024)
-                logger.info(f"✅ {format_name}: {file_size:.1f}MB")
-                if progress_callback:
-                    progress_callback(1.0)
-                return True
-            else:
-                logger.error(f"❌ {format_name}: Output file not created")
+        # Run conversion with progress indication
+        try:
+            logger.info(
+                f"🎬 Converting to {format_name}: {os.path.basename(output_path)}"
+            )
+
+            # Start the process
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+
+            # Calculate estimated duration for progress bar
+            estimated_duration = 5.0  # Default fallback estimate
+            try:
+                # Try to get actual video duration from input file
+                duration_cmd = [
+                    "ffprobe",
+                    "-v",
+                    "error",
+                    "-show_entries",
+                    "format=duration",
+                    "-of",
+                    "default=noprint_wrappers=1:nokey=1",
+                    str(input_path),
+                ]
+                duration_output = (
+                    subprocess.check_output(duration_cmd).decode("utf-8").strip()
+                )
+                estimated_duration = float(duration_output)
+            except:
+                pass
+
+            # Start progress indicator in background
+            progress_thread = threading.Thread(
+                target=show_progress_bar,
+                args=(process, f"🎬 Converting to {format_name}", estimated_duration),
+                daemon=True,
+            )
+            progress_thread.start()
+
+            # Wait for completion with timeout
+            try:
+                stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
+            except subprocess.TimeoutExpired:
+                process.kill()
+                logger.error(f"❌ {format_name} timeout after 5 minutes")
                 return False
-        else:
-            logger.error(f"❌ {format_name} failed: {process.stderr[:100]}...")
-            logger.debug(f"Full command: {' '.join(cmd)}")
+
+            if process.returncode == 0:
+                # Verify file was created and get size
+                if os.path.exists(output_path):
+                    file_size = os.path.getsize(output_path) / (1024 * 1024)
+                    logger.info(f"✅ {format_name}: {file_size:.1f}MB")
+                    if progress_callback:
+                        progress_callback(1.0)
+                    return True
+                else:
+                    logger.error(f"❌ {format_name}: Output file not created")
+                    return False
+            else:
+                logger.error(f"❌ {format_name} failed: {stderr[:200]}...")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ {format_name} error: {e}")
             return False
 
     except Exception as e:
@@ -568,17 +692,47 @@ def extract_clip_frames(
             ]
         )
 
-        # Run extraction
-        process = subprocess.run(cmd, capture_output=True, text=True)
+        # Debug: Log the full command being executed
+        logger.info(f"🎬 Running FFmpeg extract: {' '.join(cmd)}")
+        logger.info(f"🎬 Input: {input_path} (exists: {os.path.exists(input_path)})")
+        logger.info(f"🎬 Output: {output_path}")
 
-        if process.returncode == 0:
-            logger.info(f"✅ Extracted: {duration:.1f}s")
-            if progress_callback:
-                progress_callback(1.0)
-            return True
-        else:
-            logger.error(f"❌ Extraction failed: {process.stderr[:100]}...")
-            logger.debug(f"Full command: {' '.join(cmd)}")
+        # Run extraction with progress indication
+        try:
+            logger.info(f"🎬 Extracting: {os.path.basename(input_path)}")
+
+            # Start the process
+            process = subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+
+            # Start progress indicator in background
+            progress_thread = threading.Thread(
+                target=show_progress_bar,
+                args=(process, "🎬 Extracting", duration),
+                daemon=True,
+            )
+            progress_thread.start()
+
+            # Wait for completion with timeout
+            try:
+                stdout, stderr = process.communicate(timeout=300)  # 5 minute timeout
+            except subprocess.TimeoutExpired:
+                process.kill()
+                logger.error(f"❌ Extraction timeout after 5 minutes")
+                return False
+
+            if process.returncode == 0:
+                logger.info(f"✅ Extracted: {duration:.1f}s")
+                if progress_callback:
+                    progress_callback(1.0)
+                return True
+            else:
+                logger.error(f"❌ Extraction failed: {stderr[:200]}...")
+                return False
+
+        except Exception as e:
+            logger.error(f"❌ Extraction error: {e}")
             return False
 
     except Exception as e:
@@ -791,9 +945,8 @@ def export_clip_efficient(
                     f"Generating {format_type.upper()} format for '{crop_variation}' variation"
                 )
 
-                # Get proper export path
-                export_base = config_manager.output_base
-                export_dir = Path(export_base) / "03_CLIPPED"
+                # Get proper export path using configured clips directory
+                export_dir = config_manager.clips_dir
 
                 # Use correct directory and extension for format type
                 if is_cv_format:

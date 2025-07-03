@@ -269,10 +269,16 @@ def process_clip_with_variations(
 
     try:
         # Get clip metadata and crop keyframes
-        clip_start_frame = clip.in_frame
-        clip_end_frame = clip.out_frame
+        clip_start_frame = clip.start_frame
+        clip_end_frame = clip.end_frame
         duration_frames = clip_end_frame - clip_start_frame + 1
-        duration_seconds = duration_frames / 30.0  # Assuming 30fps
+
+        # Get source FPS for accurate timing calculation
+        source_fps = get_source_video_fps(source_path)
+        duration_seconds = duration_frames / source_fps
+        logger.info(
+            f"🎬 Duration: {duration_frames} frames @ {source_fps} fps = {duration_seconds:.2f}s"
+        )
 
         # Get crop keyframes
         crop_keyframes = {}
@@ -367,6 +373,42 @@ def create_full_frame_keyframes():
     return None
 
 
+def get_source_video_fps(source_path):
+    """Get the FPS of the source video file"""
+    import subprocess
+
+    fps_cmd = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=r_frame_rate",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        str(source_path),
+    ]
+
+    fps = 30.0  # Default fallback
+    try:
+        fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
+        if fps_output:
+            # Parse fraction format (e.g., "30000/1001" or "25/1")
+            if "/" in fps_output:
+                num, den = fps_output.split("/")
+                fps = float(num) / float(den)
+            else:
+                fps = float(fps_output)
+    except Exception as e:
+        import logging
+
+        logger = logging.getLogger("clipper.multi_crop")
+        logger.warning(f"Could not detect FPS from {source_path}, using 30.0: {e}")
+
+    return fps
+
+
 def create_variation_export(
     clip,
     source_path,
@@ -379,24 +421,28 @@ def create_variation_export(
 ):
     """Export a single crop variation using the correct pipeline"""
     try:
-        from ..services import clip_export_service, calibration_service
+        from src.services import clip_export_service, calibration_service
         import tempfile
         import os
 
+        # Get the source video FPS - critical for preserving timing
+        source_fps = get_source_video_fps(source_path)
+
         # Determine output format and directory
         format_ext = ".mkv" if is_cv_format else ".mp4"
-        format_dir = "cv" if is_cv_format else "regular"
+        format_dir = "ffv1" if is_cv_format else "h264"
 
         # Create export path
-        base_dir = config_manager.get_export_dir()
         camera_type = source_path.parent.parent.name  # Extract camera from path
         session = source_path.parent.name
 
-        export_dir = base_dir / format_dir / camera_type / session
+        # Use configured clips directory from config.yaml
+        export_dir = config_manager.clips_dir / format_dir / camera_type / session
 
-        # Add variation suffix to filename
+        # Create proper filename with source video name prefix
+        source_video_name = source_path.stem  # Get filename without extension (e.g., "C0001")
         variation_suffix = "" if variation == "original" else f"_{variation}"
-        export_filename = f"{clip.name}{variation_suffix}{format_ext}"
+        export_filename = f"{source_video_name}_{clip.name}{variation_suffix}{format_ext}"
         export_path = export_dir / export_filename
 
         # Ensure directory exists
@@ -418,8 +464,8 @@ def create_variation_export(
                 calibrate_success = clip_export_service.apply_calibration_to_clip(
                     input_path=source_path,
                     output_path=temp_calibrated_path,
-                    start_frame=clip.in_frame,
-                    end_frame=clip.out_frame,
+                    start_frame=clip.start_frame,
+                    end_frame=clip.end_frame,
                     camera_type=camera_type_for_cal,
                     alpha=alpha,
                     config_manager=config_manager,
@@ -430,8 +476,8 @@ def create_variation_export(
                 calibrate_success = clip_export_service.extract_clip_frames(
                     input_path=source_path,
                     output_path=temp_calibrated_path,
-                    start_frame=clip.in_frame,
-                    end_frame=clip.out_frame,
+                    start_frame=clip.start_frame,
+                    end_frame=clip.end_frame,
                     gpu_acceleration=gpu_acceleration,
                 )
 
@@ -440,6 +486,8 @@ def create_variation_export(
                 return False
 
             # Step 2: Apply crop variation to the calibrated clip
+            logger.info(f"🎬 Source FPS: {source_fps} (preserving original timing)")
+
             if variation_keyframes is None:
                 # Full frame - no crop
                 success = clip_export_service.convert_to_final_format_with_crop(
@@ -447,8 +495,8 @@ def create_variation_export(
                     output_path=export_path,
                     crop_region=None,
                     crop_keyframes=None,
-                    start_frame=clip.in_frame,  # Keep original frame reference for timing
-                    fps=30,
+                    start_frame=clip.start_frame,  # Keep original frame reference for timing
+                    fps=source_fps,  # Use detected source FPS to preserve timing
                     is_cv_format=is_cv_format,
                     gpu_acceleration=gpu_acceleration,
                 )
@@ -459,8 +507,8 @@ def create_variation_export(
                     output_path=export_path,
                     crop_region=None,
                     crop_keyframes=variation_keyframes,
-                    start_frame=clip.in_frame,  # Keep original frame reference for keyframe timing
-                    fps=30,
+                    start_frame=clip.start_frame,  # Keep original frame reference for keyframe timing
+                    fps=source_fps,  # Use detected source FPS to preserve timing
                     is_cv_format=is_cv_format,
                     gpu_acceleration=gpu_acceleration,
                 )

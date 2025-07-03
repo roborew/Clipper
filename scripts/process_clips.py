@@ -1149,10 +1149,9 @@ def find_generated_clips(
         List of paths to the generated clips found on disk
     """
     try:
-        # Figure out potential output directories
-        export_base = config_manager.output_base
-        h264_dir = Path(export_base) / "03_CLIPPED" / "h264"
-        ffv1_dir = Path(export_base) / "03_CLIPPED" / "ffv1"
+        # Figure out potential output directories using configured clips directory
+        h264_dir = config_manager.clips_dir / "h264"
+        ffv1_dir = config_manager.clips_dir / "ffv1"
 
         # Get source path components
         source_path = Path(clip.source_path)
@@ -1193,16 +1192,15 @@ def find_generated_clips(
 
             logger.info(f"Looking for variations: {variations}")
 
-            # Create pattern for each variation
+            # Create pattern for each variation with source video prefix
             for variation in variations:
                 if variation == "original":
-                    # Original might not have a suffix
+                    # Original uses source_video_name + clip_name without suffix
                     clip_patterns.append(f"{video_name}_{base_name}")
-                    clip_patterns.append(f"{video_name}_{base_name}_original")
                 else:
                     clip_patterns.append(f"{video_name}_{base_name}_{variation}")
         else:
-            # Just use the clip name as is
+            # Just use the source video name + clip name
             clip_patterns.append(f"{video_name}_{clip.name}")
 
         logger.info(f"Searching for clip patterns: {clip_patterns}")
@@ -1735,9 +1733,58 @@ def process_single_clip(
         )
 
         if success:
-            # Update clip status
+            # Find generated files to update export_path
+            export_paths = find_generated_clips(
+                clip,
+                config,
+                both_formats=both_formats,
+                multi_crop=multi_crop,
+                crop_variations=(
+                    crop_variations.split(",") if crop_variations else ["original"]
+                ),
+            )
+
+            # Update clip with export paths
+            if export_paths:
+                clip.export_path = export_paths
+                logger.info(f"🔗 Export paths: {len(export_paths)} files")
+
+            # Update source path to correct location if it was resolved
+            if str(source_path) != clip.source_path:
+                logger.info(
+                    f"📂 Source path corrected: {clip.source_path} → {source_path}"
+                )
+                clip.source_path = str(source_path)
+
+            # Update clip status to Complete
             clip.status = "Complete"
             clip.modified_at = datetime.now().isoformat()
+
+            # Save the updated clip back to its JSON file
+            try:
+                from src.services import clip_service
+
+                # Find the source JSON file for this clip
+                clip_files = []
+                configs_dir = config.clips_dir / "_configs"
+                for config_file in configs_dir.rglob("*_clips.json"):
+                    try:
+                        clips = clip_service.load_clips(config_file)
+                        for i, existing_clip in enumerate(clips):
+                            if existing_clip.id == clip.id:
+                                # Update the clip in the list
+                                clips[i] = clip
+                                # Save the updated clips back to file
+                                clip_service.save_clips(clips, config_file)
+                                logger.info(
+                                    f"💾 Updated status: {clip.name} → Complete"
+                                )
+                                break
+                    except Exception as e:
+                        continue
+            except Exception as e:
+                logger.warning(f"⚠️  Could not update JSON status: {e}")
+
             return True
         else:
             return False

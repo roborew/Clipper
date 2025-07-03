@@ -5,11 +5,57 @@ Utility for processing clips in an automated fashion.
 import os
 import json
 import logging
+import time
 from pathlib import Path
 from services.clip_service import Clip, save_clips, load_clips
 from services.config_manager import ConfigManager
 
 logger = logging.getLogger("clipper.processor")
+
+
+def resolve_source_path(source_path, config_manager):
+    """Simple wrapper to resolve source paths"""
+    # Import here to avoid circular imports
+    import sys
+    import os
+
+    script_dir = os.path.join(os.path.dirname(__file__), "..", "..")
+    if script_dir not in sys.path:
+        sys.path.insert(0, script_dir)
+
+    from scripts.process_clips import resolve_source_path as main_resolve
+
+    return main_resolve(source_path, config_manager)
+
+
+def extract_camera_type(source_path):
+    """Simple wrapper to extract camera type"""
+    # Import here to avoid circular imports
+    import sys
+    import os
+
+    script_dir = os.path.join(os.path.dirname(__file__), "..", "..")
+    if script_dir not in sys.path:
+        sys.path.insert(0, script_dir)
+
+    from scripts.process_clips import extract_camera_type as main_extract
+
+    return main_extract(source_path)
+
+
+def camera_matches_filter(camera_type, camera_filter):
+    """Simple wrapper to check camera filter matches"""
+    # Import here to avoid circular imports
+    import sys
+    import os
+
+    script_dir = os.path.join(os.path.dirname(__file__), "..", "..")
+    if script_dir not in sys.path:
+        sys.path.insert(0, script_dir)
+
+    from scripts.process_clips import camera_matches_filter as main_matches
+
+    return main_matches(camera_type, camera_filter)
 
 
 def scan_for_clips_to_process(config_manager=None):
@@ -277,9 +323,15 @@ def process_single_crop_clip(
 ):
     """Process a single clip with one crop (no variations) using the correct pipeline"""
     try:
-        from ..services import clip_export_service, calibration_service
+        from services import clip_export_service, calibration_service
         import tempfile
         import os
+
+        # Get the source video FPS - critical for preserving timing
+        from utils.multi_crop import get_source_video_fps
+
+        source_fps = get_source_video_fps(source_path)
+        logger.info(f"🎬 Source FPS: {source_fps} (preserving original timing)")
 
         # Determine formats to export
         formats = []
@@ -306,8 +358,8 @@ def process_single_crop_clip(
                 calibrate_success = clip_export_service.apply_calibration_to_clip(
                     input_path=source_path,
                     output_path=temp_calibrated_path,
-                    start_frame=clip.in_frame,
-                    end_frame=clip.out_frame,
+                    start_frame=clip.start_frame,
+                    end_frame=clip.end_frame,
                     camera_type=camera_type_for_cal,
                     alpha=alpha,
                     config_manager=config_manager,
@@ -318,8 +370,8 @@ def process_single_crop_clip(
                 calibrate_success = clip_export_service.extract_clip_frames(
                     input_path=source_path,
                     output_path=temp_calibrated_path,
-                    start_frame=clip.in_frame,
-                    end_frame=clip.out_frame,
+                    start_frame=clip.start_frame,
+                    end_frame=clip.end_frame,
                     gpu_acceleration=gpu_acceleration,
                 )
 
@@ -334,17 +386,23 @@ def process_single_crop_clip(
                 is_cv = format_type == "cv"
 
                 # Create export path
-                base_dir = config_manager.get_export_dir()
                 camera_type = source_path.parent.parent.name
                 session = source_path.parent.name
 
                 format_ext = ".mkv" if is_cv else ".mp4"
-                format_dir = "cv" if is_cv else "regular"
+                format_dir = "ffv1" if is_cv else "h264"
 
-                export_dir = base_dir / format_dir / camera_type / session
+                # Use configured clips directory from config.yaml
+                export_dir = (
+                    config_manager.clips_dir / format_dir / camera_type / session
+                )
                 export_dir.mkdir(parents=True, exist_ok=True)
 
-                export_filename = f"{clip.name}{format_ext}"
+                # Create proper filename with source video name prefix
+                source_video_name = (
+                    source_path.stem
+                )  # Get filename without extension (e.g., "C0001")
+                export_filename = f"{source_video_name}_{clip.name}{format_ext}"
                 export_path = export_dir / export_filename
 
                 # Apply crop and convert to final format
@@ -355,8 +413,8 @@ def process_single_crop_clip(
                         output_path=export_path,
                         crop_region=None,
                         crop_keyframes=clip.crop_keyframes,
-                        start_frame=clip.in_frame,  # Keep original frame reference for keyframe timing
-                        fps=30,
+                        start_frame=clip.start_frame,  # Keep original frame reference for keyframe timing
+                        fps=source_fps,  # Use detected source FPS to preserve timing
                         is_cv_format=is_cv,
                         gpu_acceleration=gpu_acceleration,
                     )
@@ -368,8 +426,8 @@ def process_single_crop_clip(
                         output_path=export_path,
                         crop_region=crop_region,
                         crop_keyframes=None,
-                        start_frame=clip.in_frame,  # Keep original frame reference for timing
-                        fps=30,
+                        start_frame=clip.start_frame,  # Keep original frame reference for timing
+                        fps=source_fps,  # Use detected source FPS to preserve timing
                         is_cv_format=is_cv,
                         gpu_acceleration=gpu_acceleration,
                     )
@@ -393,6 +451,34 @@ def process_single_crop_clip(
     except Exception as e:
         logger.error(f"Single crop processing failed: {e}")
         return False
+
+
+def process_clip_with_variations(
+    clip,
+    source_path,
+    config_manager,
+    crop_variations,
+    wide_crop_factor,
+    cv_optimized,
+    both_formats,
+    gpu_acceleration,
+    progress_callback,
+):
+    """Simple wrapper for multi-crop processing"""
+    # Import here to avoid circular imports
+    from utils.multi_crop import process_clip_with_variations as multi_crop_func
+
+    return multi_crop_func(
+        clip=clip,
+        source_path=source_path,
+        config_manager=config_manager,
+        crop_variations=crop_variations,
+        wide_crop_factor=wide_crop_factor,
+        cv_optimized=cv_optimized,
+        both_formats=both_formats,
+        gpu_acceleration=gpu_acceleration,
+        progress_callback=progress_callback,
+    )
 
 
 # Example usage:

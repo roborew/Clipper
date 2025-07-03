@@ -1590,9 +1590,8 @@ def export_clip(
         if isinstance(source_path, str):
             source_path = Path(source_path)
 
-        # Get export directory from config
-        export_base = config_manager.output_base
-        export_dir = Path(export_base) / "03_CLIPPED"
+        # Get export directory from config - use configured clips directory
+        export_dir = config_manager.clips_dir
 
         # Use FFV1 codec for CV-optimized export
         if cv_optimized:
