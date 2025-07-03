@@ -295,7 +295,12 @@ def apply_calibration_to_clip(
                     progress_callback(1.0)
                 return True
             else:
-                logger.error(f"❌ Calibration failed: {stderr[:200]}...")
+                logger.error(
+                    f"❌ Calibration failed with return code {process.returncode}"
+                )
+                logger.error(f"FFmpeg stderr: {stderr}")
+                if stdout:
+                    logger.error(f"FFmpeg stdout: {stdout}")
                 return False
 
         except Exception as e:
@@ -562,7 +567,12 @@ def convert_to_final_format_with_crop(
                     logger.error(f"❌ {format_name}: Output file not created")
                     return False
             else:
-                logger.error(f"❌ {format_name} failed: {stderr[:200]}...")
+                logger.error(
+                    f"❌ {format_name} failed with return code {process.returncode}"
+                )
+                logger.error(f"FFmpeg stderr: {stderr}")
+                if stdout:
+                    logger.error(f"FFmpeg stdout: {stdout}")
                 return False
 
         except Exception as e:
@@ -728,7 +738,10 @@ def extract_clip_frames(
                     progress_callback(1.0)
                 return True
             else:
-                logger.error(f"❌ Extraction failed: {stderr[:200]}...")
+                logger.error(f"❌ Extraction failed with return code {process.returncode}")
+                logger.error(f"FFmpeg stderr: {stderr}")
+                if stdout:
+                    logger.error(f"FFmpeg stdout: {stdout}")
                 return False
 
         except Exception as e:
