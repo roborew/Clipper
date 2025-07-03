@@ -22,6 +22,52 @@ from src.services import calibration_service
 logger = logging.getLogger("clipper.clip_export")
 
 
+def get_gpu_encode_settings(gpu_acceleration=False, is_cv_format=False):
+    """
+    Get GPU encoding settings for FFmpeg based on available hardware.
+
+    Args:
+        gpu_acceleration: Whether to enable GPU acceleration
+        is_cv_format: Whether to use CV-optimized format (FFV1)
+
+    Returns:
+        Tuple of (decoder_args, encoder_args, encoder_name)
+    """
+    if not gpu_acceleration:
+        # CPU-only encoding
+        if is_cv_format:
+            return [], ["-c:v", "ffv1"], "ffv1"
+        else:
+            return [], ["-c:v", "libx264", "-crf", "18", "-preset", "fast"], "libx264"
+
+    # GPU acceleration enabled
+    if is_cv_format:
+        # FFV1 doesn't have GPU acceleration, fallback to CPU
+        logger.info("FFV1 format doesn't support GPU acceleration, using CPU encoding")
+        return [], ["-c:v", "ffv1"], "ffv1"
+    else:
+        # H.264 with NVENC (NVIDIA GPU) acceleration
+        logger.info("Using NVENC hardware acceleration for H.264 encoding")
+        decoder_args = ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"]
+        encoder_args = [
+            "-c:v",
+            "h264_nvenc",
+            "-cq",
+            "18",  # Constant quality (equivalent to CRF)
+            "-preset",
+            "p4",  # High quality preset
+            "-profile:v",
+            "high",
+            "-level",
+            "4.1",
+            "-rc",
+            "vbr_hq",  # Variable bitrate high quality
+            "-b:v",
+            "0",  # Let CQ control bitrate
+        ]
+        return decoder_args, encoder_args, "h264_nvenc"
+
+
 def is_calibration_enabled(config_manager):
     """
     Check if calibration is enabled in config.
@@ -54,6 +100,7 @@ def apply_calibration_to_clip(
     quality_preset="high",
     progress_callback=None,
     config_manager=None,
+    gpu_acceleration=False,
 ):
     """
     Apply calibration to a specific frame range using FFmpeg (preserves audio).
@@ -132,26 +179,43 @@ def apply_calibration_to_clip(
             "Using frame extraction with audio preservation instead of calibration (calibration via OpenCV loses audio)"
         )
 
+        # Get GPU encoding settings
+        decoder_args, encoder_args, encoder_name = get_gpu_encode_settings(
+            gpu_acceleration=gpu_acceleration, is_cv_format=False
+        )
+
+        if gpu_acceleration:
+            logger.info(
+                f"Using GPU acceleration for calibration extraction: {encoder_name}"
+            )
+
         # Build FFmpeg command for efficient extraction with audio preservation
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-ss",
-            str(start_time),
-            "-t",
-            str(duration),
-            "-i",
-            str(input_path),
-            "-c:v",
-            "libx264",
-            "-crf",
-            "18",  # High quality encoding
-            "-preset",
-            "fast",
-            "-c:a",
-            "copy",  # Preserve original audio track
-            str(output_path),
-        ]
+        cmd = ["ffmpeg", "-y"]
+
+        # Add hardware decoder if GPU acceleration enabled
+        cmd.extend(decoder_args)
+
+        cmd.extend(
+            [
+                "-ss",
+                str(start_time),
+                "-t",
+                str(duration),
+                "-i",
+                str(input_path),
+            ]
+        )
+
+        # Add hardware encoder settings
+        cmd.extend(encoder_args)
+
+        cmd.extend(
+            [
+                "-c:a",
+                "copy",  # Preserve original audio track
+                str(output_path),
+            ]
+        )
 
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -183,6 +247,7 @@ def convert_to_final_format_with_crop(
     fps=30.0,
     is_cv_format=False,
     progress_callback=None,
+    gpu_acceleration=False,
 ):
     """
     Convert calibrated clip to final format with optional cropping and keyframe animation.
@@ -205,8 +270,21 @@ def convert_to_final_format_with_crop(
             f"Converting to final format: {'FFV1 LOSSLESS' if is_cv_format else 'H.264'}"
         )
 
+        # Get GPU encoding settings
+        decoder_args, encoder_args, encoder_name = get_gpu_encode_settings(
+            gpu_acceleration=gpu_acceleration, is_cv_format=is_cv_format
+        )
+
+        if gpu_acceleration:
+            logger.info(f"Using GPU acceleration for final conversion: {encoder_name}")
+
         # Build FFmpeg command with appropriate codec settings
-        cmd = ["ffmpeg", "-y", "-i", str(input_path)]
+        cmd = ["ffmpeg", "-y"]
+
+        # Add hardware decoder if GPU acceleration enabled
+        cmd.extend(decoder_args)
+
+        cmd.extend(["-i", str(input_path)])
 
         # Add crop and scale filters
         vf_filters = []
@@ -327,38 +405,22 @@ def convert_to_final_format_with_crop(
         if vf_filters:
             cmd.extend(["-vf", ",".join(vf_filters)])
 
+        # Add GPU-aware encoder settings
+        cmd.extend(encoder_args)
+        
+        # Add format-specific settings for FFV1 (GPU encoders handle H.264 settings internally)
         if is_cv_format:
-            # FFV1 lossless codec for CV applications (matches original proxy_service settings)
-            cmd.extend(
-                [
-                    "-c:v",
-                    "ffv1",
-                    "-level",
-                    "3",  # FFV1 level 3 for better features
-                    "-g",
-                    "1",  # All frames are keyframes for precise seeking
-                    "-context",
-                    "1",  # Better error recovery
-                    "-slices",
-                    "24",  # Good for multithreading
-                    "-pix_fmt",
-                    "yuv420p",  # Standard pixel format
-                ]
-            )
-        else:
-            # H.264 for regular exports (matches original proxy_service settings)
-            cmd.extend(
-                [
-                    "-c:v",
-                    "libx264",
-                    "-crf",
-                    "18",  # High quality
-                    "-preset",
-                    "slow",  # Better compression
-                    "-pix_fmt",
-                    "yuv420p",  # Standard pixel format
-                ]
-            )
+            # FFV1-specific settings (only used when GPU acceleration is off)
+            if not gpu_acceleration:
+                cmd.extend([
+                    "-level", "3",  # FFV1 level 3 for better features
+                    "-g", "1",  # All frames are keyframes for precise seeking
+                    "-context", "1",  # Better error recovery
+                    "-slices", "24",  # Good for multithreading
+                ])
+        
+        # Add pixel format (compatible with both CPU and GPU encoders)
+        cmd.extend(["-pix_fmt", "yuv420p"])
 
         # Preserve original audio track (copy without re-encoding)
         cmd.extend(["-c:a", "copy"])
@@ -423,7 +485,12 @@ def convert_to_final_format(
 
 
 def extract_clip_frames(
-    input_path, output_path, start_frame, end_frame, progress_callback=None
+    input_path,
+    output_path,
+    start_frame,
+    end_frame,
+    progress_callback=None,
+    gpu_acceleration=False,
 ):
     """
     Extract a clip using FFmpeg (no calibration).
@@ -470,26 +537,41 @@ def extract_clip_frames(
 
         logger.info(f"Extracting frames {start_frame}-{end_frame} ({duration:.2f}s)")
 
+        # Get GPU encoding settings
+        decoder_args, encoder_args, encoder_name = get_gpu_encode_settings(
+            gpu_acceleration=gpu_acceleration, is_cv_format=False
+        )
+
+        if gpu_acceleration:
+            logger.info(f"Using GPU acceleration for frame extraction: {encoder_name}")
+
         # Build FFmpeg command for efficient extraction
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-ss",
-            str(start_time),
-            "-t",
-            str(duration),
-            "-i",
-            str(input_path),
-            "-c:v",
-            "libx264",
-            "-crf",
-            "18",  # High quality encoding
-            "-preset",
-            "fast",
-            "-c:a",
-            "copy",  # Preserve original audio track
-            str(output_path),
-        ]
+        cmd = ["ffmpeg", "-y"]
+
+        # Add hardware decoder if GPU acceleration enabled
+        cmd.extend(decoder_args)
+
+        cmd.extend(
+            [
+                "-ss",
+                str(start_time),
+                "-t",
+                str(duration),
+                "-i",
+                str(input_path),
+            ]
+        )
+
+        # Add hardware encoder settings
+        cmd.extend(encoder_args)
+
+        cmd.extend(
+            [
+                "-c:a",
+                "copy",  # Preserve original audio track
+                str(output_path),
+            ]
+        )
 
         # Run extraction
         process = subprocess.run(cmd, capture_output=True, text=True)
@@ -509,7 +591,12 @@ def extract_clip_frames(
 
 
 def export_clip_efficient(
-    clip, config_manager, multi_crop=False, multi_format=False, progress_callback=None
+    clip,
+    config_manager,
+    multi_crop=False,
+    multi_format=False,
+    progress_callback=None,
+    gpu_acceleration=False,
 ):
     """
     Main efficient clip export function.
@@ -562,6 +649,7 @@ def export_clip_efficient(
                     progress_callback(p * 0.8) if progress_callback else None
                 ),
                 config_manager=config_manager,
+                gpu_acceleration=gpu_acceleration,
             )
         else:
             logger.info("Calibration disabled, extracting frames only")
@@ -573,6 +661,7 @@ def export_clip_efficient(
                 progress_callback=lambda p: (
                     progress_callback(p * 0.8) if progress_callback else None
                 ),
+                gpu_acceleration=gpu_acceleration,
             )
 
         if not success:
@@ -751,6 +840,7 @@ def export_clip_efficient(
                         if progress_callback
                         else None
                     ),
+                    gpu_acceleration=gpu_acceleration,
                 )
 
                 if success:

@@ -324,6 +324,7 @@ def process_clip(
     multi_crop=False,
     crop_variations=None,
     wide_crop_factor=1.5,
+    gpu_acceleration=False,
 ):
     """
     Process a single clip - this is where you would implement your custom processing logic
@@ -473,6 +474,7 @@ def process_clip(
                     multi_crop=False,  # Single clip processing
                     multi_format=is_cv_format,  # CV format when requested
                     progress_callback=progress_callback,
+                    gpu_acceleration=gpu_acceleration,
                 )
 
                 pbar.close()
@@ -1108,6 +1110,7 @@ def process_batch(
     wide_crop_factor=1.5,
     crop_camera_types=None,
     exclude_crop_camera_types=None,
+    gpu_acceleration=False,
 ):
     logger.info(f"Processing batch of {len(clips)} clips")
 
@@ -1147,6 +1150,7 @@ def process_batch(
                 multi_crop,
                 crop_variations,
                 wide_crop_factor,
+                gpu_acceleration,
             ): clip
             for clip in clips
         }
@@ -1751,6 +1755,11 @@ Watch Mode:
         action="store_true",
         help="Fix clips that were processed but not marked as Complete",
     )
+    parser.add_argument(
+        "--gpu",
+        action="store_true",
+        help="Enable GPU hardware acceleration for video processing (H.264 only, requires NVIDIA GPU)",
+    )
     args = parser.parse_args()
 
     config_manager = ConfigManager()
@@ -1827,6 +1836,10 @@ Watch Mode:
             logger.info(
                 f"Wide crop factor: {args.wide_crop_factor} (higher values = more zoomed out)"
             )
+        if args.gpu:
+            logger.info("GPU hardware acceleration enabled (NVENC for H.264, CPU fallback for FFV1)")
+        else:
+            logger.info("Using CPU-only video processing")
 
         # Add a heartbeat file to track if daemon is running
         heartbeat_file = script_dir / "daemon_heartbeat.txt"
@@ -1939,6 +1952,7 @@ Watch Mode:
                                     args.wide_crop_factor,
                                     crop_camera_types,
                                     exclude_crop_camera_types,
+                                    args.gpu,
                                 )
                                 total_processed += num_processed
 
@@ -2003,6 +2017,7 @@ Watch Mode:
                                 args.wide_crop_factor,
                                 crop_camera_types,
                                 exclude_crop_camera_types,
+                                args.gpu,
                             )
                             logger.info(f"Processed {num_processed} clips")
                         except Exception as e:
@@ -2040,6 +2055,10 @@ Watch Mode:
             logger.info("Using CV optimization for exports")
         if args.both_formats:
             logger.info("Exporting in both regular and CV-optimized formats")
+        if args.gpu:
+            logger.info("GPU hardware acceleration enabled (NVENC for H.264, CPU fallback for FFV1)")
+        else:
+            logger.info("Using CPU-only video processing")
 
         # Get all pending clips
         pending_clips = get_pending_clips(config_manager)
@@ -2085,6 +2104,7 @@ Watch Mode:
                     args.wide_crop_factor,
                     crop_camera_types,
                     exclude_crop_camera_types,
+                    args.gpu,
                 )
                 total_processed += num_processed
 
@@ -2107,6 +2127,7 @@ Watch Mode:
                 args.wide_crop_factor,
                 crop_camera_types,
                 exclude_crop_camera_types,
+                args.gpu,
             )
             logger.info(f"Processed {num_processed} clips")
             print(f"\n{'='*80}")
