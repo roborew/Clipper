@@ -402,11 +402,28 @@ class ConfigManager:
             # Continue without raising, but log the issue
 
     def get_calibration_settings(self) -> dict:
-        """Get calibration settings"""
+        """Get calibration settings with updated structure"""
         # Ensure the calibration settings exist in the config
         if "calibration" not in self.config:
-            self.config["calibration"] = {"use_calibrated_footage": False, "alpha": 0.5}
-        return self.config["calibration"]
+            self.config["calibration"] = {
+                "enabled": False,  # Clear setting instead of confusing "use_calibrated_footage"
+                "alpha": 0.5       # Optimal alpha value
+            }
+        
+        # Handle migration from old config structure
+        calib_config = self.config["calibration"]
+        if "use_calibrated_footage" in calib_config and "enabled" not in calib_config:
+            # Migrate old confusing setting to new clear setting
+            # Old logic: use_calibrated_footage=false meant "apply calibration during export"
+            # New logic: enabled=true means "apply calibration during export"
+            calib_config["enabled"] = not calib_config.get("use_calibrated_footage", False)
+            logger.info(f"Migrated calibration config: enabled={calib_config['enabled']}")
+        
+        # Ensure alpha is set
+        if "alpha" not in calib_config:
+            calib_config["alpha"] = 0.5
+        
+        return calib_config
 
     def save_calibration_settings(self, settings: dict) -> bool:
         """Save calibration settings to config file"""

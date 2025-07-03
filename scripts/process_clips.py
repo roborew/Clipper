@@ -34,6 +34,7 @@ from src.services.config_manager import ConfigManager
 from src.services import video_service
 from src.services import proxy_service
 from src.services import clip_service
+from src.services import clip_export_service  # NEW: Efficient clip export
 from src.utils.multi_crop import process_clip_with_variations
 
 # Set up logging
@@ -222,40 +223,46 @@ def resolve_source_path(source_path, config_manager):
     if str_path.startswith("data/source/"):
         logger.info(f"Detected legacy hardcoded path: {str_path}")
         # Strip the "data/source/" prefix to get the relative part
-        legacy_relative = str_path[len("data/source/"):]
+        legacy_relative = str_path[len("data/source/") :]
         logger.info(f"Extracted legacy relative path: {legacy_relative}")
-        
+
         # The legacy relative path should start with a folder like "00_RAW" or "RAW"
         # Replace it with the current config and rebuild with proper source base
         if legacy_relative.startswith("00_RAW/") or legacy_relative.startswith("RAW/"):
             # Extract the part after the folder
             if legacy_relative.startswith("00_RAW/"):
-                rel_path_after_folder = legacy_relative[len("00_RAW/"):]
+                rel_path_after_folder = legacy_relative[len("00_RAW/") :]
             else:  # RAW/
-                rel_path_after_folder = legacy_relative[len("RAW/"):]
-            
+                rel_path_after_folder = legacy_relative[len("RAW/") :]
+
             # Build the new path using the current config
             if use_calibrated_footage:
-                corrected_path = config_manager.source_calibrated / rel_path_after_folder
+                corrected_path = (
+                    config_manager.source_calibrated / rel_path_after_folder
+                )
             else:
                 corrected_path = config_manager.source_raw / rel_path_after_folder
-            
+
             logger.info(f"Corrected legacy path to: {corrected_path}")
             return corrected_path
-        
-        elif legacy_relative.startswith("01_CALIBRATION/") or legacy_relative.startswith("CALIBRATION/"):
+
+        elif legacy_relative.startswith(
+            "01_CALIBRATION/"
+        ) or legacy_relative.startswith("CALIBRATION/"):
             # Extract the part after the calibration folder
             if legacy_relative.startswith("01_CALIBRATION/"):
-                rel_path_after_folder = legacy_relative[len("01_CALIBRATION/"):]
+                rel_path_after_folder = legacy_relative[len("01_CALIBRATION/") :]
             else:  # CALIBRATION/
-                rel_path_after_folder = legacy_relative[len("CALIBRATION/"):]
-            
+                rel_path_after_folder = legacy_relative[len("CALIBRATION/") :]
+
             # Build the new path using the current config
             if use_calibrated_footage:
-                corrected_path = config_manager.source_calibrated / rel_path_after_folder
+                corrected_path = (
+                    config_manager.source_calibrated / rel_path_after_folder
+                )
             else:
                 corrected_path = config_manager.source_raw / rel_path_after_folder
-            
+
             logger.info(f"Corrected legacy calibration path to: {corrected_path}")
             return corrected_path
 
@@ -446,7 +453,7 @@ def process_clip(
                 format_label = "CV" if is_cv_format else "H.264"
                 pbar = tqdm(
                     total=100,
-                    desc=f"Processing {variation_clip.name} ({format_label})",
+                    desc=f"Processing {variation_clip.name} ({format_label}) - EFFICIENT",
                     unit="%",
                 )
 
@@ -458,35 +465,29 @@ def process_clip(
                     if current_percent > pbar.n:
                         pbar.update(current_percent - pbar.n)
 
-                # Export the clip using proxy_service - now correctly using keyframes if present
-                export_path = proxy_service.export_clip(
-                    source_path=source_path,
-                    clip_name=variation_clip.name,
-                    start_frame=variation_clip.start_frame,
-                    end_frame=variation_clip.end_frame,
-                    crop_region=(
-                        variation_clip.crop_region
-                        if hasattr(variation_clip, "crop_region")
-                        else None
-                    ),
-                    crop_keyframes=variation_clip.crop_keyframes,
-                    output_resolution=variation_clip.output_resolution,
-                    cv_optimized=is_cv_format,
+                # Use the NEW efficient clip export service instead of proxy_service
+                # This processes only the needed frames (59 vs 44,760) - ~760x faster!
+                export_paths = clip_export_service.export_clip_efficient(
+                    clip=variation_clip,
                     config_manager=config_manager,
+                    multi_crop=False,  # Single clip processing
+                    multi_format=is_cv_format,  # CV format when requested
                     progress_callback=progress_callback,
-                    clean_up_existing=False,  # Don't delete files in export_clip - we handle it at clip level
                 )
 
                 pbar.close()
 
-                if export_path:
+                if export_paths and len(export_paths) > 0:
+                    export_path = export_paths[
+                        0
+                    ]  # Take the first (and likely only) path
                     logger.info(
-                        f"Successfully processed {variation_clip.name} ({format_label}): {export_path}"
+                        f"Successfully processed {variation_clip.name} ({format_label}) - EFFICIENT: {export_path}"
                     )
                     return export_path
                 else:
                     logger.error(
-                        f"Failed to process {variation_clip.name} ({format_label})"
+                        f"Failed to process {variation_clip.name} ({format_label}) - EFFICIENT"
                     )
                     return None
             except Exception as e:

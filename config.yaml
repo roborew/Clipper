@@ -1,5 +1,6 @@
 calibration:
-  alpha: 0.5
+  enabled: true # Apply calibration during clip processing (much clearer than old setting)
+  alpha: 0.5 # Optimal balance between distortion removal and image preservation
   camera_types:
     - GP1
     - GP2
@@ -8,7 +9,6 @@ calibration:
   directories:
     base: data/SD_01_SURF_FOOTAGE_SOURCE
     parameters: 01_CALIBRATION/parameters
-  use_calibrated_footage: false
 directories:
   output:
     base: data/SD_02_SURF_FOOTAGE_PREPT
@@ -30,6 +30,8 @@ export:
     camera_types:
       - SONY_300
       - SONY_70
+      - GP1
+      - GP2
 patterns:
   video_extensions:
     - .mp4
