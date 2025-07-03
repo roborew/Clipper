@@ -6,8 +6,8 @@ import os
 import json
 import logging
 from pathlib import Path
-from src.services.clip_service import Clip, save_clips, load_clips
-from src.services.config_manager import ConfigManager
+from services.clip_service import Clip, save_clips, load_clips
+from services.config_manager import ConfigManager
 
 logger = logging.getLogger("clipper.processor")
 
@@ -183,6 +183,216 @@ def get_pending_clips(config_manager=None):
     except Exception as e:
         logger.exception(f"Error getting pending clips: {str(e)}")
         return []
+
+
+def process_clip(
+    clip,
+    camera_filter=None,
+    cv_optimized=False,
+    both_formats=False,
+    multi_crop=False,
+    crop_variations="original,wide,full",
+    wide_crop_factor=1.5,
+    crop_camera_types=None,
+    exclude_crop_camera_types=None,
+    gpu_acceleration=False,
+    progress_callback=None,
+):
+    """Process a single clip with streamlined logging"""
+
+    try:
+        logger.info(f"🎬 Processing: {clip.name}")
+
+        # Resolve source path
+        config_manager = ConfigManager()
+        source_path = resolve_source_path(clip.source_path, config_manager)
+
+        if not source_path.exists():
+            logger.error(f"❌ Source not found: {source_path}")
+            return False
+
+        # Extract camera type for filtering
+        camera_type = extract_camera_type(source_path)
+
+        # Check if multi-crop applies to this camera
+        should_use_multi_crop = multi_crop
+        if multi_crop and crop_camera_types:
+            should_use_multi_crop = any(
+                camera_matches_filter(camera_type, ct) for ct in crop_camera_types
+            )
+        elif multi_crop and exclude_crop_camera_types:
+            should_use_multi_crop = not any(
+                camera_matches_filter(camera_type, ct)
+                for ct in exclude_crop_camera_types
+            )
+
+        if should_use_multi_crop:
+            logger.info(f"📐 Multi-crop enabled")
+
+            success = process_clip_with_variations(
+                clip=clip,
+                source_path=source_path,
+                config_manager=config_manager,
+                crop_variations=crop_variations,
+                wide_crop_factor=wide_crop_factor,
+                cv_optimized=cv_optimized,
+                both_formats=both_formats,
+                gpu_acceleration=gpu_acceleration,
+                progress_callback=progress_callback,
+            )
+        else:
+            logger.info(f"🎬 Single crop")
+
+            # Single crop processing
+            success = process_single_crop_clip(
+                clip=clip,
+                source_path=source_path,
+                config_manager=config_manager,
+                cv_optimized=cv_optimized,
+                both_formats=both_formats,
+                gpu_acceleration=gpu_acceleration,
+                progress_callback=progress_callback,
+            )
+
+        if success:
+            logger.info(f"✅ Success: {clip.name}")
+            return True
+        else:
+            logger.error(f"❌ Failed: {clip.name}")
+            return False
+
+    except Exception as e:
+        logger.error(f"❌ Error processing {clip.name}: {e}")
+        return False
+
+
+def process_single_crop_clip(
+    clip,
+    source_path,
+    config_manager,
+    cv_optimized=False,
+    both_formats=False,
+    gpu_acceleration=False,
+    progress_callback=None,
+):
+    """Process a single clip with one crop (no variations) using the correct pipeline"""
+    try:
+        from ..services import clip_export_service, calibration_service
+        import tempfile
+        import os
+
+        # Determine formats to export
+        formats = []
+        if both_formats:
+            formats = ["regular", "cv"]
+        elif cv_optimized:
+            formats = ["cv"]
+        else:
+            formats = ["regular"]
+
+        # Step 1: Extract + Calibrate the clip segment (following export_clip_efficient pattern)
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
+            temp_calibrated_path = temp_file.name
+
+        try:
+            # Check if calibration is enabled and apply it
+            if clip_export_service.is_calibration_enabled(config_manager):
+                camera_type_for_cal = calibration_service.get_camera_type_from_path(
+                    source_path, config_manager
+                )
+                logger.info(f"🔧 Calibrating: {camera_type_for_cal}")
+
+                alpha = config_manager.get_calibration_settings().get("alpha", 0.5)
+                calibrate_success = clip_export_service.apply_calibration_to_clip(
+                    input_path=source_path,
+                    output_path=temp_calibrated_path,
+                    start_frame=clip.in_frame,
+                    end_frame=clip.out_frame,
+                    camera_type=camera_type_for_cal,
+                    alpha=alpha,
+                    config_manager=config_manager,
+                    gpu_acceleration=gpu_acceleration,
+                )
+            else:
+                logger.info(f"🎬 Extracting (no calibration)")
+                calibrate_success = clip_export_service.extract_clip_frames(
+                    input_path=source_path,
+                    output_path=temp_calibrated_path,
+                    start_frame=clip.in_frame,
+                    end_frame=clip.out_frame,
+                    gpu_acceleration=gpu_acceleration,
+                )
+
+            if not calibrate_success:
+                logger.error(f"Failed to extract/calibrate clip")
+                return False
+
+            # Step 2: Apply crop and convert to final formats
+            all_success = True
+
+            for format_type in formats:
+                is_cv = format_type == "cv"
+
+                # Create export path
+                base_dir = config_manager.get_export_dir()
+                camera_type = source_path.parent.parent.name
+                session = source_path.parent.name
+
+                format_ext = ".mkv" if is_cv else ".mp4"
+                format_dir = "cv" if is_cv else "regular"
+
+                export_dir = base_dir / format_dir / camera_type / session
+                export_dir.mkdir(parents=True, exist_ok=True)
+
+                export_filename = f"{clip.name}{format_ext}"
+                export_path = export_dir / export_filename
+
+                # Apply crop and convert to final format
+                if hasattr(clip, "crop_keyframes") and clip.crop_keyframes:
+                    # Use keyframes for cropping
+                    success = clip_export_service.convert_to_final_format_with_crop(
+                        input_path=temp_calibrated_path,
+                        output_path=export_path,
+                        crop_region=None,
+                        crop_keyframes=clip.crop_keyframes,
+                        start_frame=clip.in_frame,  # Keep original frame reference for keyframe timing
+                        fps=30,
+                        is_cv_format=is_cv,
+                        gpu_acceleration=gpu_acceleration,
+                    )
+                else:
+                    # Use static crop region if available
+                    crop_region = getattr(clip, "crop_region", None)
+                    success = clip_export_service.convert_to_final_format_with_crop(
+                        input_path=temp_calibrated_path,
+                        output_path=export_path,
+                        crop_region=crop_region,
+                        crop_keyframes=None,
+                        start_frame=clip.in_frame,  # Keep original frame reference for timing
+                        fps=30,
+                        is_cv_format=is_cv,
+                        gpu_acceleration=gpu_acceleration,
+                    )
+
+                if not success:
+                    all_success = False
+                    logger.error(f"❌ {format_type} format failed")
+                else:
+                    logger.info(f"✅ {format_type} format")
+
+            return all_success
+
+        finally:
+            # Clean up temporary calibrated file
+            if os.path.exists(temp_calibrated_path):
+                try:
+                    os.unlink(temp_calibrated_path)
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temp file: {e}")
+
+    except Exception as e:
+        logger.error(f"Single crop processing failed: {e}")
+        return False
 
 
 # Example usage:

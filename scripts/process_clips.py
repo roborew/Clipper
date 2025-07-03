@@ -6,36 +6,39 @@ This script scans for clips with status "Process" and processes them.
 It can be run as a scheduled job or a daemon process.
 """
 
-import os
-import sys
-import logging
-import time
 import argparse
-from pathlib import Path
-import re
-from concurrent.futures import ThreadPoolExecutor
-from tqdm import tqdm
+import json
+import logging
+import os
+import shutil
+import sys
+import time
 import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
+from pathlib import Path
+from tqdm import tqdm
 
-# Add the project root to the path so we can import the app modules
-script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
-project_root = script_dir.parent
-sys.path.insert(0, str(project_root))
+# Add the src directory to the Python path
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent / "src"
+sys.path.insert(0, str(src_dir))
 
-from src.utils.clip_processor import (
+from services.config_manager import ConfigManager
+from services import clip_service
+from utils.logging_utils import configure_logging
+
+from utils.clip_processor import (
     process_pending_clips,
     get_pending_clips,
     update_clip_status,
     scan_for_clips_to_process,
 )
-from src.services.clip_service import save_clips, load_clips
-from src.services.config_manager import ConfigManager
-from src.services import video_service
-from src.services import proxy_service
-from src.services import clip_service
-from src.services import clip_export_service  # NEW: Efficient clip export
-from src.utils.multi_crop import process_clip_with_variations
+from services.clip_service import save_clips, load_clips
+from services import video_service
+from services import proxy_service
+from services import clip_export_service  # NEW: Efficient clip export
+from utils.multi_crop import process_clip_with_variations
 
 # Set up logging
 logging.basicConfig(
@@ -47,6 +50,151 @@ logging.basicConfig(
     ],
 )
 logger = logging.getLogger("clip_processor")
+
+
+def parse_arguments():
+    """Parse command line arguments with comprehensive help"""
+    parser = argparse.ArgumentParser(
+        description='Process clips with "Process" status',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Process all clips
+  python scripts/process_clips.py
+  
+  # Process clips from SONY_300 camera with GPU acceleration
+  python scripts/process_clips.py --camera SONY_300 --gpu
+  
+  # Run as daemon with multi-crop variations
+  python scripts/process_clips.py --daemon --multi-crop
+  
+  # Process with both H.264 and FFV1 formats
+  python scripts/process_clips.py --both-formats
+""",
+    )
+    parser.add_argument("--daemon", action="store_true", help="Run as a daemon process")
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=60,
+        help="Scan interval in seconds (default: 60)",
+    )
+    parser.add_argument(
+        "--camera", type=str, help="Only process clips from specific camera type"
+    )
+    parser.add_argument(
+        "--list-cameras",
+        action="store_true",
+        help="List all available camera types and exit",
+    )
+    parser.add_argument(
+        "--max-workers", type=int, default=1, help="Maximum parallel clips (default: 1)"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=5, help="Clips per batch (default: 5)"
+    )
+    parser.add_argument("--h264-only", action="store_true", help="Export H.264 only")
+    parser.add_argument("--cv-only", action="store_true", help="Export FFV1 only")
+    parser.add_argument(
+        "--both-formats", action="store_true", help="Export both H.264 and FFV1"
+    )
+    parser.add_argument(
+        "--multi-crop", action="store_true", help="Generate multiple crop variations"
+    )
+    parser.add_argument(
+        "--gpu", action="store_true", help="Enable GPU acceleration (NVIDIA only)"
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Log level",
+    )
+
+    return parser.parse_args()
+
+
+def process_pending_clips(
+    camera_filter=None,
+    batch_size=5,
+    max_workers=1,
+    export_h264=True,
+    export_ffv1=False,
+    multi_crop=False,
+    gpu_acceleration=False,
+):
+    """Process pending clips with streamlined logging"""
+    config = ConfigManager()
+
+    # Get pending clips
+    pending_clips = get_pending_clips(config)
+    if not pending_clips:
+        logger.info("💤 No clips to process")
+        return
+
+    # Apply camera filter
+    if camera_filter:
+        filtered_clips = []
+        for clip in pending_clips:
+            try:
+                source_path = resolve_source_path(clip.source_path, config)
+                camera_type = extract_camera_type(source_path)
+                if camera_matches_filter(camera_type, camera_filter):
+                    filtered_clips.append(clip)
+            except Exception as e:
+                logger.warning(f"⚠️  {clip.name}: {e}")
+                continue
+
+        logger.info(
+            f"📊 Found {len(filtered_clips)}/{len(pending_clips)} clips for {camera_filter}"
+        )
+        pending_clips = filtered_clips
+    else:
+        logger.info(f"📊 Found {len(pending_clips)} clips to process")
+
+    if not pending_clips:
+        return
+
+    # Process in batches
+    total_processed = 0
+    start_time = time.time()
+
+    while pending_clips:
+        batch = pending_clips[:batch_size]
+        pending_clips = pending_clips[batch_size:]
+
+        logger.info(
+            f"🎬 Processing batch: {len(batch)} clips (remaining: {len(pending_clips)})"
+        )
+
+        try:
+            # Determine if both formats should be exported
+            both_formats = export_h264 and export_ffv1
+
+            num_processed = process_batch(
+                batch,
+                max_workers,
+                camera_filter,
+                False,  # cv_optimized (deprecated, use both_formats instead)
+                both_formats,
+                multi_crop,
+                "original,wide,full",
+                1.5,  # wide_crop_factor
+                None,  # crop_camera_types
+                None,  # exclude_crop_camera_types
+                gpu_acceleration,
+            )
+            total_processed += num_processed
+
+        except Exception as e:
+            logger.error(f"❌ Batch failed: {e}")
+            continue
+
+    elapsed = time.time() - start_time
+    rate = total_processed / elapsed * 60 if elapsed > 0 else 0
+    logger.info(
+        f"✅ Complete: {total_processed} clips in {elapsed:.1f}s ({rate:.1f} clips/min)"
+    )
 
 
 def extract_camera_type(video_path):
@@ -1101,48 +1249,30 @@ def find_generated_clips(
 
 def process_batch(
     clips,
-    max_workers=1,
-    camera_filter=None,
-    cv_optimized=False,
-    both_formats=False,
-    multi_crop=False,
-    crop_variations="original,wide,full",
-    wide_crop_factor=1.5,
-    crop_camera_types=None,
-    exclude_crop_camera_types=None,
-    gpu_acceleration=False,
+    max_workers,
+    camera_filter,
+    cv_optimized,
+    both_formats,
+    multi_crop,
+    crop_variations,
+    wide_crop_factor,
+    crop_camera_types,
+    exclude_crop_camera_types,
+    gpu_acceleration,
 ):
-    logger.info(f"Processing batch of {len(clips)} clips")
+    """Process a batch of clips with streamlined output"""
+    if not clips:
+        return 0
 
-    successful = 0
-    processed_clips = []
-    config_manager = ConfigManager()
+    processed_count = 0
+    batch_start = time.time()
 
-    # Create a map of clips to their config files
-    clip_sources = {}
-    for clip in clips:
-        found = False
-        for config_file in config_manager.configs_dir.glob("**/*.json"):
-            if not found:
-                try:
-                    config_clips = clip_service.load_clips(config_file)
-                    for i, config_clip in enumerate(config_clips):
-                        if (
-                            hasattr(clip, "id")
-                            and hasattr(config_clip, "id")
-                            and clip.id == config_clip.id
-                        ):
-                            clip_sources[clip.id] = (config_file, i)
-                            found = True
-                            break
-                except Exception as e:
-                    logger.warning(f"Error loading clips from {config_file}: {e}")
+    for i, clip in enumerate(clips, 1):
+        clip_start = time.time()
+        logger.info(f"📼 [{i}/{len(clips)}] {clip.name}")
 
-    # Use ThreadPoolExecutor for parallel processing
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_clip = {
-            executor.submit(
-                process_clip,
+        try:
+            success = process_single_clip(
                 clip,
                 camera_filter,
                 cv_optimized,
@@ -1150,68 +1280,28 @@ def process_batch(
                 multi_crop,
                 crop_variations,
                 wide_crop_factor,
+                crop_camera_types,
+                exclude_crop_camera_types,
                 gpu_acceleration,
-            ): clip
-            for clip in clips
-        }
+            )
 
-        with tqdm(
-            total=len(clips), desc="Processing clips", position=0, leave=True
-        ) as pbar:
-            for future in concurrent.futures.as_completed(future_to_clip):
-                clip = future_to_clip[future]
-                try:
-                    success = future.result()
-                    if success:
-                        successful += 1
-                        logger.info(f"Successfully processed clip: {clip.name}")
+            if success:
+                processed_count += 1
+                clip_time = time.time() - clip_start
+                logger.info(f"✅ [{i}/{len(clips)}] {clip.name} ({clip_time:.1f}s)")
+            else:
+                logger.error(f"❌ [{i}/{len(clips)}] {clip.name} failed")
 
-                        # Verify the clip was properly updated
-                        if clip.id in clip_sources:
-                            config_file, clip_index = clip_sources[clip.id]
-                            # Double-check the saved file
-                            try:
-                                reloaded_clips = clip_service.load_clips(config_file)
-                                if clip_index < len(reloaded_clips):
-                                    saved_clip = reloaded_clips[clip_index]
-                                    if (
-                                        saved_clip.status != "Complete"
-                                        or not saved_clip.export_path
-                                    ):
-                                        logger.warning(
-                                            f"Clip {clip.name} status or export_path not properly saved, attempting to fix..."
-                                        )
-                                        # Try to fix it
-                                        reloaded_clips[clip_index].status = "Complete"
-                                        reloaded_clips[clip_index].export_path = (
-                                            clip.export_path
-                                        )
-                                        reloaded_clips[clip_index].modified_at = (
-                                            datetime.now().isoformat()
-                                        )
-                                        save_success = clip_service.save_clips(
-                                            reloaded_clips, config_file
-                                        )
-                                        if save_success:
-                                            logger.info(
-                                                f"Fixed clip {clip.name} status and export_path"
-                                            )
-                                        else:
-                                            logger.error(
-                                                f"Failed to fix clip {clip.name} status"
-                                            )
-                            except Exception as e:
-                                logger.warning(
-                                    f"Error verifying clip {clip.name} update: {e}"
-                                )
-                    else:
-                        logger.error(f"Failed to process clip: {clip.name}")
-                except Exception as e:
-                    logger.exception(f"Error processing clip {clip.name}: {str(e)}")
-                finally:
-                    pbar.update(1)
+        except Exception as e:
+            logger.error(f"❌ [{i}/{len(clips)}] {clip.name}: {e}")
 
-    return successful
+    batch_time = time.time() - batch_start
+    rate = processed_count / batch_time * 60 if batch_time > 0 else 0
+    logger.info(
+        f"📊 Batch complete: {processed_count}/{len(clips)} clips ({batch_time:.1f}s, {rate:.1f}/min)"
+    )
+
+    return processed_count
 
 
 def list_available_cameras(config_manager):
@@ -1605,541 +1695,148 @@ def fix_processed_clips(config_manager):
     return fixed_count
 
 
+def process_single_clip(
+    clip,
+    camera_filter,
+    cv_optimized,
+    both_formats,
+    multi_crop,
+    crop_variations,
+    wide_crop_factor,
+    crop_camera_types,
+    exclude_crop_camera_types,
+    gpu_acceleration,
+):
+    """Process a single clip using the new streamlined pipeline"""
+    try:
+        # Import the new streamlined functions
+        from utils.clip_processor import process_clip as new_process_clip
+
+        # Resolve source path
+        config = ConfigManager()
+        source_path = resolve_source_path(clip.source_path, config)
+
+        if not source_path.exists():
+            logger.error(f"Source not found: {source_path}")
+            return False
+
+        # Use the new streamlined clip processor
+        success = new_process_clip(
+            clip=clip,
+            camera_filter=camera_filter,
+            cv_optimized=cv_optimized,
+            both_formats=both_formats,
+            multi_crop=multi_crop,
+            crop_variations=crop_variations,
+            wide_crop_factor=wide_crop_factor,
+            crop_camera_types=crop_camera_types,
+            exclude_crop_camera_types=exclude_crop_camera_types,
+            gpu_acceleration=gpu_acceleration,
+        )
+
+        if success:
+            # Update clip status
+            clip.status = "Complete"
+            clip.modified_at = datetime.now().isoformat()
+            return True
+        else:
+            return False
+
+    except Exception as e:
+        logger.error(f"Processing error: {e}")
+        return False
+
+
 def main():
-    """
-    Main function to process clips
-    """
-    parser = argparse.ArgumentParser(
-        description='Process clips with "Process" status',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Process all clips
-  python scripts/process_clips.py
-  
-  # List available camera types
-  python scripts/process_clips.py --list-cameras
-  
-  # Process clips from a specific camera
-  python scripts/process_clips.py --camera SONY_70
-  
-  # Process clips with CV optimization
-  python scripts/process_clips.py --cv-optimized
-  
-  # Process clips with multiple crop variations
-  python scripts/process_clips.py --multi-crop
-  
-  # Process clips with specific crop variations
-  python scripts/process_clips.py --multi-crop --crop-variations "original,wide"
-  
-  # Process clips with custom wide crop factor (75% larger)
-  python scripts/process_clips.py --multi-crop --wide-crop-factor 1.75
-  
-  # Run as a daemon, checking every 5 minutes
-  python scripts/process_clips.py --daemon --interval 300
-  
-  # Watch for new raw footage and auto-generate proxies
-  python scripts/process_clips.py --generate-proxies
-  
-  # Watch for new raw footage from a specific camera only, ignoring existing files
-  python scripts/process_clips.py --generate-proxies --camera GP1 --ignore-existing
-  
-  # Watch for new footage, checking every 2 minutes
-  python scripts/process_clips.py --generate-proxies --watch-interval 120
-  
-  # Fix clips that were processed but not marked as Complete
-  python scripts/process_clips.py --fix-processed
-  
-Camera Filtering:
-  The --camera option supports flexible matching:
-  - Exact match: --camera GP1 matches only "GP1"
-  - Prefix match: --camera SONY matches "SONY", "SONY_70", "SONY_300", etc.
-  - Substring match: --camera GP matches "GP", "GP1", "GP2", etc.
-  
-  Use --list-cameras to see all available camera types.
-  
-Watch Mode:
-  The --generate-proxies option sets up a daemon that watches for new raw footage and 
-  automatically generates proxies when new files are detected. This is useful 
-  for automatically processing footage as it's imported.
-  
-  --ignore-existing: Skip processing existing raw footage without proxies (only process new files)
-  --watch-interval: How often to check for new files (in seconds)
-  --camera: Filter to only watch for footage from specific cameras
-""",
-    )
-    parser.add_argument("--daemon", action="store_true", help="Run as a daemon process")
-    parser.add_argument(
-        "--interval",
-        type=int,
-        default=60,
-        help="Scan interval in seconds (default: 60)",
-    )
-    parser.add_argument(
-        "--camera",
-        type=str,
-        help="Only process clips from a specific camera type (e.g., SONY, GP1, SONY_70)",
-    )
-    parser.add_argument(
-        "--list-cameras",
-        action="store_true",
-        help="List all available camera types and exit",
-    )
-    parser.add_argument(
-        "--max-workers",
-        type=int,
-        default=1,
-        help="Maximum number of clips to process in parallel (default: 1)",
-    )
-    parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=5,
-        help="Maximum clips to process in one batch (0 for unlimited)",
-    )
-    parser.add_argument(
-        "--cv-optimized",
-        action="store_true",
-        help="Export clips with CV optimization (higher quality)",
-    )
-    parser.add_argument(
-        "--both-formats",
-        action="store_true",
-        help="Export clips in both regular H.264 and CV-optimized formats",
-    )
-    parser.add_argument(
-        "--multi-crop",
-        action="store_true",
-        help="Generate multiple crop variations of each clip",
-    )
-    parser.add_argument(
-        "--crop-variations",
-        type=str,
-        default="original,wide,full",
-        help="Comma-separated list of crop variations to generate (original, wide, full)",
-    )
-    parser.add_argument(
-        "--wide-crop-factor",
-        type=float,
-        default=1.5,
-        help="Multiplier for the wide crop variation - higher values = more zoomed out (default: 1.2, 1.5 = 50%% larger than original)",
-    )
-    parser.add_argument(
-        "--generate-proxies",
-        action="store_true",
-        help="Watch for new raw footage and auto-generate proxies",
-    )
-    parser.add_argument(
-        "--watch-interval",
-        type=int,
-        default=300,
-        help="Interval in seconds to check for new raw footage (default: 300)",
-    )
-    parser.add_argument(
-        "--ignore-existing",
-        action="store_true",
-        help="When watching for new footage, ignore existing files without proxies",
-    )
-    parser.add_argument(
-        "--crop-camera-types",
-        type=str,
-        help="Comma-separated list of camera types to apply crop variations to",
-    )
-    parser.add_argument(
-        "--exclude-crop-camera-types",
-        type=str,
-        help="Comma-separated list of camera types to exclude from crop variations",
-    )
-    parser.add_argument(
-        "--fix-processed",
-        action="store_true",
-        help="Fix clips that were processed but not marked as Complete",
-    )
-    parser.add_argument(
-        "--gpu",
-        action="store_true",
-        help="Enable GPU hardware acceleration for video processing (H.264 only, requires NVIDIA GPU)",
-    )
-    args = parser.parse_args()
+    args = parse_arguments()
 
-    config_manager = ConfigManager()
+    # Initialize logger
+    logger = configure_logging(
+        log_level=args.log_level,
+        log_file="clip_processor.log" if not args.daemon else None,
+    )
 
-    # Handle fixing processed clips
-    if args.fix_processed:
-        fixed_count = fix_processed_clips(config_manager)
-        if fixed_count > 0:
-            print(
-                f"\nFixed {fixed_count} clips that were processed but not marked as Complete"
-            )
-        else:
-            print("\nNo clips needed fixing")
+    # Initialize config manager
+    try:
+        config = ConfigManager()
+        logger.info(f"📋 Config loaded")
+    except Exception as e:
+        logger.error(f"❌ Config error: {e}")
         return
 
-    # Parse crop camera types
-    crop_camera_types = None
-    exclude_crop_camera_types = None
-
-    if args.crop_camera_types:
-        crop_camera_types = [
-            ct.strip() for ct in args.crop_camera_types.split(",") if ct.strip()
-        ]
-        logger.info(
-            f"Applying crop variations only to camera types: {crop_camera_types}"
-        )
-
-    if args.exclude_crop_camera_types:
-        exclude_crop_camera_types = [
-            ct.strip() for ct in args.exclude_crop_camera_types.split(",") if ct.strip()
-        ]
-        logger.info(
-            f"Excluding crop variations for camera types: {exclude_crop_camera_types}"
-        )
-
-    # List available cameras if requested
-    if args.list_cameras:
-        cameras = list_available_cameras(config_manager)
-        if cameras:
-            print("\nAvailable camera types:")
-            for camera in cameras:
-                print(f"  - {camera}")
-            print("\nUse --camera CAMERA_TYPE to filter by camera type")
-        else:
-            print(
-                "\nNo camera types found. Make sure your videos are organized in camera-specific folders."
-            )
-        return
-
-    # Handle watch mode
-    if args.generate_proxies:
-        logger.info("Starting proxy generation mode for automatic proxy creation")
-        watch_for_new_footage(
-            config_manager,
-            interval=args.watch_interval,
-            ignore_existing=args.ignore_existing,
-            camera_filter=args.camera,
-        )
-        return
-
+    # Log compact configuration summary
     if args.daemon:
+        logger.info(f"🔄 Daemon mode: scan every {args.interval}s")
+
+    if args.camera:
+        logger.info(f"📷 Camera filter: {args.camera}")
+
+    formats = []
+    if args.h264_only:
+        formats.append("H.264")
+    elif args.cv_only:
+        formats.append("FFV1")
+    elif args.both_formats:
+        formats.extend(["H.264", "FFV1"])
+    else:
+        formats.append("H.264")  # Default
+    logger.info(f"🎬 Formats: {', '.join(formats)}")
+
+    if args.multi_crop:
+        # Default crop variations (config.yaml doesn't specify types, just enabled flag)
+        crop_variations = ["original", "wide", "full"]
+        logger.info(f"🎯 Crops: {','.join(crop_variations)}")
+        wide_factor = 1.5  # Default wide factor
+        logger.info(f"📐 Wide factor: {wide_factor} (higher = more zoomed out)")
+
+    if args.gpu:
         logger.info(
-            f"Starting clip processor daemon, scanning every {args.interval} seconds"
+            f"🚀 GPU acceleration enabled (NVENC for H.264, CPU fallback for FFV1)"
         )
-        if args.camera:
-            logger.info(f"Filtering for camera type: {args.camera}")
-        if args.cv_optimized:
-            logger.info("Using CV optimization for exports")
-        if args.both_formats:
-            logger.info("Exporting in both regular and CV-optimized formats")
-        if args.multi_crop:
-            logger.info("Generating multiple crop variations")
-            logger.info(f"Crop variations: {args.crop_variations}")
-            logger.info(
-                f"Wide crop factor: {args.wide_crop_factor} (higher values = more zoomed out)"
-            )
-        if args.gpu:
-            logger.info("GPU hardware acceleration enabled (NVENC for H.264, CPU fallback for FFV1)")
-        else:
-            logger.info("Using CPU-only video processing")
 
-        # Add a heartbeat file to track if daemon is running
-        heartbeat_file = script_dir / "daemon_heartbeat.txt"
-        last_heartbeat = time.time()
-
-        try:
-            iteration = 0
-            while True:
-                iteration += 1
-                current_time = time.time()
-
-                # Update heartbeat file
-                with open(heartbeat_file, "w") as f:
-                    f.write(f"Last heartbeat: {datetime.now().isoformat()}\n")
-                    f.write(f"Iteration: {iteration}\n")
-                    f.write(
-                        f"Total runtime: {int(current_time - last_heartbeat)} seconds\n"
-                    )
-
-                logger.info(f"Starting daemon iteration {iteration}")
+    # Run processor
+    if args.daemon:
+        iteration = 1
+        while True:
+            try:
+                logger.info(f"🔄 Starting daemon iteration {iteration}")
                 print(f"\n{'='*80}")
                 print(f"Daemon Iteration {iteration}")
                 print(f"Last heartbeat: {datetime.now().isoformat()}")
                 print(f"{'='*80}\n")
 
-                try:
-                    # Get all pending clips
-                    pending_clips = get_pending_clips(config_manager)
-                    logger.info(f"Found {len(pending_clips)} pending clips")
-
-                    # Apply camera filter if specified
-                    if args.camera and pending_clips:
-                        filtered_clips = []
-                        for clip in pending_clips:
-                            try:
-                                # Resolve the source path
-                                source_path = resolve_source_path(
-                                    clip.source_path, config_manager
-                                )
-                                # Extract camera type
-                                camera_type = extract_camera_type(source_path)
-                                if camera_matches_filter(camera_type, args.camera):
-                                    filtered_clips.append(clip)
-                            except Exception as e:
-                                logger.warning(
-                                    f"Error filtering clip {clip.name}: {str(e)}"
-                                )
-                                # Skip this clip if we can't resolve its path
-                                continue
-                        logger.info(
-                            f"Found {len(filtered_clips)} clips matching camera filter '{args.camera}' out of {len(pending_clips)} total pending clips"
-                        )
-                        pending_clips = filtered_clips
-
-                    # Process clips in batches if batch size is specified
-                    if args.batch_size > 0 and pending_clips:
-                        total_processed = 0
-                        batch_start_time = time.time()
-
-                        # Store mapping of processed clips to their config files and indices
-                        processed_clip_info = []
-
-                        # Before processing, find the file paths and indices for all clips
-                        for clip in pending_clips:
-                            # Find clip's source config file
-                            for config_file in config_manager.configs_dir.glob(
-                                "**/*.json"
-                            ):
-                                try:
-                                    config_clips = clip_service.load_clips(config_file)
-                                    for i, config_clip in enumerate(config_clips):
-                                        # Match by ID if available
-                                        if (
-                                            hasattr(clip, "id")
-                                            and hasattr(config_clip, "id")
-                                            and clip.id == config_clip.id
-                                        ):
-                                            processed_clip_info.append(
-                                                (clip.id, config_file, i)
-                                            )
-                                            logger.info(
-                                                f"Found config file for clip {clip.name}: {config_file}"
-                                            )
-                                            break
-                                except Exception as e:
-                                    logger.warning(
-                                        f"Error loading clips from {config_file}: {e}"
-                                    )
-
-                        while pending_clips:
-                            batch = pending_clips[: args.batch_size]
-                            pending_clips = pending_clips[args.batch_size :]
-
-                            logger.info(
-                                f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
-                            )
-
-                            # Keep track of successfully processed clips in this batch
-                            successfully_processed = []
-
-                            try:
-                                num_processed = process_batch(
-                                    batch,
-                                    args.max_workers,
-                                    args.camera,
-                                    args.cv_optimized,
-                                    args.both_formats,
-                                    args.multi_crop,
-                                    args.crop_variations,
-                                    args.wide_crop_factor,
-                                    crop_camera_types,
-                                    exclude_crop_camera_types,
-                                    args.gpu,
-                                )
-                                total_processed += num_processed
-
-                                # For each processed clip, directly update its status using update_clip_status
-                                for clip in batch:
-                                    if (
-                                        hasattr(clip, "status")
-                                        and clip.status == "Complete"
-                                    ):
-                                        successfully_processed.append(clip)
-                                        # Find the clip info in our mapping
-                                        for (
-                                            clip_id,
-                                            config_file,
-                                            clip_index,
-                                        ) in processed_clip_info:
-                                            if (
-                                                hasattr(clip, "id")
-                                                and clip.id == clip_id
-                                            ):
-                                                logger.info(
-                                                    f"Directly updating status for clip {clip.name} in {config_file}"
-                                                )
-                                                update_success = update_clip_status(
-                                                    config_file,
-                                                    clip_index,
-                                                    "Complete",
-                                                    clip,
-                                                )
-                                                if update_success:
-                                                    logger.info(
-                                                        f"Successfully updated clip status for {clip.name}"
-                                                    )
-                                                else:
-                                                    logger.error(
-                                                        f"Failed to update clip status for {clip.name}"
-                                                    )
-
-                                logger.info(
-                                    f"Successfully processed {len(successfully_processed)} clips in this batch"
-                                )
-                            except Exception as e:
-                                logger.exception(f"Error processing batch: {str(e)}")
-                                # Continue with next batch even if this one failed
-                                continue
-
-                        batch_time = time.time() - batch_start_time
-                        logger.info(
-                            f"Processed {total_processed} clips in {batch_time:.2f} seconds"
-                        )
-                    elif pending_clips:
-                        # Process all clips at once
-                        try:
-                            num_processed = process_batch(
-                                pending_clips,
-                                args.max_workers,
-                                args.camera,
-                                args.cv_optimized,
-                                args.both_formats,
-                                args.multi_crop,
-                                args.crop_variations,
-                                args.wide_crop_factor,
-                                crop_camera_types,
-                                exclude_crop_camera_types,
-                                args.gpu,
-                            )
-                            logger.info(f"Processed {num_processed} clips")
-                        except Exception as e:
-                            logger.exception(f"Error processing clips: {str(e)}")
-                    else:
-                        logger.info("No pending clips found")
-
-                except Exception as e:
-                    logger.exception(f"Error in daemon iteration: {str(e)}")
-                    # Continue running despite errors
-
-                # Calculate sleep time, ensuring we don't sleep too long
-                elapsed = time.time() - current_time
-                sleep_time = max(0, args.interval - elapsed)
-                logger.info(
-                    f"Sleeping for {sleep_time:.2f} seconds until next iteration"
+                process_pending_clips(
+                    camera_filter=args.camera,
+                    batch_size=args.batch_size,
+                    max_workers=args.max_workers,
+                    export_h264=args.h264_only or args.both_formats,
+                    export_ffv1=args.cv_only or args.both_formats,
+                    multi_crop=args.multi_crop,
+                    gpu_acceleration=args.gpu,
                 )
-                time.sleep(sleep_time)
 
-        except KeyboardInterrupt:
-            logger.info("Daemon stopped by user")
-            print("\nDaemon stopped by user")
-        except Exception as e:
-            logger.exception(f"Fatal error in daemon: {str(e)}")
-            print(f"\nFatal error in daemon: {str(e)}")
-        finally:
-            # Clean up heartbeat file
-            if heartbeat_file.exists():
-                heartbeat_file.unlink()
+                iteration += 1
+                logger.info(f"⏱️  Sleeping {args.interval}s until next scan")
+                time.sleep(args.interval)
+
+            except KeyboardInterrupt:
+                logger.info("👋 Daemon stopped by user")
+                break
+            except Exception as e:
+                logger.error(f"❌ Daemon error: {e}")
+                logger.info(f"⏱️  Retrying in {args.interval}s")
+                time.sleep(args.interval)
     else:
-        logger.info("Running one-time clip processing scan")
-        if args.camera:
-            logger.info(f"Filtering for camera type: {args.camera}")
-        if args.cv_optimized:
-            logger.info("Using CV optimization for exports")
-        if args.both_formats:
-            logger.info("Exporting in both regular and CV-optimized formats")
-        if args.gpu:
-            logger.info("GPU hardware acceleration enabled (NVENC for H.264, CPU fallback for FFV1)")
-        else:
-            logger.info("Using CPU-only video processing")
-
-        # Get all pending clips
-        pending_clips = get_pending_clips(config_manager)
-
-        # Apply camera filter if specified
-        if args.camera and pending_clips:
-            filtered_clips = []
-            for clip in pending_clips:
-                try:
-                    # Resolve the source path
-                    source_path = resolve_source_path(clip.source_path, config_manager)
-                    # Extract camera type
-                    camera_type = extract_camera_type(source_path)
-                    if camera_matches_filter(camera_type, args.camera):
-                        filtered_clips.append(clip)
-                except Exception as e:
-                    logger.warning(f"Error filtering clip {clip.name}: {str(e)}")
-                    # Skip this clip if we can't resolve its path
-                    continue
-            logger.info(
-                f"Found {len(filtered_clips)} clips matching camera filter '{args.camera}' out of {len(pending_clips)} total pending clips"
-            )
-            pending_clips = filtered_clips
-
-        # Process clips in batches if batch size is specified
-        if args.batch_size > 0 and pending_clips:
-            total_processed = 0
-            while pending_clips:
-                batch = pending_clips[: args.batch_size]
-                pending_clips = pending_clips[args.batch_size :]
-
-                logger.info(
-                    f"Processing batch of {len(batch)} clips (remaining: {len(pending_clips)})"
-                )
-                num_processed = process_batch(
-                    batch,
-                    args.max_workers,
-                    args.camera,
-                    args.cv_optimized,
-                    args.both_formats,
-                    args.multi_crop,
-                    args.crop_variations,
-                    args.wide_crop_factor,
-                    crop_camera_types,
-                    exclude_crop_camera_types,
-                    args.gpu,
-                )
-                total_processed += num_processed
-
-            logger.info(f"Processed {total_processed} clips in batches")
-            print(f"\n{'='*80}")
-            print(
-                f"PROCESSING COMPLETE: Successfully processed {total_processed} clips"
-            )
-            print(f"{'='*80}\n")
-        elif pending_clips:
-            # Process all clips at once
-            num_processed = process_batch(
-                pending_clips,
-                args.max_workers,
-                args.camera,
-                args.cv_optimized,
-                args.both_formats,
-                args.multi_crop,
-                args.crop_variations,
-                args.wide_crop_factor,
-                crop_camera_types,
-                exclude_crop_camera_types,
-                args.gpu,
-            )
-            logger.info(f"Processed {num_processed} clips")
-            print(f"\n{'='*80}")
-            print(
-                f"PROCESSING COMPLETE: Successfully processed {num_processed} of {len(pending_clips)} clips"
-            )
-            print(f"{'='*80}\n")
-        else:
-            logger.info("No pending clips found")
-            print(
-                "\nNo clips marked for processing. Mark clips with 'Process' status in the UI."
-            )
+        # Single run
+        process_pending_clips(
+            camera_filter=args.camera,
+            batch_size=args.batch_size,
+            max_workers=args.max_workers,
+            export_h264=args.h264_only or args.both_formats,
+            export_ffv1=args.cv_only or args.both_formats,
+            multi_crop=args.multi_crop,
+            gpu_acceleration=args.gpu,
+        )
 
 
 if __name__ == "__main__":

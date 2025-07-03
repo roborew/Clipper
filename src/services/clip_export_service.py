@@ -17,7 +17,7 @@ import time
 from pathlib import Path
 from queue import Queue
 import numpy as np
-from src.services import calibration_service
+from . import calibration_service
 
 logger = logging.getLogger("clipper.clip_export")
 
@@ -185,9 +185,7 @@ def apply_calibration_to_clip(
         )
 
         if gpu_acceleration:
-            logger.info(
-                f"Using GPU acceleration for calibration extraction: {encoder_name}"
-            )
+            logger.info(f"🚀 GPU: {encoder_name}")
 
         # Build FFmpeg command for efficient extraction with audio preservation
         cmd = ["ffmpeg", "-y"]
@@ -221,16 +219,16 @@ def apply_calibration_to_clip(
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         # Run extraction
-        logger.info(f"Running FFmpeg command: {' '.join(cmd)}")
         process = subprocess.run(cmd, capture_output=True, text=True)
 
         if process.returncode == 0:
-            logger.info(f"Extracted clip with audio successfully: {output_path}")
+            logger.info(f"✅ Calibrated: {duration:.1f}s")
             if progress_callback:
                 progress_callback(1.0)
             return True
         else:
-            logger.error(f"FFmpeg extraction failed: {process.stderr}")
+            logger.error(f"❌ Calibration failed: {process.stderr[:100]}...")
+            logger.debug(f"Full command: {' '.join(cmd)}")
             return False
 
     except Exception as e:
@@ -266,17 +264,16 @@ def convert_to_final_format_with_crop(
         True if successful, False otherwise
     """
     try:
-        logger.info(
-            f"Converting to final format: {'FFV1 LOSSLESS' if is_cv_format else 'H.264'}"
-        )
+        format_name = "FFV1" if is_cv_format else "H.264"
+        logger.info(f"🎬 Converting to {format_name}")
 
         # Get GPU encoding settings
         decoder_args, encoder_args, encoder_name = get_gpu_encode_settings(
             gpu_acceleration=gpu_acceleration, is_cv_format=is_cv_format
         )
 
-        if gpu_acceleration:
-            logger.info(f"Using GPU acceleration for final conversion: {encoder_name}")
+        if gpu_acceleration and not is_cv_format:
+            logger.info(f"🚀 GPU: {encoder_name}")
 
         # Build FFmpeg command with appropriate codec settings
         cmd = ["ffmpeg", "-y"]
@@ -291,7 +288,7 @@ def convert_to_final_format_with_crop(
 
         # Handle dynamic crop keyframes (prioritized over static crop)
         if crop_keyframes and len(crop_keyframes) > 1:
-            logger.info(f"Using dynamic crop with {len(crop_keyframes)} keyframes")
+            logger.info(f"🎯 Dynamic crop: {len(crop_keyframes)} keyframes")
 
             # Sort keyframes by frame number
             sorted_keyframes = sorted([(int(k), v) for k, v in crop_keyframes.items()])
@@ -313,10 +310,6 @@ def convert_to_final_format_with_crop(
                 # Convert frame number to timestamp relative to the start point
                 curr_t = max(0, (curr_frame - start_frame) / fps)
                 curr_x = curr_crop[0]  # X is the 1st value in crop tuple
-
-                logger.info(
-                    f"Keyframe {curr_frame} maps to time {curr_t:.3f}s with x={curr_x}"
-                )
 
                 if i == 0:
                     # Before first keyframe
@@ -379,7 +372,6 @@ def convert_to_final_format_with_crop(
             # Create the dynamic crop filter
             crop_filter = f"crop={':'.join(expressions)}"
             vf_filters.append(crop_filter)
-            logger.info(f"Dynamic crop filter: {crop_filter}")
 
         elif crop_keyframes and len(crop_keyframes) == 1:
             # Just one keyframe, use static crop
@@ -387,19 +379,16 @@ def convert_to_final_format_with_crop(
             crop = crop_keyframes[frame_num]
             x, y, width, height = crop
             vf_filters.append(f"crop={width}:{height}:{x}:{y}")
-            logger.info(
-                f"Static crop from single keyframe: {x}, {y}, {width}, {height}"
-            )
+            logger.info(f"🎯 Static crop: {width}x{height}")
 
         elif crop_region:
             # Static crop region provided directly
             x, y, width, height = crop_region
             vf_filters.append(f"crop={width}:{height}:{x}:{y}")
-            logger.info(f"Applying crop: {width}x{height} at ({x},{y})")
+            logger.info(f"🎯 Crop: {width}x{height}")
 
         # Scale to exactly 1920x1080 for consistent output resolution across all variations
         vf_filters.append("scale=1920:1080")
-        logger.info("Scaling output to 1920x1080 (1080p)")
 
         # Add video filters
         if vf_filters:
@@ -407,18 +396,24 @@ def convert_to_final_format_with_crop(
 
         # Add GPU-aware encoder settings
         cmd.extend(encoder_args)
-        
+
         # Add format-specific settings for FFV1 (GPU encoders handle H.264 settings internally)
         if is_cv_format:
             # FFV1-specific settings (only used when GPU acceleration is off)
             if not gpu_acceleration:
-                cmd.extend([
-                    "-level", "3",  # FFV1 level 3 for better features
-                    "-g", "1",  # All frames are keyframes for precise seeking
-                    "-context", "1",  # Better error recovery
-                    "-slices", "24",  # Good for multithreading
-                ])
-        
+                cmd.extend(
+                    [
+                        "-level",
+                        "3",  # FFV1 level 3 for better features
+                        "-g",
+                        "1",  # All frames are keyframes for precise seeking
+                        "-context",
+                        "1",  # Better error recovery
+                        "-slices",
+                        "24",  # Good for multithreading
+                    ]
+                )
+
         # Add pixel format (compatible with both CPU and GPU encoders)
         cmd.extend(["-pix_fmt", "yuv420p"])
 
@@ -432,22 +427,22 @@ def convert_to_final_format_with_crop(
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         # Run conversion
-        logger.info(f"Running FFmpeg command: {' '.join(cmd)}")
         process = subprocess.run(cmd, capture_output=True, text=True)
 
         if process.returncode == 0:
             # Verify file was created and get size
             if os.path.exists(output_path):
                 file_size = os.path.getsize(output_path) / (1024 * 1024)
-                logger.info(f"Successfully created {output_path} ({file_size:.2f} MB)")
+                logger.info(f"✅ {format_name}: {file_size:.1f}MB")
                 if progress_callback:
                     progress_callback(1.0)
                 return True
             else:
-                logger.error("Output file was not created")
+                logger.error(f"❌ {format_name}: Output file not created")
                 return False
         else:
-            logger.error(f"FFmpeg conversion failed: {process.stderr}")
+            logger.error(f"❌ {format_name} failed: {process.stderr[:100]}...")
+            logger.debug(f"Full command: {' '.join(cmd)}")
             return False
 
     except Exception as e:
@@ -543,7 +538,7 @@ def extract_clip_frames(
         )
 
         if gpu_acceleration:
-            logger.info(f"Using GPU acceleration for frame extraction: {encoder_name}")
+            logger.info(f"🚀 GPU: {encoder_name}")
 
         # Build FFmpeg command for efficient extraction
         cmd = ["ffmpeg", "-y"]
@@ -577,12 +572,13 @@ def extract_clip_frames(
         process = subprocess.run(cmd, capture_output=True, text=True)
 
         if process.returncode == 0:
-            logger.info(f"Extracted clip successfully: {output_path}")
+            logger.info(f"✅ Extracted: {duration:.1f}s")
             if progress_callback:
                 progress_callback(1.0)
             return True
         else:
-            logger.error(f"FFmpeg extraction failed: {process.stderr}")
+            logger.error(f"❌ Extraction failed: {process.stderr[:100]}...")
+            logger.debug(f"Full command: {' '.join(cmd)}")
             return False
 
     except Exception as e:
@@ -681,7 +677,7 @@ def export_clip_efficient(
 
         # Import multi-crop utility
         from src.utils.multi_crop import get_crop_for_variation
-        from src.services import video_service
+        from . import video_service
 
         # Get video dimensions for crop calculations
         video_dimensions = video_service.get_video_dimensions(resolved_source_path)

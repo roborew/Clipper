@@ -7,7 +7,7 @@ for generating multiple variations of the same clip.
 
 import logging
 import os
-from src.services import video_service
+from services import video_service
 
 logger = logging.getLogger("clipper.multi_crop")
 
@@ -249,371 +249,234 @@ def get_crop_for_variation(
 
 
 def process_clip_with_variations(
-    process_clip_func,
     clip,
-    crop_variations,
+    source_path,
+    config_manager,
+    crop_variations="original,wide,full",
     wide_crop_factor=1.5,
-    camera_type=None,
-    crop_camera_types=None,
-    exclude_camera_types=None,
-    config_manager=None,
-    multi_crop=False,  # Explicitly use multi_crop flag
-    **kwargs,
+    cv_optimized=False,
+    both_formats=False,
+    gpu_acceleration=False,
+    progress_callback=None,
 ):
-    """
-    Process a clip with multiple crop variations.
+    """Generate multiple crop variations of a clip with streamlined logging"""
 
-    Args:
-        process_clip_func: Function to call for processing each variation
-        clip: Clip object to process
-        crop_variations: List of crop variations to generate or comma-separated string
-        wide_crop_factor: Factor for the 'wide' crop variation (1.5 = 50% larger)
-        camera_type: Optional camera type for filtering
-        crop_camera_types: Optional list of camera types to apply variations to
-        exclude_camera_types: Optional list of camera types to exclude from variations
-        config_manager: Optional ConfigManager instance
-        multi_crop: Whether to force multi-crop processing
-        **kwargs: Additional arguments to pass to process_clip_func
-
-    Returns:
-        Dict of results for each variation and combined export paths
-    """
+    # Parse variations
+    variations_list = [v.strip() for v in crop_variations.split(",") if v.strip()]
     logger.info(
-        f"Initial export_path state for multi_crop processing: {getattr(clip, 'export_path', None)}"
+        f"🎯 Generating {len(variations_list)} variations: {', '.join(variations_list)}"
     )
 
-    # Initialize the clip's export_path as an empty list if it doesn't exist
-    if not hasattr(clip, "export_path") or clip.export_path is None:
-        clip.export_path = []
-    elif not isinstance(clip.export_path, list):
-        # Convert to list if it's not already
-        clip.export_path = [clip.export_path] if clip.export_path else []
-
-    # Check configuration if not explicitly provided
-    if config_manager and (crop_camera_types is None and exclude_camera_types is None):
-        try:
-            # Access the export configuration directly from the config property
-            export_config = config_manager.config.get("export", {})
-            crop_variations_config = export_config.get("crop_variations", {})
-
-            if crop_variations_config.get("enabled", True):
-                # Get camera types from config
-                crop_camera_types = crop_variations_config.get("camera_types", [])
-                exclude_camera_types = crop_variations_config.get(
-                    "exclude_camera_types", []
-                )
-
-                logger.info(
-                    f"Using camera types from config: crop_camera_types={crop_camera_types}, exclude_camera_types={exclude_camera_types}"
-                )
-            else:
-                logger.info("Crop variations disabled in config")
-                # Force to only use original
-                crop_variations = ["original"]
-                # Don't apply camera type filtering
-                crop_camera_types = None
-                exclude_camera_types = None
-        except Exception as e:
-            logger.warning(f"Error accessing crop variations config: {str(e)}")
-
-    # Determine if we should apply variations based on camera type
-    should_apply_variations = True
-
-    # If there's a camera filter in crop_camera_types (include only)
-    if crop_camera_types:
-        # Convert to list if it's a string
-        if isinstance(crop_camera_types, str):
-            crop_camera_types = [
-                t.strip() for t in crop_camera_types.split(",") if t.strip()
-            ]
-
-        # Only apply variations if camera type matches one in the list
-        if camera_type and camera_type not in crop_camera_types:
-            should_apply_variations = False
-
-        logger.info(
-            f"Camera type {camera_type} {'is' if should_apply_variations else 'is not'} in included types {crop_camera_types}"
-        )
-
-    # If there's a camera filter in exclude_camera_types
-    if exclude_camera_types and should_apply_variations:
-        # Convert to list if it's a string
-        if isinstance(exclude_camera_types, str):
-            exclude_camera_types = [
-                t.strip() for t in exclude_camera_types.split(",") if t.strip()
-            ]
-
-        # Don't apply variations if camera type is in excluded list
-        if camera_type and camera_type in exclude_camera_types:
-            should_apply_variations = False
-
-        logger.info(
-            f"Camera type {camera_type} {'is not' if should_apply_variations else 'is'} in excluded types {exclude_camera_types}"
-        )
-
-    # Parse crop variations if provided as string
-    if isinstance(crop_variations, str):
-        variation_list = [v.strip() for v in crop_variations.split(",") if v.strip()]
-    elif isinstance(crop_variations, list):
-        variation_list = crop_variations
-    else:
-        variation_list = ["original"]  # Default to original only
-
-    logger.info(f"Crop variations requested: {variation_list}")
-
-    # If we shouldn't apply variations, only use the original
-    if not should_apply_variations:
-        logger.info("Only processing original variation due to camera type filtering")
-        variation_list = ["original"]
-    else:
-        logger.info(f"Processing all crop variations: {variation_list}")
-
-    # Get the source video dimensions
     try:
-        # IMPORTANT: Use the resolved source path from kwargs if available, 
-        # otherwise try to resolve the clip's source path
-        source_path = kwargs.get("source_path")
-        if source_path is None:
-            # Fallback: try to resolve the clip's source path if config_manager is available
-            if config_manager:
-                from scripts.process_clips import resolve_source_path
-                source_path = resolve_source_path(clip.source_path, config_manager)
-                logger.info(f"Resolved clip source path: {source_path}")
-            else:
-                source_path = clip.source_path
-                logger.warning(f"Using unresolved clip source path: {source_path}")
+        # Get clip metadata and crop keyframes
+        clip_start_frame = clip.in_frame
+        clip_end_frame = clip.out_frame
+        duration_frames = clip_end_frame - clip_start_frame + 1
+        duration_seconds = duration_frames / 30.0  # Assuming 30fps
+
+        # Get crop keyframes
+        crop_keyframes = {}
+        if hasattr(clip, "crop_keyframes") and clip.crop_keyframes:
+            crop_keyframes = clip.crop_keyframes
+            logger.info(f"🎯 Keyframes: {len(crop_keyframes)}")
         else:
-            logger.info(f"Using provided source path: {source_path}")
-            
-        logger.info(f"Source path exists: {os.path.exists(source_path) if source_path else 'None'}")
+            logger.warning("⚠️  No crop keyframes found")
+            return False
 
-        frame_dimensions = video_service.get_video_dimensions(source_path)
-        logger.info(f"Source video dimensions: {frame_dimensions}")
+        # Generate all requested variations
+        all_success = True
+        results = []
 
-        # Check if dimensions are valid (not zero)
-        if frame_dimensions[0] == 0 or frame_dimensions[1] == 0:
-            logger.warning(
-                f"Invalid frame dimensions {frame_dimensions}, using default 1920x1080"
-            )
-            frame_dimensions = (1920, 1080)
+        for variation in variations_list:
+            logger.info(f"🎬 Creating {variation} variation")
+
+            # Calculate crop for this variation
+            if variation == "original":
+                variation_keyframes = crop_keyframes
+            elif variation == "wide":
+                variation_keyframes = create_wide_crop_keyframes(
+                    crop_keyframes, wide_crop_factor
+                )
+            elif variation == "full":
+                variation_keyframes = create_full_frame_keyframes()
+            else:
+                logger.warning(f"⚠️  Unknown variation: {variation}")
+                continue
+
+            # Process each format
+            for format_type in ["regular", "cv"] if both_formats else ["regular"]:
+                is_cv = format_type == "cv"
+
+                success = create_variation_export(
+                    clip,
+                    source_path,
+                    config_manager,
+                    variation,
+                    variation_keyframes,
+                    is_cv,
+                    gpu_acceleration,
+                    duration_seconds,
+                )
+
+                if success:
+                    results.append(f"{variation}-{format_type}")
+                    logger.info(f"✅ {variation} {format_type}")
+                else:
+                    logger.error(f"❌ {variation} {format_type}")
+                    all_success = False
+
+        if all_success:
+            logger.info(f"✅ All variations complete: {', '.join(results)}")
+        else:
+            logger.warning(f"⚠️  Some variations failed: {', '.join(results)}")
+
+        return all_success
 
     except Exception as e:
-        logger.error(f"Error getting video dimensions: {str(e)}")
-        frame_dimensions = (
-            1920,
-            1080,
-        )  # Default to 1080p if dimensions can't be determined
+        logger.error(f"❌ Variation processing failed: {e}")
+        return False
 
-    # Check if clip has a crop region - IMPORTANT: Some clips may have None as crop_region
-    # Try to get it from crop_keyframes if available
-    original_crop = None
-    if hasattr(clip, "crop_region") and clip.crop_region is not None:
-        original_crop = clip.crop_region
-        logger.info(f"Using clip.crop_region: {original_crop}")
-    else:
-        # Try to get crop region from keyframes
-        original_crop = clip.get_crop_region_at_frame(clip.start_frame, use_proxy=False)
-        logger.info(f"Using crop from keyframes: {original_crop}")
 
-    # If no crop is defined at all, log an important warning
-    if original_crop is None:
-        logger.warning(f"Clip {clip.name} has no crop region defined!")
-        # For 'wide' variation to work properly, we need to create a fake original crop
-        # that matches the full frame, so the 'wide' variation can be calculated
-        if "wide" in variation_list:
-            logger.info(
-                "Creating default crop region based on full frame for 'wide' variation"
-            )
-            # Use a crop that's centered in frame but ~20% smaller than full frame
-            frame_width, frame_height = frame_dimensions
-            default_width = int(frame_width * 0.8)
-            default_height = int(frame_height * 0.8)
-            default_x = (frame_width - default_width) // 2
-            default_y = (frame_height - default_height) // 2
-            original_crop = (default_x, default_y, default_width, default_height)
-            logger.info(f"Created default crop region: {original_crop}")
+def create_wide_crop_keyframes(original_keyframes, wide_factor):
+    """Create wider crop keyframes by scaling the original crops"""
+    wide_keyframes = {}
 
-    # Track results and export paths
-    results = {}
-    all_export_paths = []
+    for frame_num, crop in original_keyframes.items():
+        x, y, width, height = crop
 
-    # Process each variation
-    for variation in variation_list:
-        if variation not in ["original", "wide", "full"]:
-            logger.warning(f"Skipping unknown variation: {variation}")
-            continue
+        # Calculate wider dimensions
+        new_width = int(width * wide_factor)
+        new_height = int(height * wide_factor)
 
+        # Center the wider crop
+        new_x = max(0, x - (new_width - width) // 2)
+        new_y = max(0, y - (new_height - height) // 2)
+
+        # Ensure we don't exceed frame boundaries (assume 1920x1080)
+        new_x = min(new_x, 1920 - new_width)
+        new_y = min(new_y, 1080 - new_height)
+
+        wide_keyframes[frame_num] = (new_x, new_y, new_width, new_height)
+
+    return wide_keyframes
+
+
+def create_full_frame_keyframes():
+    """Create keyframes for full frame (no crop)"""
+    # Return None to indicate no cropping
+    return None
+
+
+def create_variation_export(
+    clip,
+    source_path,
+    config_manager,
+    variation,
+    variation_keyframes,
+    is_cv_format,
+    gpu_acceleration,
+    duration,
+):
+    """Export a single crop variation using the correct pipeline"""
+    try:
+        from ..services import clip_export_service, calibration_service
+        import tempfile
+        import os
+
+        # Determine output format and directory
+        format_ext = ".mkv" if is_cv_format else ".mp4"
+        format_dir = "cv" if is_cv_format else "regular"
+
+        # Create export path
+        base_dir = config_manager.get_export_dir()
+        camera_type = source_path.parent.parent.name  # Extract camera from path
+        session = source_path.parent.name
+
+        export_dir = base_dir / format_dir / camera_type / session
+
+        # Add variation suffix to filename
         variation_suffix = "" if variation == "original" else f"_{variation}"
-        variation_clip_name = f"{clip.name}{variation_suffix}"
-        logger.info(f"Processing variation: {variation} as {variation_clip_name}")
+        export_filename = f"{clip.name}{variation_suffix}{format_ext}"
+        export_path = export_dir / export_filename
 
-        # Create a modified clip for this variation
-        variation_clip = clip.copy()
-        variation_clip.name = variation_clip_name
+        # Ensure directory exists
+        export_dir.mkdir(parents=True, exist_ok=True)
 
-        # For 'wide' variation, scale each keyframe's crop region if keyframes exist
-        if (
-            variation == "wide"
-            and hasattr(clip, "crop_keyframes")
-            and clip.crop_keyframes
-        ):
-            # Create a copy of the keyframes to modify
-            scaled_keyframes = {}
+        # Step 1: Extract + Calibrate the clip segment (like export_clip_efficient does)
+        with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
+            temp_calibrated_path = temp_file.name
 
-            # Process each keyframe to create a wider version
-            for frame_num, crop_region in clip.crop_keyframes.items():
-                # Calculate a wider crop for this keyframe
-                wider_crop = calculate_wider_crop(
-                    crop_region, wide_crop_factor, frame_dimensions
-                )
-
-                # Store the wider crop in the new keyframes dictionary
-                scaled_keyframes[frame_num] = wider_crop
-
-            # Set the scaled keyframes on the variation clip
-            variation_clip.crop_keyframes = scaled_keyframes
-            logger.info(
-                f"Created {len(scaled_keyframes)} scaled keyframes for 'wide' variation"
-            )
-        # For 'full' variation or if no crop keyframes, clear keyframes
-        elif variation != "original":
-            variation_clip.crop_keyframes = None
-            logger.info(
-                f"Cleared crop keyframes for non-original variation: {variation}"
-            )
-
-        # Set static crop region based on variation - for full and fallback for wide if no keyframes
-        if (
-            variation == "wide"
-            and not hasattr(variation_clip, "crop_keyframes")
-            or not variation_clip.crop_keyframes
-        ):
-            variation_crop = get_crop_for_variation(
-                variation, original_crop, frame_dimensions, wide_crop_factor
-            )
-            variation_clip.crop_region = variation_crop
-        elif variation == "full":
-            variation_clip.crop_region = None
-
-        # Log crop details for clarity
-        if (
-            variation == "wide"
-            and hasattr(variation_clip, "crop_keyframes")
-            and variation_clip.crop_keyframes
-        ):
-            # Log a sample of the scaled keyframes (first one)
-            first_frame = sorted(variation_clip.crop_keyframes.keys())[0]
-            sample_crop = variation_clip.crop_keyframes[first_frame]
-            x, y, w, h = sample_crop
-            frame_w, frame_h = frame_dimensions
-            # Prevent division by zero
-            if frame_w > 0 and frame_h > 0:
-                percent_w = round((w / frame_w) * 100, 1)
-                percent_h = round((h / frame_h) * 100, 1)
-                logger.info(
-                    f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop} ({percent_w}% × {percent_h}% of frame)"
-                )
-            else:
-                logger.warning(
-                    f"Frame dimensions are zero ({frame_w}, {frame_h}), cannot calculate percentages"
-                )
-                logger.info(
-                    f"Using scaled keyframes for {variation}. First keyframe ({first_frame}): {sample_crop}"
-                )
-        elif hasattr(variation_clip, "crop_region") and variation_clip.crop_region:
-            x, y, w, h = variation_clip.crop_region
-            frame_w, frame_h = frame_dimensions
-            # Prevent division by zero
-            if frame_w > 0 and frame_h > 0:
-                percent_w = round((w / frame_w) * 100, 1)
-                percent_h = round((h / frame_h) * 100, 1)
-                logger.info(
-                    f"Using crop for {variation}: {variation_clip.crop_region} ({percent_w}% × {percent_h}% of frame)"
-                )
-            else:
-                logger.warning(
-                    f"Frame dimensions are zero ({frame_w}, {frame_h}), cannot calculate percentages"
-                )
-                logger.info(f"Using crop for {variation}: {variation_clip.crop_region}")
-        else:
-            logger.info(f"No crop for {variation} (full frame)")
-
-        # Process this variation
-        logger.info(f"Sending variation {variation} to processing function")
-        result = process_clip_func(variation_clip, **kwargs)
-        results[variation] = result
-        logger.info(f"Result for {variation}: {'Success' if result else 'Failed'}")
-
-        # Store export path
-        if (
-            result
-            and hasattr(variation_clip, "export_path")
-            and variation_clip.export_path
-        ):
-            # Log what we found to debug
-            logger.info(
-                f"Found export path(s) for variation {variation}: {variation_clip.export_path}"
-            )
-
-            # Handle list or string export_path from the variation
-            if isinstance(variation_clip.export_path, list):
-                for path in variation_clip.export_path:
-                    if path and path not in all_export_paths:
-                        all_export_paths.append(path)
-                        logger.info(f"Added path from {variation}: {path}")
-            else:
-                path = variation_clip.export_path
-                if path and path not in all_export_paths:
-                    all_export_paths.append(path)
-                    logger.info(f"Added path from {variation}: {path}")
-
-    # If any paths were generated, add them to the original clip
-    if all_export_paths:
-        logger.info(f"Setting export_path on original clip to: {all_export_paths}")
-        # Force export_path to be a list
-        clip.export_path = all_export_paths
-
-        # Set the export_paths string attribute for compatibility
-        if hasattr(clip, "export_paths"):
-            clip.export_paths = ",".join(all_export_paths)
-            logger.info(f"Set export_paths attribute to: {clip.export_paths}")
-
-        # Explicitly log the final result for debugging
-        logger.info(f"FINAL: Clip {clip.name} has export_path: {clip.export_path}")
-        return results
-    else:
-        logger.warning("No export paths were collected from any variations")
-
-        # Check if the files exist on disk but weren't properly added to export_path
-        # This is a fallback mechanism to try to recover from issues
         try:
-            if config_manager:
-                from scripts.process_clips import find_generated_clips
+            # Check if calibration is enabled and apply it
+            if clip_export_service.is_calibration_enabled(config_manager):
+                camera_type_for_cal = calibration_service.get_camera_type_from_path(
+                    source_path, config_manager
+                )
+                logger.info(f"🔧 Calibrating {variation}: {camera_type_for_cal}")
 
-                logger.info(f"Attempting to find clips on disk for {clip.name}")
-                found_files = find_generated_clips(
-                    clip,
-                    config_manager,
-                    both_formats=kwargs.get("both_formats", False),
-                    multi_crop=True,
-                    crop_variations=crop_variations,
+                alpha = config_manager.get_calibration_settings().get("alpha", 0.5)
+                calibrate_success = clip_export_service.apply_calibration_to_clip(
+                    input_path=source_path,
+                    output_path=temp_calibrated_path,
+                    start_frame=clip.in_frame,
+                    end_frame=clip.out_frame,
+                    camera_type=camera_type_for_cal,
+                    alpha=alpha,
+                    config_manager=config_manager,
+                    gpu_acceleration=gpu_acceleration,
+                )
+            else:
+                logger.info(f"🎬 Extracting {variation} (no calibration)")
+                calibrate_success = clip_export_service.extract_clip_frames(
+                    input_path=source_path,
+                    output_path=temp_calibrated_path,
+                    start_frame=clip.in_frame,
+                    end_frame=clip.out_frame,
+                    gpu_acceleration=gpu_acceleration,
                 )
 
-                if found_files:
-                    logger.info(
-                        f"Found {len(found_files)} files on disk: {found_files}"
+            if not calibrate_success:
+                logger.error(f"Failed to extract/calibrate {variation}")
+                return False
+
+            # Step 2: Apply crop variation to the calibrated clip
+            if variation_keyframes is None:
+                # Full frame - no crop
+                success = clip_export_service.convert_to_final_format_with_crop(
+                    input_path=temp_calibrated_path,
+                    output_path=export_path,
+                    crop_region=None,
+                    crop_keyframes=None,
+                    start_frame=clip.in_frame,  # Keep original frame reference for timing
+                    fps=30,
+                    is_cv_format=is_cv_format,
+                    gpu_acceleration=gpu_acceleration,
+                )
+            else:
+                # Use keyframes for cropping (keep original frame numbers for timing)
+                success = clip_export_service.convert_to_final_format_with_crop(
+                    input_path=temp_calibrated_path,
+                    output_path=export_path,
+                    crop_region=None,
+                    crop_keyframes=variation_keyframes,
+                    start_frame=clip.in_frame,  # Keep original frame reference for keyframe timing
+                    fps=30,
+                    is_cv_format=is_cv_format,
+                    gpu_acceleration=gpu_acceleration,
+                )
+
+            return success
+
+        finally:
+            # Clean up temporary calibrated file
+            if os.path.exists(temp_calibrated_path):
+                try:
+                    os.unlink(temp_calibrated_path)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to clean up temp file {temp_calibrated_path}: {e}"
                     )
-                    clip.export_path = found_files
 
-                    # Set the export_paths string attribute for compatibility
-                    if hasattr(clip, "export_paths"):
-                        clip.export_paths = ",".join(found_files)
-
-                    logger.info(
-                        f"RECOVERED: Set export_path to found files: {clip.export_path}"
-                    )
-                    return results
-        except Exception as e:
-            logger.exception(f"Error in fallback file search: {e}")
-
-    return results
+    except Exception as e:
+        logger.error(f"Export failed for {variation}: {e}")
+        return False

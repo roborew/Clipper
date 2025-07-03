@@ -3,11 +3,52 @@ Logging utilities for the Clipper application.
 """
 
 import logging
+import sys
+from pathlib import Path
 import streamlit as st
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("clipper")
+
+
+def configure_logging(log_level="INFO", log_file=None):
+    """Configure logging for the application
+
+    Args:
+        log_level: Logging level (DEBUG, INFO, WARNING, ERROR)
+        log_file: Optional log file path
+
+    Returns:
+        Logger instance
+    """
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(getattr(logging, log_level.upper()))
+
+    # Clear existing handlers
+    for handler in root_logger.handlers[:]:
+        root_logger.removeHandler(handler)
+
+    # Create formatter
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+
+    # File handler if specified
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+
+    # Return the clipper logger
+    clipper_logger = logging.getLogger("clipper")
+    return clipper_logger
 
 
 def setup_logger():

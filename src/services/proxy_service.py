@@ -38,7 +38,7 @@ script_run_context_logger.addFilter(ScriptRunContextFilter())
 logger = logging.getLogger("clipper.proxy")
 
 # Import calibration service
-from src.services import calibration_service
+from . import calibration_service
 
 
 def monitor_progress(process, duration, progress_queue, stop_event):

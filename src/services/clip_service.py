@@ -9,7 +9,7 @@ from pathlib import Path
 import streamlit as st
 import logging
 from datetime import datetime
-from src.services import video_service
+from . import video_service
 
 logger = logging.getLogger("clipper.clip")
 
