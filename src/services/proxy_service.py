@@ -1096,7 +1096,7 @@ def create_clip_preview(
             str(source_path),
         ]
 
-        fps = 30.0  # Default fallback
+        fps = 25.0  # Default fallback
         try:
             fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
             if fps_output:
@@ -1728,7 +1728,7 @@ def export_clip(
             str(actual_source_path),
         ]
 
-        fps = 30.0  # Default fallback
+        fps = 25.0  # Default fallback
         try:
             fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
             if fps_output:

@@ -409,7 +409,7 @@ def get_source_video_fps(source_path):
         str(source_path),
     ]
 
-    fps = 30.0  # Default fallback
+    fps = 25.0  # Default fallback
     try:
         fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
         if fps_output:
@@ -423,7 +423,7 @@ def get_source_video_fps(source_path):
         import logging
 
         logger = logging.getLogger("clipper.multi_crop")
-        logger.warning(f"Could not detect FPS from {source_path}, using 30.0: {e}")
+        logger.warning(f"Could not detect FPS from {source_path}, using 25.0: {e}")
 
     return fps
 

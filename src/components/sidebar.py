@@ -1010,7 +1010,7 @@ def process_csv_clips(csv_file, video_path, clips_file, overwrite=False):
                 return False
 
         # Get video info to convert timecodes to frames
-        fps = st.session_state.get("fps", 30.0)  # Default to 30 fps if not available
+        fps = st.session_state.get("fps", 25.0)  # Default to 30 fps if not available
         total_frames = st.session_state.get("total_frames", 0)
         logger.info(f"Video info - FPS: {fps}, Total frames: {total_frames}")
 

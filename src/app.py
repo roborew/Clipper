@@ -237,7 +237,7 @@ def initialize_session_state():
         if "total_frames" not in st.session_state:
             st.session_state.total_frames = 0
         if "fps" not in st.session_state:
-            st.session_state.fps = 30.0
+            st.session_state.fps = 25.0
         if "proxy_path" not in st.session_state:
             st.session_state.proxy_path = None
 

@@ -193,7 +193,7 @@ def apply_calibration_to_clip(
             str(input_path),
         ]
 
-        fps = 30.0  # Default fallback
+        fps = 25.0  # Default fallback
         try:
             fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
             if "/" in fps_output:
@@ -202,7 +202,7 @@ def apply_calibration_to_clip(
             else:
                 fps = float(fps_output)
         except:
-            logger.warning("Could not determine FPS, using 30.0")
+            logger.warning("Could not determine FPS, using 25.0")
 
         # Calculate timestamps
         start_time = start_frame / fps
@@ -316,7 +316,7 @@ def convert_to_final_format_with_crop(
     crop_region=None,
     crop_keyframes=None,
     start_frame=0,
-    fps=30.0,
+    fps=25.0,
     is_cv_format=False,
     progress_callback=None,
     gpu_acceleration=False,
@@ -615,7 +615,7 @@ def convert_to_final_format(
         crop_region=None,
         crop_keyframes=None,
         start_frame=0,
-        fps=30.0,
+        fps=25.0,
         is_cv_format=is_cv_format,
         progress_callback=progress_callback,
     )
@@ -657,7 +657,7 @@ def extract_clip_frames(
             str(input_path),
         ]
 
-        fps = 30.0  # Default fallback
+        fps = 25.0  # Default fallback
         try:
             fps_output = subprocess.check_output(fps_cmd).decode("utf-8").strip()
             if "/" in fps_output:
@@ -666,7 +666,7 @@ def extract_clip_frames(
             else:
                 fps = float(fps_output)
         except:
-            logger.warning("Could not determine FPS, using 30.0")
+            logger.warning("Could not determine FPS, using 25.0")
 
         # Calculate timestamps
         start_time = start_frame / fps
@@ -890,10 +890,10 @@ def export_clip_efficient(
         # Get FPS from the video source
         try:
             video_info = video_service.get_video_info(resolved_source_path)
-            video_fps = video_info.get("fps", 30.0) if video_info else 30.0
+            video_fps = video_info.get("fps", 25.0) if video_info else 25.0
         except Exception as e:
             logger.warning(f"Could not get FPS from video, using default: {e}")
-            video_fps = 30.0
+            video_fps = 25.0
 
         logger.info(f"Video FPS: {video_fps}")
 
