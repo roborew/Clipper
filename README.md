@@ -1,6 +1,9 @@
+
 # Clipper - Video Clipping and Cropping Tool
 
 A Streamlit application for efficiently clipping and cropping videos with the ability to save configurations for batch processing.
+
+<img width="764" height="365" alt="Screenshot 2026-09-12 at 14 08 09" src="https://github.com/user-attachments/assets/d8b28315-9a5e-4623-8076-bb88789513c1" />
 
 ## Features
 
